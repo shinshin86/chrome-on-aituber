@@ -1,0 +1,96 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+/* Status bar - top overlay */
+.status-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  padding: 8px;
+  pointer-events: none;
+}
+
+.status {
+  font-size: 12px;
+  padding: 4px 14px;
+  border-radius: 12px;
+  pointer-events: auto;
+  backdrop-filter: blur(4px);
+}
+
+.status.ok {
+  background: rgba(232, 245, 233, 0.9);
+  color: #2e7d32;
+}
+
+.status.warn {
+  background: rgba(255, 243, 224, 0.9);
+  color: #e65100;
+}
+
+/* Stage: 3-column layout */
+.stage {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  position: relative;
+}
+
+/* Chat log columns */
+.log-column {
+  width: 280px;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  z-index: 5;
+}
+
+.log-column.left {
+  background: transparent;
+}
+
+.log-column.right {
+  background: transparent;
+}
+
+/* Avatar center */
+.avatar-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+/* Responsive: hide side logs on narrow screens */
+@media (max-width: 800px) {
+  .log-column {
+    width: 160px;
+    min-width: 120px;
+  }
+}
+
+@media (max-width: 560px) {
+  .log-column {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    opacity: 0.85;
+  }
+  .log-column.left {
+    left: 0;
+  }
+  .log-column.right {
+    right: 0;
+  }
+}

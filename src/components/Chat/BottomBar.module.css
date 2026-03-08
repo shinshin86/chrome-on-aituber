@@ -1,0 +1,99 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(245, 230, 215, 0.95);
+  backdrop-filter: blur(8px);
+  flex-shrink: 0;
+}
+
+.iconBtn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.iconBtn:hover {
+  transform: scale(1.08);
+}
+
+.iconBtn:active {
+  transform: scale(0.95);
+}
+
+.ttsBtn {
+  background: rgba(160, 150, 180, 0.5);
+  color: #555;
+}
+
+.resetBtnIcon {
+  background: rgba(160, 150, 180, 0.5);
+  color: #555;
+  font-size: 22px;
+}
+
+.input {
+  flex: 1;
+  height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 22px;
+  background: #fff;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  color: #333;
+  min-width: 0;
+}
+
+.input::placeholder {
+  color: #aaa;
+}
+
+.input:disabled {
+  background: #eee;
+}
+
+.sendBtn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(160, 150, 180, 0.5);
+  color: #555;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.15s, background 0.15s;
+}
+
+.sendBtn:hover:not(:disabled) {
+  background: rgba(140, 130, 170, 0.7);
+  transform: scale(1.08);
+}
+
+.sendBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.settingsBtn {
+  background: rgba(230, 140, 120, 0.6);
+  color: #fff;
+}
+
+.settingsBtn:hover {
+  background: rgba(220, 120, 100, 0.8);
+}
