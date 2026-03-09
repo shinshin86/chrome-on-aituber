@@ -24,6 +24,14 @@
   color: #333;
 }
 
+.sectionTitle {
+  margin: 20px 0 12px;
+  font-size: 15px;
+  color: #555;
+  border-top: 1px solid #eee;
+  padding-top: 16px;
+}
+
 .label {
   display: flex;
   flex-direction: column;
@@ -34,6 +42,17 @@
   font-weight: 500;
 }
 
+.toggleLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #555;
+  font-weight: 500;
+  cursor: pointer;
+}
+
 .textarea {
   padding: 8px 12px;
   border: 1px solid #ccc;
@@ -41,6 +60,30 @@
   font-size: 14px;
   font-family: inherit;
   resize: vertical;
+}
+
+.textInput {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.hint {
+  font-size: 12px;
+  color: #888;
+  font-weight: 400;
+}
+
+.hint kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  background: #eee;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 11px;
+  font-family: inherit;
 }
 
 .closeBtn {

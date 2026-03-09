@@ -1,39 +1,44 @@
-import { useState, useRef, type KeyboardEvent } from "react";
+import { useState, useRef, useCallback } from "react";
+import { useChatSubmit } from "use-chat-submit";
 import styles from "./BottomBar.module.css";
 
 interface Props {
   onSend: (text: string) => void;
   onReset: () => void;
   disabled: boolean;
+  isSending: boolean;
   ttsEnabled: boolean;
+  statusText: string;
   onToggleTts: () => void;
   onOpenSettings: () => void;
+  onOpenManual: () => void;
 }
 
 export function BottomBar({
   onSend,
   onReset,
   disabled,
+  isSending,
   ttsEnabled,
+  statusText,
   onToggleTts,
   onOpenSettings,
+  onOpenManual,
 }: Props) {
   const [text, setText] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  function handleSend() {
+  const handleSubmit = useCallback(() => {
     if (!text.trim() || disabled) return;
     onSend(text);
     setText("");
     inputRef.current?.focus();
-  }
+  }, [text, disabled, onSend]);
 
-  function handleKeyDown(e: KeyboardEvent) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleSend();
-    }
-  }
+  const { getTextareaProps } = useChatSubmit({
+    onSubmit: handleSubmit,
+    mode: "enter",
+  });
 
   return (
     <div className={styles.bar}>
@@ -55,24 +60,40 @@ export function BottomBar({
         &#x21BB;
       </button>
 
-      <input
-        ref={inputRef}
+      <textarea
         className={styles.input}
-        type="text"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="聞きたいことをいれてね"
+        rows={1}
+        placeholder={
+          isSending
+            ? "応答を生成中..."
+            : statusText
+              ? statusText
+              : "聞きたいことをいれてね"
+        }
         disabled={disabled}
+        {...getTextareaProps({
+          ref: inputRef,
+          value: text,
+          onChange: (e) => setText(e.target.value),
+        })}
       />
 
       <button
         className={styles.sendBtn}
-        onClick={handleSend}
+        onClick={handleSubmit}
         disabled={disabled || !text.trim()}
         aria-label="送信"
       >
         &#x27A4;
+      </button>
+
+      <button
+        className={`${styles.iconBtn} ${styles.manualBtn}`}
+        onClick={onOpenManual}
+        aria-label="マニュアル"
+        title="使い方"
+      >
+        &#x2753;
       </button>
 
       <button

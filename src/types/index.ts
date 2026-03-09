@@ -21,18 +21,32 @@ export interface AvatarImages {
   mouthOpenEyesClose: string;
 }
 
+// App mode
+export type AppMode = "chat" | "broadcast";
+
 // Settings
 export interface AppSettings {
+  appMode: AppMode;
   ttsEnabled: boolean;
   selectedAvatarId: string;
   llmSystemPrompt: string;
   ttsLengthScale: number;
+  // YouTube Live
+  youtubeApiKey: string;
+  youtubeLiveId: string;
+  youtubeEnabled: boolean;
+  youtubeCommentInterval: number;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
+  appMode: "chat",
   ttsEnabled: true,
   selectedAvatarId: "default",
   llmSystemPrompt:
     "あなたは親切で知識豊富なAIアシスタントです。ユーザーの質問に丁寧に日本語で回答してください。回答はマークダウンではなくプレーンテキストで返してください。",
   ttsLengthScale: 1.0,
+  youtubeApiKey: "",
+  youtubeLiveId: "",
+  youtubeEnabled: false,
+  youtubeCommentInterval: 20000,
 };

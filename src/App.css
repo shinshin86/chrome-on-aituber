@@ -6,35 +6,54 @@
   background: #f5f5f5;
 }
 
-/* Status bar - top overlay */
-.status-bar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 10;
-  display: flex;
-  justify-content: center;
-  padding: 8px;
+/* Broadcast mode: green screen */
+.app.broadcast {
+  background: #00ff00;
+}
+
+/* Broadcast mode hint overlay */
+.broadcast-hint {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 24px 36px;
+  border-radius: 16px;
+  text-align: center;
+  animation: broadcast-hint-fade 4s ease-in-out forwards;
   pointer-events: none;
 }
 
-.status {
-  font-size: 12px;
-  padding: 4px 14px;
-  border-radius: 12px;
-  pointer-events: auto;
-  backdrop-filter: blur(4px);
+.broadcast-hint p {
+  margin: 0;
+  line-height: 1.8;
+  font-size: 15px;
 }
 
-.status.ok {
-  background: rgba(232, 245, 233, 0.9);
-  color: #2e7d32;
+.broadcast-hint p:first-child {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
 }
 
-.status.warn {
-  background: rgba(255, 243, 224, 0.9);
-  color: #e65100;
+.broadcast-hint kbd {
+  display: inline-block;
+  padding: 2px 7px;
+  background: #555;
+  border: 1px solid #777;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+@keyframes broadcast-hint-fade {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  75% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* Stage: 3-column layout */

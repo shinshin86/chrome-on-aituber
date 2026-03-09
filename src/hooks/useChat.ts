@@ -13,7 +13,7 @@ export function useChat(settings: AppSettings) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [llmStatus, setLlmStatus] = useState<LLMStatus>("checking");
-  const [statusText, setStatusText] = useState("確認中...");
+  const [statusText, setStatusText] = useState("AI を確認中...");
   const [mouthOpen, setMouthOpen] = useState(false);
 
   const mouthOpenRef = useRef(setMouthOpen);
@@ -31,7 +31,7 @@ export function useChat(settings: AppSettings) {
 
     switch (status) {
       case "available":
-        setStatusText("利用可能（オンデバイス）");
+        setStatusText("");
         if (!llm.hasSession()) {
           try {
             await llm.createSession(settings.llmSystemPrompt);
@@ -47,7 +47,7 @@ export function useChat(settings: AppSettings) {
             setStatusText(`モデルをダウンロード中... ${pct}%`);
           });
           setLlmStatus("available");
-          setStatusText("利用可能（オンデバイス）");
+          setStatusText("");
         } catch (e) {
           setStatusText("モデルダウンロード失敗: " + (e as Error).message);
           setLlmStatus("error");
@@ -55,11 +55,11 @@ export function useChat(settings: AppSettings) {
         break;
       case "unavailable":
         setStatusText(
-          "Built-in AI が利用できません。Chrome 138+ でフラグを有効にしてください。"
+          "Built-in AI が利用できません。Chrome 138+ でフラグを有効化してください"
         );
         break;
       case "error":
-        setStatusText("Availability チェック失敗");
+        setStatusText("AI の確認に失敗しました");
         break;
     }
   }
