@@ -134,20 +134,6 @@ export function ManualDialog({ open, onClose }: Props) {
             </li>
           </ul>
 
-          <h4>2-4. ローダースクリプト</h4>
-          <p>
-            <code>public/piper/piper-global-loader.js</code>{" "}
-            を以下の内容で作成してください。
-          </p>
-          <pre className={styles.codeBlock}>
-{`import { SimpleUnifiedPhonemizer }
-  from './src/simple_unified_api.js';
-window.__PiperPlus =
-  { SimpleUnifiedPhonemizer };
-window.dispatchEvent(
-  new Event('piper-plus-ready'));`}
-          </pre>
-
           <p>
             TTS アセットが未配置の場合でもチャット機能は利用できます（音声なし）。
           </p>

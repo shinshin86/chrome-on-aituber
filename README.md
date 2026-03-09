@@ -72,13 +72,7 @@ public/piper/
 - **NAIST dictionary**: Included with OpenJTalk builds
 - **tsukuyomi voice model**: Download the tsukuyomi-chan ONNX model from the piper-plus model repository
 
-The `piper-global-loader.js` file should contain:
-
-```js
-import { SimpleUnifiedPhonemizer } from './src/simple_unified_api.js';
-window.__PiperPlus = { SimpleUnifiedPhonemizer };
-window.dispatchEvent(new Event('piper-plus-ready'));
-```
+`piper-global-loader.js` is already included in the repository. Just place the other files as described above.
 
 ### 3. Run the development server
 

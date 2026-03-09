@@ -72,13 +72,7 @@ public/piper/
 - **NAIST 辞書**: OpenJTalk のビルドに同梱
 - **つくよみちゃん音声モデル**: piper-plus モデルリポジトリからダウンロード
 
-`piper-global-loader.js` の内容:
-
-```js
-import { SimpleUnifiedPhonemizer } from './src/simple_unified_api.js';
-window.__PiperPlus = { SimpleUnifiedPhonemizer };
-window.dispatchEvent(new Event('piper-plus-ready'));
-```
+`piper-global-loader.js` はリポジトリに同梱済みです。上記のファイルを配置するだけで動作します。
 
 ### 3. 開発サーバーの起動
 

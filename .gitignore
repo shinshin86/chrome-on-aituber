@@ -25,3 +25,4 @@ dist-ssr
 
 # piper-plus WASM assets (large binaries, distributed separately)
 public/piper/
+!public/piper/piper-global-loader.js
