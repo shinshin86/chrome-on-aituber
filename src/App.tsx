@@ -7,7 +7,12 @@ import { ManualDialog } from "./components/Manual/ManualDialog";
 import { useChat } from "./hooks/useChat";
 import { useSettings } from "./hooks/useSettings";
 import { useYoutubeComments } from "./hooks/useYoutubeComments";
-import { getDefaultAvatar } from "./services/avatar/avatarService";
+import {
+  getDefaultAvatar,
+  getAllAvatars,
+  revokeAvatarUrls,
+} from "./services/avatar/avatarService";
+import type { AvatarPack } from "./types";
 import type { YouTubeChatMessage } from "./services/youtube/youtubeService";
 import "./App.css";
 
@@ -20,8 +25,27 @@ function App() {
   const [broadcastHint, setBroadcastHint] = useState(false);
 
   const isBroadcast = settings.appMode === "broadcast";
-  const avatar = getDefaultAvatar();
+  const [avatar, setAvatar] = useState<AvatarPack>(getDefaultAvatar());
   const llmReady = llmStatus === "available";
+
+  // selectedAvatarId に応じてアバターを読み込む
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      if (settings.selectedAvatarId === "default") {
+        setAvatar(getDefaultAvatar());
+        return;
+      }
+      revokeAvatarUrls();
+      const all = await getAllAvatars();
+      const found = all.find((a) => a.id === settings.selectedAvatarId);
+      if (!cancelled) {
+        setAvatar(found ?? getDefaultAvatar());
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [settings.selectedAvatarId]);
 
   // Ctrl+S / Cmd+S で設定パネルを開く
   useEffect(() => {

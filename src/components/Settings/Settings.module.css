@@ -32,6 +32,41 @@
   padding-top: 16px;
 }
 
+.section {
+  border-top: 1px solid #eee;
+  margin-top: 8px;
+}
+
+.section summary {
+  font-size: 15px;
+  font-weight: 600;
+  color: #555;
+  padding: 12px 0;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.section summary::-webkit-details-marker {
+  display: none;
+}
+
+.section summary::before {
+  content: "▶";
+  font-size: 10px;
+  transition: transform 0.15s;
+}
+
+.section[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.sectionContent {
+  padding-bottom: 8px;
+}
+
 .label {
   display: flex;
   flex-direction: column;
