@@ -1,4 +1,4 @@
-import type { AppSettings, AppMode } from "../../types";
+import type { AppSettings, AppMode, StreamingPlatform } from "../../types";
 import { AvatarSettings } from "./AvatarSettings";
 import styles from "./Settings.module.css";
 
@@ -8,6 +8,11 @@ interface Props {
   open: boolean;
   onClose: () => void;
 }
+
+const PLATFORM_OPTIONS: { value: StreamingPlatform; label: string }[] = [
+  { value: "youtube", label: "YouTube" },
+  { value: "twitch", label: "Twitch" },
+];
 
 const MODE_OPTIONS: { value: AppMode; label: string }[] = [
   { value: "chat", label: "チャットモード" },
@@ -103,48 +108,22 @@ export function SettingsPanel({ settings, onUpdate, open, onClose }: Props) {
           </div>
         </details>
 
-        {/* YouTube Live 連携 */}
+        {/* 配信チャット連携 */}
         <details className={styles.section}>
-          <summary>YouTube Live 連携</summary>
+          <summary>配信チャット連携</summary>
           <div className={styles.sectionContent}>
             <label className={styles.label}>
-              YouTube API Key
-              <input
-                className={styles.textInput}
-                type="password"
-                value={settings.youtubeApiKey}
-                onChange={(e) =>
-                  onUpdate({ youtubeApiKey: e.target.value })
-                }
-                placeholder="xxx..."
-              />
-            </label>
-
-            <label className={styles.label}>
-              ライブ配信 ID
-              <input
-                className={styles.textInput}
-                type="text"
-                value={settings.youtubeLiveId}
-                onChange={(e) =>
-                  onUpdate({ youtubeLiveId: e.target.value })
-                }
-                placeholder="xxx..."
-              />
-            </label>
-
-            <label className={styles.label}>
-              コメント取得間隔
+              プラットフォーム
               <select
                 className={styles.textInput}
-                value={settings.youtubeCommentInterval}
+                value={settings.streamingPlatform}
                 onChange={(e) =>
                   onUpdate({
-                    youtubeCommentInterval: parseInt(e.target.value),
+                    streamingPlatform: e.target.value as StreamingPlatform,
                   })
                 }
               >
-                {INTERVAL_OPTIONS.map((opt) => (
+                {PLATFORM_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
@@ -152,16 +131,165 @@ export function SettingsPanel({ settings, onUpdate, open, onClose }: Props) {
               </select>
             </label>
 
-            <label className={styles.toggleLabel}>
-              <input
-                type="checkbox"
-                checked={settings.youtubeEnabled}
-                onChange={(e) =>
-                  onUpdate({ youtubeEnabled: e.target.checked })
-                }
-              />
-              YouTube Live コメント取得を有効にする
-            </label>
+            {settings.streamingPlatform === "youtube" && (
+              <>
+                <label className={styles.label}>
+                  YouTube API Key
+                  <input
+                    className={styles.textInput}
+                    type="password"
+                    value={settings.youtubeApiKey}
+                    onChange={(e) =>
+                      onUpdate({ youtubeApiKey: e.target.value })
+                    }
+                    placeholder="xxx..."
+                  />
+                </label>
+
+                <label className={styles.label}>
+                  ライブ配信 ID
+                  <input
+                    className={styles.textInput}
+                    type="text"
+                    value={settings.youtubeLiveId}
+                    onChange={(e) =>
+                      onUpdate({ youtubeLiveId: e.target.value })
+                    }
+                    placeholder="xxx..."
+                  />
+                </label>
+
+                <label className={styles.label}>
+                  コメント取得間隔
+                  <select
+                    className={styles.textInput}
+                    value={settings.youtubeCommentInterval}
+                    onChange={(e) =>
+                      onUpdate({
+                        youtubeCommentInterval: parseInt(e.target.value),
+                      })
+                    }
+                  >
+                    {INTERVAL_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className={styles.toggleLabel}>
+                  <input
+                    type="checkbox"
+                    checked={settings.youtubeEnabled}
+                    onChange={(e) =>
+                      onUpdate({ youtubeEnabled: e.target.checked })
+                    }
+                  />
+                  YouTube Live コメント取得を有効にする
+                </label>
+              </>
+            )}
+
+            {settings.streamingPlatform === "twitch" && (
+              <>
+                <label className={styles.label}>
+                  Twitch Client ID
+                  <input
+                    className={styles.textInput}
+                    type="password"
+                    value={settings.twitchClientId}
+                    onChange={(e) =>
+                      onUpdate({ twitchClientId: e.target.value })
+                    }
+                    placeholder="Client ID..."
+                  />
+                </label>
+
+                {settings.twitchAccessToken ? (
+                  <div className={styles.label}>
+                    <span style={{ color: "#4caf50", fontWeight: 600 }}>
+                      Twitch 接続済み
+                    </span>
+                    <button
+                      className={styles.closeBtn}
+                      style={{
+                        background: "#e53935",
+                        marginTop: 4,
+                      }}
+                      onClick={() =>
+                        onUpdate({ twitchAccessToken: "" })
+                      }
+                    >
+                      切断
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className={styles.closeBtn}
+                    style={{ marginTop: 0, marginBottom: 16 }}
+                    disabled={!settings.twitchClientId}
+                    onClick={() => {
+                      const state = crypto.randomUUID();
+                      sessionStorage.setItem("twitchOauthState", state);
+                      const params = new URLSearchParams({
+                        client_id: settings.twitchClientId,
+                        redirect_uri: window.location.origin + window.location.pathname,
+                        response_type: "token",
+                        scope: "user:read:chat user:bot channel:bot",
+                        state,
+                      });
+                      window.location.href = `https://id.twitch.tv/oauth2/authorize?${params}`;
+                    }}
+                  >
+                    Twitch に接続
+                  </button>
+                )}
+
+                <label className={styles.label}>
+                  チャンネル名
+                  <input
+                    className={styles.textInput}
+                    type="text"
+                    value={settings.twitchChannel}
+                    onChange={(e) =>
+                      onUpdate({ twitchChannel: e.target.value })
+                    }
+                    placeholder="channel_name"
+                  />
+                </label>
+
+                <label className={styles.label}>
+                  コメント取得間隔
+                  <select
+                    className={styles.textInput}
+                    value={settings.twitchCommentInterval}
+                    onChange={(e) =>
+                      onUpdate({
+                        twitchCommentInterval: parseInt(e.target.value),
+                      })
+                    }
+                  >
+                    {INTERVAL_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className={styles.toggleLabel}>
+                  <input
+                    type="checkbox"
+                    checked={settings.twitchEnabled}
+                    onChange={(e) =>
+                      onUpdate({ twitchEnabled: e.target.checked })
+                    }
+                  />
+                  Twitch コメント取得を有効にする
+                </label>
+              </>
+            )}
           </div>
         </details>
 

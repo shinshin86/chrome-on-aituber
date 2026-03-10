@@ -24,6 +24,9 @@ export interface AvatarImages {
 // App mode
 export type AppMode = "chat" | "broadcast";
 
+// Streaming platform
+export type StreamingPlatform = "youtube" | "twitch";
+
 // Settings
 export interface AppSettings {
   appMode: AppMode;
@@ -31,11 +34,19 @@ export interface AppSettings {
   selectedAvatarId: string;
   llmSystemPrompt: string;
   ttsLengthScale: number;
+  // Streaming platform
+  streamingPlatform: StreamingPlatform;
   // YouTube Live
   youtubeApiKey: string;
   youtubeLiveId: string;
   youtubeEnabled: boolean;
   youtubeCommentInterval: number;
+  // Twitch
+  twitchClientId: string;
+  twitchAccessToken: string;
+  twitchChannel: string;
+  twitchEnabled: boolean;
+  twitchCommentInterval: number;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -45,8 +56,14 @@ export const DEFAULT_SETTINGS: AppSettings = {
   llmSystemPrompt:
     "あなたは親切で知識豊富なAIアシスタントです。ユーザーの質問に丁寧に日本語で回答してください。回答はマークダウンではなくプレーンテキストで返してください。",
   ttsLengthScale: 1.0,
+  streamingPlatform: "youtube",
   youtubeApiKey: "",
   youtubeLiveId: "",
   youtubeEnabled: false,
   youtubeCommentInterval: 20000,
+  twitchClientId: "",
+  twitchAccessToken: "",
+  twitchChannel: "",
+  twitchEnabled: false,
+  twitchCommentInterval: 20000,
 };

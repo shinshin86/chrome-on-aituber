@@ -7,6 +7,7 @@ import { ManualDialog } from "./components/Manual/ManualDialog";
 import { useChat } from "./hooks/useChat";
 import { useSettings } from "./hooks/useSettings";
 import { useYoutubeComments } from "./hooks/useYoutubeComments";
+import { useTwitchComments } from "./hooks/useTwitchComments";
 import {
   getDefaultAvatar,
   getAllAvatars,
@@ -14,6 +15,7 @@ import {
 } from "./services/avatar/avatarService";
 import type { AvatarPack } from "./types";
 import type { YouTubeChatMessage } from "./services/youtube/youtubeService";
+import type { TwitchChatMessage } from "./services/twitch/twitchService";
 import "./App.css";
 
 function App() {
@@ -69,6 +71,25 @@ function App() {
     setBroadcastHint(false);
   }, [isBroadcast]);
 
+  // Twitch OAuth トークン取得（マウント時1回）
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash.includes("access_token")) return;
+
+    const params = new URLSearchParams(hash.slice(1));
+    const token = params.get("access_token");
+    const state = params.get("state");
+    const savedState = sessionStorage.getItem("twitchOauthState");
+
+    if (token && state && state === savedState) {
+      updateSettings({ twitchAccessToken: token });
+      sessionStorage.removeItem("twitchOauthState");
+    }
+
+    // URL ハッシュをクリア
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // YouTube Live コメントを受け取って LLM に送信
   const handleYoutubeComment = useCallback(
     (comment: YouTubeChatMessage) => {
@@ -83,6 +104,24 @@ function App() {
     isEnabled: settings.youtubeEnabled,
     intervalMs: settings.youtubeCommentInterval,
     onComment: handleYoutubeComment,
+  });
+
+  // Twitch コメントを受け取って LLM に送信
+  const handleTwitchComment = useCallback(
+    (comment: TwitchChatMessage) => {
+      send(`${comment.userName} さんのコメント: ${comment.userComment}`);
+    },
+    [send]
+  );
+
+  useTwitchComments({
+    twitchChannel: settings.twitchChannel,
+    twitchClientId: settings.twitchClientId,
+    twitchAccessToken: settings.twitchAccessToken,
+    isEnabled: settings.twitchEnabled,
+    intervalMs: settings.twitchCommentInterval,
+    onComment: handleTwitchComment,
+    onTokenExpired: () => updateSettings({ twitchAccessToken: "" }),
   });
 
   const aiMessages = useMemo(
