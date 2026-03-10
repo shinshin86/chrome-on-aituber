@@ -60,6 +60,11 @@ export function ManualDialog({ open, onClose }: Props) {
 
         <section className={styles.section}>
           <h3>2. 音声合成（TTS）のセットアップ</h3>
+          <p style={{ fontSize: 13, color: "#888", marginBottom: 8 }}>
+            ※ 公開サイトをご利用の場合、TTS
+            はセットアップ済みのためこの手順は不要です。
+            リポジトリをクローンしてローカルで実行する場合のみ必要です。
+          </p>
           <p>
             音声読み上げには piper-plus WASM
             のアセットが必要です。以下の手順でファイルを取得し、
