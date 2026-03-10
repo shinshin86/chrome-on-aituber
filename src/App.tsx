@@ -4,6 +4,7 @@ import { ChatLog } from "./components/Chat/ChatLog";
 import { BottomBar } from "./components/Chat/BottomBar";
 import { SettingsPanel } from "./components/Settings/SettingsPanel";
 import { ManualDialog } from "./components/Manual/ManualDialog";
+import { LicenseDialog } from "./components/License/LicenseDialog";
 import { useChat } from "./hooks/useChat";
 import { useSettings } from "./hooks/useSettings";
 import { useYoutubeComments } from "./hooks/useYoutubeComments";
@@ -24,6 +25,7 @@ function App() {
     useChat(settings);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+  const [licenseOpen, setLicenseOpen] = useState(false);
   const [broadcastHint, setBroadcastHint] = useState(false);
 
   const isBroadcast = settings.appMode === "broadcast";
@@ -179,6 +181,7 @@ function App() {
           onToggleTts={() => updateSettings({ ttsEnabled: !settings.ttsEnabled })}
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenManual={() => setManualOpen(true)}
+          onOpenLicense={() => setLicenseOpen(true)}
         />
       )}
 
@@ -192,6 +195,11 @@ function App() {
       <ManualDialog
         open={manualOpen}
         onClose={() => setManualOpen(false)}
+      />
+
+      <LicenseDialog
+        open={licenseOpen}
+        onClose={() => setLicenseOpen(false)}
       />
     </div>
   );

@@ -103,6 +103,15 @@
   background: rgba(80, 140, 190, 0.8);
 }
 
+.licenseBtn {
+  background: rgba(120, 160, 140, 0.6);
+  color: #fff;
+}
+
+.licenseBtn:hover {
+  background: rgba(100, 140, 120, 0.8);
+}
+
 .settingsBtn {
   background: rgba(230, 140, 120, 0.6);
   color: #fff;

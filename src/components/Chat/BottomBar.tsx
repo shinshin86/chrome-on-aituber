@@ -12,6 +12,7 @@ interface Props {
   onToggleTts: () => void;
   onOpenSettings: () => void;
   onOpenManual: () => void;
+  onOpenLicense: () => void;
 }
 
 export function BottomBar({
@@ -24,6 +25,7 @@ export function BottomBar({
   onToggleTts,
   onOpenSettings,
   onOpenManual,
+  onOpenLicense,
 }: Props) {
   const [text, setText] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -94,6 +96,15 @@ export function BottomBar({
         title="使い方"
       >
         &#x2753;
+      </button>
+
+      <button
+        className={`${styles.iconBtn} ${styles.licenseBtn}`}
+        onClick={onOpenLicense}
+        aria-label="ライセンス"
+        title="ライセンス"
+      >
+        &#xa9;
       </button>
 
       <button

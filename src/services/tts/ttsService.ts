@@ -38,14 +38,16 @@ export async function initialize(
     try {
       onProgress?.("音声エンジンを初期化中...");
 
+      const base = import.meta.env.BASE_URL;
+
       // ONNX Runtime 設定
-      ort.env.wasm.wasmPaths = "/piper/dist/";
+      ort.env.wasm.wasmPaths = `${base}piper/dist/`;
       ort.env.wasm.numThreads = 1;
       ort.env.wasm.simd = true;
 
       // モデル設定読み込み
       onProgress?.("モデル設定を読み込み中...");
-      const configResp = await fetch("/piper/models/tsukuyomi-config.json");
+      const configResp = await fetch(`${base}piper/models/tsukuyomi-config.json`);
       modelConfig = await configResp.json();
 
       // OpenJTalk Phonemizer 初期化
@@ -54,17 +56,17 @@ export async function initialize(
       phonemizer = new SimpleUnifiedPhonemizer();
       await phonemizer.initialize({
         openjtalk: {
-          jsPath: "/piper/dist/openjtalk.js",
-          wasmPath: "/piper/dist/openjtalk.wasm",
-          dictPath: "/piper/assets/dict",
-          voicePath: "/piper/assets/voice/mei_normal.htsvoice",
+          jsPath: `${base}piper/dist/openjtalk.js`,
+          wasmPath: `${base}piper/dist/openjtalk.wasm`,
+          dictPath: `${base}piper/assets/dict`,
+          voicePath: `${base}piper/assets/voice/mei_normal.htsvoice`,
         },
       });
 
       // ONNX モデル読み込み
       onProgress?.("音声モデルを読み込み中...");
       onnxSession = await ort.InferenceSession.create(
-        "/piper/models/tsukuyomi-wavlm-300epoch.onnx",
+        `${base}piper/models/tsukuyomi-wavlm-300epoch.onnx`,
         { executionProviders: ["wasm"], graphOptimizationLevel: "all" }
       );
 
