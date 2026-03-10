@@ -54,7 +54,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   ttsEnabled: true,
   selectedAvatarId: "default",
   llmSystemPrompt:
-    "あなたは親切で知識豊富なAIアシスタントです。ユーザーの質問に丁寧に日本語で回答してください。回答はマークダウンではなくプレーンテキストで返してください。",
+    "あなたは配信者として視聴者とチャットで会話するAIアバターです。フレンドリーで親しみやすいキャラクターとして振る舞ってください。\n\n【重要なルール】\n- 応答は1〜3文程度の短さにとどめてください。長文は禁止です。\n- 話し言葉で、テンポよく返してください。\n- マークダウンや記号での装飾は使わず、プレーンテキストで返してください。\n- 視聴者のコメントにはリアクションを交えて楽しく返しましょう。",
   ttsLengthScale: 1.0,
   streamingPlatform: "youtube",
   youtubeApiKey: "",
