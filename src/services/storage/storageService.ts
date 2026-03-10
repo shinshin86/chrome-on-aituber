@@ -1,12 +1,14 @@
 import type { AppSettings, ChatMessage } from "../../types";
 import { DEFAULT_SETTINGS } from "../../types";
 
+const PREFIX = "chrome-on-aituber";
+
 const KEYS = {
-  SETTINGS: "aituber_settings",
-  MESSAGES: "aituber_messages",
+  SETTINGS: `${PREFIX}_settings`,
+  MESSAGES: `${PREFIX}_messages`,
 } as const;
 
-const DB_NAME = "aituber_db";
+const DB_NAME = `${PREFIX}_db`;
 const DB_VERSION = 1;
 const AVATAR_STORE = "avatars";
 
