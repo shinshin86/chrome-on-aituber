@@ -136,6 +136,24 @@ export function LicenseDialog({ open, onClose }: Props) {
           </p>
         </section>
 
+        <section className={styles.section}>
+          <h3>ミコ — PNGTuber アバター素材</h3>
+          <p>
+            デフォルトアバターとして使用している PNGTuber 素材「ミコ」は
+            AITuber OnAir が提供するフリー素材です。
+          </p>
+          <p>&copy; AITuber OnAir / Miko</p>
+          <p>
+            <a
+              href="https://miko.aituberonair.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              https://miko.aituberonair.com/
+            </a>
+          </p>
+        </section>
+
         <button className={styles.closeBtn} onClick={onClose}>
           閉じる
         </button>
