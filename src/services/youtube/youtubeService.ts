@@ -101,7 +101,7 @@ export async function retrieveLiveComments(
   apiKey: string,
   onComment: (comment: YouTubeChatMessage) => void,
   timeLimitMinutes: number = DEFAULT_TIME_LIMIT_MINUTES
-): Promise<void> {
+): Promise<number> {
   const state = getLiveChatState(liveId);
 
   const params = new URLSearchParams({
@@ -120,7 +120,7 @@ export async function retrieveLiveComments(
 
   if (json.error) {
     console.error("YouTube API Error:", json.error);
-    return;
+    return pollingIntervals.get(liveId) || 0;
   }
 
   if (json.pollingIntervalMillis) {
@@ -186,6 +186,8 @@ export async function retrieveLiveComments(
 
   cleanupOldCommentIds(state);
   if (Math.random() < 0.1) cleanupOldStates();
+
+  return pollingIntervals.get(liveId) || 0;
 }
 
 export async function fetchAndProcessComments(
@@ -193,12 +195,12 @@ export async function fetchAndProcessComments(
   apiKey: string,
   onComment: (comment: YouTubeChatMessage) => void,
   timeLimitMinutes: number = DEFAULT_TIME_LIMIT_MINUTES
-): Promise<void> {
-  if (!apiKey || !liveId) return;
+): Promise<number> {
+  if (!apiKey || !liveId) return 0;
   try {
     const liveChatId = await getLiveChatId(liveId, apiKey);
     if (liveChatId) {
-      await retrieveLiveComments(
+      return await retrieveLiveComments(
         liveId,
         liveChatId,
         apiKey,
@@ -209,6 +211,8 @@ export async function fetchAndProcessComments(
   } catch (error) {
     console.error("Error fetching YouTube comments:", error);
   }
+
+  return pollingIntervals.get(liveId) || 0;
 }
 
 export function getNextPollingInterval(
