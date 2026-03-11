@@ -1,86 +1,127 @@
 # Chrome on AITuber
 
-ブラウザ完結型の AITuber チャットアプリです。Gemini Nano（Chrome Built-in AI / Prompt API）で LLM 応答を生成し、piper-plus WASM で日本語 TTS を行い、アバターの口パクアニメーションと同期させます。
-
-**技術スタック**: TypeScript / React / Vite SPA
-
----
+React + Vite で構成された、ブラウザ完結型の AITuber チャットアプリです。Chrome Built-in AI（Gemini Nano / Prompt API）で日本語応答を生成し、piper-plus WASM で音声合成し、4 枚スプライトのアバターを口パクとまばたき付きで表示します。
 
 ## 機能
 
-- **LLM チャット** — Chrome Built-in AI（LanguageModel API、Chrome 138+）による日本語対話
-- **TTS 音声合成** — piper-plus WASM（OpenJTalk + ONNX Runtime Web）による日本語読み上げ
-- **アバター** — 4 枚スプライトアニメーション（口開閉 x 目開閉）+ ランダムまばたき
-- **チャット UI** — 3 カラムレイアウト（AI メッセージ / アバター / ユーザーメッセージ）
-- **設定** — システムプロンプト編集、TTS 読み上げ速度調整
-- **ローカル保存** — 全データをローカルに保存（LocalStorage + IndexedDB）、サーバー不要
+- アプリケーションサーバー不要のブラウザ完結動作
+- Chrome Built-in AI / `LanguageModel` による日本語チャット
+- piper-plus WASM + OpenJTalk + ONNX Runtime Web による音声合成
+- 4 枚スプライトのアバター表示、口パク、ランダムまばたき
+- チャットモードと配信モード（グリーンバック）の 2 表示モード
+- YouTube Data API v3 を使った YouTube Live コメント取得
+- EventSub WebSocket + OAuth implicit flow を使った Twitch コメント取得
+- 4 枚画像アップロードによるカスタムアバター登録
+- `localStorage` への設定・会話履歴保存
+- `IndexedDB` へのカスタムアバター保存
 
 ## 必要環境
 
-- **Google Chrome 138+**（Built-in AI / Prompt API 有効化済み）
-  - `chrome://flags` で `#optimization-guide-on-device-model` と `#prompt-api-for-gemini-nano` を有効化
-  - Chrome を再起動し、モデルのダウンロード完了を待つ
-- **Node.js 18+**
+- Google Chrome 138 以降
+- Node.js 18 以降
+- `npm`
+
+AI 応答を使うには、事前に Chrome Built-in AI を有効化してください。
+
+1. `chrome://flags` を開く
+2. `#optimization-guide-on-device-model` を有効化
+3. `#prompt-api-for-gemini-nano` を有効化
+4. Chrome を再起動
+5. オンデバイスモデルのダウンロード完了を待つ
 
 ## セットアップ
 
-### 1. クローンと依存パッケージのインストール
+1. リポジトリを clone して依存関係を入れる
 
 ```bash
-git clone https://github.com/<your-username>/chrome-on-aituber.git
+git clone https://github.com/shinshin86/chrome-on-aituber.git
 cd chrome-on-aituber
 npm install
 ```
 
-### 2. piper-plus WASM アセットの配置
+2. 音声を使いたい場合は TTS アセットを配置する
 
-TTS エンジンに必要な piper-plus WASM アセットはファイルサイズが大きいため、リポジトリには含まれていません。以下のファイルを `public/piper/` に配置してください。
+piper TTS の完全なアセット一式は、このリポジトリにはコミットされていません。自分で clone して起動する場合は、必要なファイルを `public/piper/` 配下に配置する必要があります。
 
+Git 管理されているのは次のみです。
+
+- `public/piper/piper-global-loader.js`
+
+それ以外の `public/piper/` 一式は利用者側で別途用意する必要があります。これらがない場合でもチャット画面は開けますが、TTS は正常動作しません。
+
+次の手順でアセットを用意してください。
+
+1. [ayutaz/piper-plus](https://github.com/ayutaz/piper-plus) から `piper-plus` を取得
+   `dev` ブランチを clone またはダウンロードし、次をコピーします。
+   - `src/wasm/openjtalk-web/dist/` -> `public/piper/dist/`
+   - `src/wasm/openjtalk-web/src/` -> `public/piper/src/`
+   - `src/wasm/openjtalk-web/assets/` -> `public/piper/assets/`
+2. [onnxruntime-web の npm ページ](https://www.npmjs.com/package/onnxruntime-web) から `onnxruntime-web` を取得
+   次のファイルを `public/piper/dist/` に配置します。
+   - `dist/ort.min.js`
+   - `dist/ort-wasm.wasm`
+   - `dist/ort-wasm-simd.wasm`
+3. [ayousanz/piper-plus-tsukuyomi-chan](https://huggingface.co/ayousanz/piper-plus-tsukuyomi-chan) から音声モデルを取得
+   次のファイルを `public/piper/models/` に配置します。
+   - `tsukuyomi-wavlm-300epoch.onnx`
+   - `config.json` を `tsukuyomi-config.json` にリネームしたもの
+
+`scripts/package-piper-assets.sh` はセットアップ用スクリプトではなく、すでに用意済みの `public/piper/` を `piper-assets.tar.gz` に固めて GitHub Releases / CI 配布に使うためのものです。
+
+このパッケージ化フローを使う場合は、次を実行してください。
+
+```bash
+./scripts/package-piper-assets.sh
 ```
-public/piper/
-├── piper-global-loader.js      # ES module ローダー（下記参照）
-├── dist/
-│   ├── openjtalk.js             # OpenJTalk JS ラッパー
-│   ├── openjtalk.wasm           # OpenJTalk WASM バイナリ
-│   ├── ort.min.js               # ONNX Runtime Web
-│   ├── ort-wasm.wasm            # ONNX Runtime WASM
-│   └── ort-wasm-simd.wasm       # ONNX Runtime WASM (SIMD)
-├── src/
-│   ├── simple_unified_api.js    # piper-plus 統合 API
-│   ├── phonemizer.js
-│   ├── openjtalk_wrapper.js
-│   ├── japanese_phoneme_extract.js
-│   ├── dictionary-loader.js
-│   ├── custom_dictionary.js
-│   ├── simple_english_phonemizer.js
-│   └── api.js
-├── assets/
-│   ├── dict/                    # OpenJTalk 用 NAIST 日本語辞書
-│   │   ├── sys.dic, unk.dic, char.bin, matrix.bin, ...
-│   │   └── COPYING
-│   └── voice/
-│       └── mei_normal.htsvoice  # HTS 音声ファイル
-└── models/
-    ├── tsukuyomi-config.json    # モデル設定（phoneme_id_map 等）
-    └── tsukuyomi-wavlm-300epoch.onnx  # TTS ONNX モデル
-```
 
-**入手先:**
-
-- **ONNX Runtime Web**: [ONNX Runtime リリース](https://github.com/nicl-nno/onnxruntime-web-demo/releases)からダウンロード、または `npm install onnxruntime-web` でインストール後 `dist/` から `ort.min.js`, `ort-wasm.wasm`, `ort-wasm-simd.wasm` をコピー
-- **OpenJTalk WASM**: [piper-plus](https://github.com/nicl-nno/piper-plus) からビルド、またはビルド済みアセットを使用
-- **NAIST 辞書**: OpenJTalk のビルドに同梱
-- **つくよみちゃん音声モデル**: piper-plus モデルリポジトリからダウンロード
-
-`piper-global-loader.js` はリポジトリに同梱済みです。上記のファイルを配置するだけで動作します。
-
-### 3. 開発サーバーの起動
+3. 開発サーバーを起動する
 
 ```bash
 npm run dev
 ```
 
-Chrome でターミナルに表示された URL（デフォルト: `http://localhost:5173`）を開いてください。
+Chrome で Vite の URL（通常は `http://localhost:5173`）を開いてください。
+
+## 使い方
+
+- 画面下の入力欄にテキストを入れて `Enter` で送信
+- 改行は `Shift+Enter`
+- 下部バーから設定パネルを開く
+- `Ctrl+S` / `Cmd+S` で設定パネルを素早く開閉
+- 配信モードに切り替えると、中央アバターのみのグリーンバック表示
+- 設定パネルから会話リセット、TTS の ON/OFF、読み上げ速度変更が可能
+- カスタムアバターは 4 枚の画像を登録して追加可能
+  - 口閉じ・目開き
+  - 口閉じ・目閉じ
+  - 口開き・目開き
+  - 口開き・目閉じ
+
+## 配信コメント連携
+
+### YouTube Live
+
+設定パネルで次を設定します。
+
+- `YouTube API Key`
+- `ライブ配信 ID`
+- コメント取得間隔
+- 有効化チェック
+
+`ライブ配信 ID` は YouTube 配信 URL の動画 ID です。例:
+
+- `https://www.youtube.com/watch?v=dQw4w9WgXcQ` -> `dQw4w9WgXcQ`
+
+ブラウザから直接ライブチャットを取得し、重複や古いコメントを除外したうえで、1 件を選んで AI に渡します。
+
+### Twitch
+
+設定パネルで次を設定します。
+
+- `Twitch Client ID`
+- チャンネル名
+- コメント取得間隔
+
+その後 `Twitch に接続` を押して OAuth を完了すると、ブラウザ内でアクセストークンを保持し、EventSub WebSocket の `channel.chat.message` を購読します。
 
 ## ビルド
 
@@ -89,33 +130,43 @@ npm run build
 npm run preview
 ```
 
-> **注意**: 本番ビルドでも WASM の SharedArrayBuffer サポートのため COOP/COEP ヘッダー（`Cross-Origin-Opener-Policy: same-origin`、`Cross-Origin-Embedder-Policy: require-corp`）が必要です。ホスティング環境で設定してください。
+Vite の開発サーバーでは、すでに次のヘッダーを返しています。
+
+- `Cross-Origin-Opener-Policy: same-origin`
+- `Cross-Origin-Embedder-Policy: require-corp`
+
+本番ホスティングでも、WASM / `SharedArrayBuffer` のために同じヘッダー設定が必要です。
 
 ## プロジェクト構成
 
-```
+```text
 src/
 ├── components/
-│   ├── Avatar/       # アバタースプライト表示 + まばたきアニメーション
-│   ├── Chat/         # チャット UI（ChatLog, ChatMessage, ChatInput, BottomBar）
-│   └── Settings/     # 設定モーダルパネル
+│   ├── Avatar/
+│   ├── Chat/
+│   ├── License/
+│   ├── Manual/
+│   ├── Settings/
+│   └── Toast/
 ├── hooks/
-│   ├── useBlink.ts   # ランダムまばたき用フック
-│   ├── useChat.ts    # コアチャットロジック（LLM + TTS 統合）
-│   └── useSettings.ts
+│   ├── useBlink.ts
+│   ├── useChat.ts
+│   ├── useInterval.ts
+│   ├── useSettings.ts
+│   ├── useTwitchComments.ts
+│   └── useYoutubeComments.ts
 ├── services/
-│   ├── avatar/       # アバターパック管理
-│   ├── llm/          # Chrome Built-in AI ラッパー
-│   ├── storage/      # LocalStorage + IndexedDB 永続化
-│   ├── tts/          # piper-plus WASM TTS エンジン
-│   └── youtube/      # YouTube ライブチャット連携（スタブ）
-└── types/            # TypeScript 型定義
+│   ├── avatar/
+│   ├── llm/
+│   ├── storage/
+│   ├── tts/
+│   ├── twitch/
+│   └── youtube/
+└── types/
 ```
 
-## ライセンス
+## 補足
 
-TBD
-
----
+- 設定、会話履歴、API キー、Twitch アクセストークンはローカルブラウザに保存されます。
 
 [English README](./README.md)
