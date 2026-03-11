@@ -11,11 +11,13 @@ export function useSettings() {
 
   const updateSettings = useCallback(
     (patch: Partial<AppSettings>) => {
-      const next = { ...settings, ...patch };
-      setSettings(next);
-      saveSettings(next);
+      setSettings((prev) => {
+        const next = { ...prev, ...patch };
+        saveSettings(next);
+        return next;
+      });
     },
-    [settings]
+    []
   );
 
   const resetSettings = useCallback(() => {
