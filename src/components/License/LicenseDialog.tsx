@@ -5,6 +5,11 @@ interface Props {
   onClose: () => void;
 }
 
+const REPO_BLOB_BASE_URL =
+  "https://github.com/shinshin86/chrome-on-aituber/blob/main";
+const REPO_TREE_BASE_URL =
+  "https://github.com/shinshin86/chrome-on-aituber/tree/main";
+
 export function LicenseDialog({ open, onClose }: Props) {
   if (!open) return null;
 
@@ -17,11 +22,14 @@ export function LicenseDialog({ open, onClose }: Props) {
         <section className={styles.section}>
           <h3>つくよみちゃんコーパス</h3>
           <p style={{ fontSize: 15, fontWeight: 500, color: "#333" }}>
-            本ソフトウェアの音声合成には、フリー素材キャラクター「つくよみちゃん」
-            &copy; Rei Yumesaki
-            が無料公開している音声データを使用しています。
+            本ソフトウェアの音声合成には、フリー素材キャラクター
+            「つくよみちゃん」 &copy; Rei Yumesaki
+            が公開している音声データおよび、その利用条件に準拠した関連モデルを使用しています。
           </p>
           <p>つくよみちゃんコーパス（CV.夢前黎）</p>
+          <p>
+            本アプリの音声モデルには、つくよみちゃんコーパス準拠のモデルを使用しています。
+          </p>
           <p>
             <a
               href="https://tyc.rei-yumesaki.net/"
@@ -31,6 +39,32 @@ export function LicenseDialog({ open, onClose }: Props) {
               https://tyc.rei-yumesaki.net/
             </a>
           </p>
+          <p>
+            <a
+              href="https://tyc.rei-yumesaki.net/material/corpus/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              コーパス情報
+            </a>
+            {" / "}
+            <a
+              href="https://tyc.rei-yumesaki.net/about/terms/credit/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              クレジットガイド
+            </a>
+            {" / "}
+            <a
+              href="https://tyc.rei-yumesaki.net/about/terms/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              利用規約
+            </a>
+          </p>
+          <p>詳細な利用条件は公式規約を参照してください。</p>
         </section>
 
         <section className={styles.section}>
@@ -38,7 +72,9 @@ export function LicenseDialog({ open, onClose }: Props) {
           <p>
             OpenJTalk WASM ベースの音声合成エンジン。
             <br />
-            Copyright &copy; ayutaz
+            Copyright &copy; 2022 Michael Hansen
+            <br />
+            Copyright &copy; 2025 ayutaz
           </p>
           <p>
             <a
@@ -56,7 +92,7 @@ export function LicenseDialog({ open, onClose }: Props) {
           <p>
             ニューラル音声合成フレームワーク。
             <br />
-            Copyright &copy; Michael Hansen
+            Copyright &copy; 2022 Michael Hansen
           </p>
           <p>
             <a
@@ -92,7 +128,7 @@ export function LicenseDialog({ open, onClose }: Props) {
           <p>
             日本語テキスト音声合成システム。
             <br />
-            Copyright &copy; 2008-2016 Nagoya Institute of Technology,
+            Copyright &copy; 2008-2018 Nagoya Institute of Technology,
             Department of Computer Science
           </p>
           <p>
@@ -102,6 +138,32 @@ export function LicenseDialog({ open, onClose }: Props) {
               rel="noopener noreferrer"
             >
               https://open-jtalk.sourceforge.net/
+            </a>
+          </p>
+        </section>
+
+        <section className={styles.section}>
+          <h3>Third-Party Notices / License Texts</h3>
+          <p>
+            第三者コンポーネントの notices とライセンス本文は、
+            リポジトリ内の `THIRD_PARTY_NOTICES.md` および `licenses/`
+            にまとめています。
+          </p>
+          <p>
+            <a
+              href={`${REPO_BLOB_BASE_URL}/THIRD_PARTY_NOTICES.md`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              THIRD_PARTY_NOTICES.md
+            </a>
+            {" / "}
+            <a
+              href={`${REPO_TREE_BASE_URL}/licenses`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              licenses/
             </a>
           </p>
         </section>
