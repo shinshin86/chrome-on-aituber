@@ -6,15 +6,17 @@ import {
   type StoredAvatarPack,
 } from "../storage/storageService";
 
+const BASE_URL = import.meta.env.BASE_URL;
+
 const DEFAULT_AVATAR: AvatarPack = {
   id: "default",
   name: "Default",
   isBuiltIn: true,
   images: {
-    mouthCloseEyesOpen: "/assets/avatars/default/mouth_close_eyes_open.png",
-    mouthCloseEyesClose: "/assets/avatars/default/mouth_close_eyes_close.png",
-    mouthOpenEyesOpen: "/assets/avatars/default/mouth_open_eyes_open.png",
-    mouthOpenEyesClose: "/assets/avatars/default/mouth_open_eyes_close.png",
+    mouthCloseEyesOpen: `${BASE_URL}assets/avatars/default/mouth_close_eyes_open.png`,
+    mouthCloseEyesClose: `${BASE_URL}assets/avatars/default/mouth_close_eyes_close.png`,
+    mouthOpenEyesOpen: `${BASE_URL}assets/avatars/default/mouth_open_eyes_open.png`,
+    mouthOpenEyesClose: `${BASE_URL}assets/avatars/default/mouth_open_eyes_close.png`,
   },
 };
 
