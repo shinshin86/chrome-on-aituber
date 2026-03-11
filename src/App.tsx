@@ -5,6 +5,7 @@ import { BottomBar } from "./components/Chat/BottomBar";
 import { SettingsPanel } from "./components/Settings/SettingsPanel";
 import { ManualDialog } from "./components/Manual/ManualDialog";
 import { LicenseDialog } from "./components/License/LicenseDialog";
+import { Toast } from "./components/Toast/Toast";
 import { useChat } from "./hooks/useChat";
 import { useSettings } from "./hooks/useSettings";
 import { useYoutubeComments } from "./hooks/useYoutubeComments";
@@ -21,7 +22,7 @@ import "./App.css";
 
 function App() {
   const { settings, updateSettings } = useSettings();
-  const { messages, isSending, llmStatus, statusText, mouthOpen, send, reset } =
+  const { messages, isSending, llmStatus, statusText, mouthOpen, errorMessage, send, reset, clearError } =
     useChat(settings);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
@@ -204,6 +205,10 @@ function App() {
         open={licenseOpen}
         onClose={() => setLicenseOpen(false)}
       />
+
+      {errorMessage && (
+        <Toast message={errorMessage} onClose={clearError} />
+      )}
     </div>
   );
 }

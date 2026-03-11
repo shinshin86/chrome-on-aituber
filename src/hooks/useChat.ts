@@ -15,6 +15,7 @@ export function useChat(settings: AppSettings) {
   const [llmStatus, setLlmStatus] = useState<LLMStatus>("checking");
   const [statusText, setStatusText] = useState("AI を確認中...");
   const [mouthOpen, setMouthOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const mouthOpenRef = useRef(setMouthOpen);
   mouthOpenRef.current = setMouthOpen;
@@ -78,7 +79,8 @@ export function useChat(settings: AppSettings) {
             settings.llmSystemPrompt,
             messages.map((m) => ({ role: m.role, content: m.content }))
           );
-        } catch {
+        } catch (e) {
+          setErrorMessage("AI セッションの作成に失敗しました: " + (e as Error).message);
           setIsSending(false);
           return;
         }
@@ -120,15 +122,18 @@ export function useChat(settings: AppSettings) {
               });
               setStatusText("");
             } catch (e) {
+              setErrorMessage("音声エンジンの初期化に失敗しました");
               console.warn("TTS init error:", e);
               setStatusText("");
             }
           }
           tts.speak(reply, (open) => mouthOpenRef.current(open), settings.ttsLengthScale).catch((e) => {
+            setErrorMessage("音声の再生に失敗しました");
             console.warn("TTS error:", e);
           });
         }
       } catch (e) {
+        setErrorMessage("AI の応答生成に失敗しました");
         console.error("LLM error:", e);
         llm.destroySession();
       } finally {
@@ -151,13 +156,17 @@ export function useChat(settings: AppSettings) {
     }
   }, [settings.llmSystemPrompt]);
 
+  const clearError = useCallback(() => setErrorMessage(""), []);
+
   return {
     messages,
     isSending,
     llmStatus,
     statusText,
     mouthOpen,
+    errorMessage,
     send,
     reset,
+    clearError,
   };
 }
