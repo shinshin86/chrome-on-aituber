@@ -21,7 +21,6 @@ interface Options {
 let ws: WebSocket | null = null;
 let buffer: Array<TwitchChatMessage> = [];
 let pollTimer: number | null = null;
-let currentSessionId: string | null = null;
 let reconnectInProgress = false;
 const processedMessageIds = new Set<string>();
 
@@ -127,7 +126,6 @@ export async function connectTwitchChat(opts: Options): Promise<WebSocket> {
     ws.onclose = () => {
       if (pollTimer) clearInterval(pollTimer);
       buffer = [];
-      currentSessionId = null;
 
       if (!reconnectInProgress) {
         ws = null;
@@ -169,8 +167,6 @@ export async function connectTwitchChat(opts: Options): Promise<WebSocket> {
       const errorData = await response.json();
       throw new Error(`Subscription failed: ${JSON.stringify(errorData)}`);
     }
-
-    currentSessionId = sessionId;
   }
 
   function reconnect(url: string) {
@@ -237,7 +233,6 @@ export function disconnectTwitchChat() {
   }
 
   buffer = [];
-  currentSessionId = null;
   reconnectInProgress = false;
   processedMessageIds.clear();
 }

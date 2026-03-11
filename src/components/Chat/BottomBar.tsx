@@ -42,7 +42,7 @@ export function BottomBar({
         className={`${styles.iconBtn} ${styles.manualBtn}`}
         onClick={onOpenManual}
         aria-label="マニュアル"
-        title="使い方"
+        title="使い方マニュアルを開く"
       >
         &#x2753;
       </button>
@@ -51,7 +51,7 @@ export function BottomBar({
         className={`${styles.iconBtn} ${styles.licenseBtn}`}
         onClick={onOpenLicense}
         aria-label="ライセンス"
-        title="ライセンス"
+        title="ライセンス情報を表示"
       >
         &#xa9;
       </button>
@@ -64,7 +64,7 @@ export function BottomBar({
             ? "応答を生成中..."
             : statusText
               ? statusText
-              : "聞きたいことをいれてね"
+              : "メッセージを入力（Enterで送信、Shift+Enterで改行）"
         }
         disabled={disabled}
         {...getTextareaProps({
@@ -79,6 +79,7 @@ export function BottomBar({
         onClick={handleSubmit}
         disabled={disabled || !text.trim()}
         aria-label="送信"
+        title="メッセージを送信"
       >
         &#x27A4;
       </button>
@@ -87,6 +88,7 @@ export function BottomBar({
         className={`${styles.iconBtn} ${styles.settingsBtn}`}
         onClick={onOpenSettings}
         aria-label="設定"
+        title="設定を開く"
       >
         &#x2699;
       </button>
