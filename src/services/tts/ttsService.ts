@@ -83,7 +83,8 @@ export async function initialize(
 }
 
 export async function synthesize(
-  text: string
+  text: string,
+  lengthScale?: number
 ): Promise<{ audio: Float32Array; sampleRate: number }> {
   if (!ready) throw new Error("TTS not initialized");
 
@@ -110,7 +111,7 @@ export async function synthesize(
     "float32",
     new Float32Array([
       modelConfig.inference.noise_scale || 0.667,
-      modelConfig.inference.length_scale || 1.0,
+      lengthScale ?? modelConfig.inference.length_scale ?? 1.0,
       modelConfig.inference.noise_w || 0.8,
     ]),
     [3]
@@ -145,7 +146,8 @@ export async function synthesize(
 
 export async function speak(
   text: string,
-  onMouthChange: (open: boolean) => void
+  onMouthChange: (open: boolean) => void,
+  lengthScale?: number
 ): Promise<void> {
   stop();
   onMouthChange(false);
@@ -154,7 +156,7 @@ export async function speak(
     await initialize((msg) => msg && console.log("TTS:", msg));
   }
 
-  const { audio, sampleRate } = await synthesize(text);
+  const { audio, sampleRate } = await synthesize(text, lengthScale);
 
   if (!audioCtx || audioCtx.state === "closed") {
     audioCtx = new AudioContext({ sampleRate });

@@ -112,7 +112,7 @@ export function useChat(settings: AppSettings) {
         saveMessages(updatedWithReply);
 
         if (settings.ttsEnabled) {
-          tts.speak(reply, (open) => mouthOpenRef.current(open)).catch((e) => {
+          tts.speak(reply, (open) => mouthOpenRef.current(open), settings.ttsLengthScale).catch((e) => {
             console.warn("TTS error:", e);
           });
         }
