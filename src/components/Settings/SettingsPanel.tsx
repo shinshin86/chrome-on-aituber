@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { AppSettings, AppMode, StreamingPlatform } from "../../types";
 import { AvatarSettings } from "./AvatarSettings";
 import styles from "./Settings.module.css";
@@ -28,7 +29,29 @@ const INTERVAL_OPTIONS = [
   { value: 60000, label: "60秒" },
 ];
 
+function createOauthState(): string {
+  if (typeof crypto !== "undefined") {
+    if (typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+
+    if (typeof crypto.getRandomValues === "function") {
+      const bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+    }
+  }
+
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 export function SettingsPanel({ settings, onUpdate, open, onClose, onReset }: Props) {
+  const [twitchConnectError, setTwitchConnectError] = useState("");
+  const twitchRedirectUri =
+    typeof window === "undefined"
+      ? ""
+      : new URL(window.location.pathname, window.location.origin).toString();
+
   if (!open) return null;
 
   return (
@@ -120,6 +143,7 @@ export function SettingsPanel({ settings, onUpdate, open, onClose, onReset }: Pr
 
             <button
               className={styles.resetBtn}
+              type="button"
               onClick={onReset}
             >
               会話をリセット
@@ -232,6 +256,7 @@ export function SettingsPanel({ settings, onUpdate, open, onClose, onReset }: Pr
                     </span>
                     <button
                       className={styles.closeBtn}
+                      type="button"
                       style={{
                         background: "#e53935",
                         marginTop: 4,
@@ -246,23 +271,49 @@ export function SettingsPanel({ settings, onUpdate, open, onClose, onReset }: Pr
                 ) : (
                   <button
                     className={styles.closeBtn}
+                    type="button"
                     style={{ marginTop: 0, marginBottom: 16 }}
                     disabled={!settings.twitchClientId}
                     onClick={() => {
-                      const state = crypto.randomUUID();
-                      sessionStorage.setItem("twitchOauthState", state);
-                      const params = new URLSearchParams({
-                        client_id: settings.twitchClientId,
-                        redirect_uri: window.location.origin + window.location.pathname,
-                        response_type: "token",
-                        scope: "user:read:chat user:bot channel:bot",
-                        state,
-                      });
-                      window.location.href = `https://id.twitch.tv/oauth2/authorize?${params}`;
+                      setTwitchConnectError("");
+
+                      try {
+                        const state = createOauthState();
+                        sessionStorage.setItem("twitchOauthState", state);
+
+                        const params = new URLSearchParams({
+                          client_id: settings.twitchClientId,
+                          redirect_uri: twitchRedirectUri,
+                          response_type: "token",
+                          scope: "user:read:chat user:bot channel:bot",
+                          state,
+                        });
+
+                        window.location.assign(
+                          `https://id.twitch.tv/oauth2/authorize?${params.toString()}`
+                        );
+                      } catch (error) {
+                        console.error("Failed to start Twitch OAuth:", error);
+                        setTwitchConnectError(
+                          "Twitch 接続を開始できませんでした。Client ID とブラウザ設定を確認してください。"
+                        );
+                      }
                     }}
                   >
                     Twitch に接続
                   </button>
+                )}
+
+                {!settings.twitchAccessToken && (
+                  <>
+                    <p className={styles.hint}>
+                      Twitch Developers の OAuth Redirect URL には次を登録してください:
+                    </p>
+                    <p className={styles.hint}>{twitchRedirectUri}</p>
+                    {twitchConnectError && (
+                      <p className={styles.errorText}>{twitchConnectError}</p>
+                    )}
+                  </>
                 )}
 
                 <label className={styles.label}>
@@ -312,7 +363,7 @@ export function SettingsPanel({ settings, onUpdate, open, onClose, onReset }: Pr
           </div>
         </details>
 
-        <button className={styles.closeBtn} onClick={onClose}>
+        <button className={styles.closeBtn} type="button" onClick={onClose}>
           閉じる
         </button>
       </div>
