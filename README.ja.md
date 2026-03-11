@@ -66,12 +66,15 @@ Git 管理されているのは次のみです。
    - `tsukuyomi-wavlm-300epoch.onnx`
    - `config.json` を `tsukuyomi-config.json` にリネームしたもの
 
-`scripts/package-piper-assets.sh` はセットアップ用スクリプトではなく、すでに用意済みの `public/piper/` を `piper-assets.tar.gz` に固めて GitHub Releases / CI 配布に使うためのものです。
+`scripts/package-piper-assets.sh` はセットアップ用スクリプトではなく、すでに用意済みの `public/piper/` を `piper-assets.tar.gz` に固めて GitHub Releases / CI 配布に使うためのものです。`scripts/release-piper-assets.sh` はさらに GitHub Release へのアップロードまで自動化します。
+
+どちらも `gh` で GitHub にログイン済みのローカル作業環境で使う想定です。
 
 このパッケージ化フローを使う場合は、次を実行してください。
 
 ```bash
 ./scripts/package-piper-assets.sh
+./scripts/release-piper-assets.sh
 ```
 
 3. 開発サーバーを起動する

@@ -64,12 +64,15 @@ Prepare the assets as follows.
    - `tsukuyomi-wavlm-300epoch.onnx`
    - `config.json` renamed to `tsukuyomi-config.json`
 
-`scripts/package-piper-assets.sh` is not a setup script. It only packages an already-prepared `public/piper/` directory into `piper-assets.tar.gz` for GitHub Releases / CI deployment.
+`scripts/package-piper-assets.sh` is not a setup script. It only packages an already-prepared `public/piper/` directory into `piper-assets.tar.gz` for GitHub Releases / CI deployment. `scripts/release-piper-assets.sh` also uploads that asset to a GitHub Release.
+
+Both scripts are intended for a local release/build environment where `gh` is already authenticated.
 
 If you need that packaging flow, use:
 
 ```bash
 ./scripts/package-piper-assets.sh
+./scripts/release-piper-assets.sh
 ```
 
 3. Start the development server

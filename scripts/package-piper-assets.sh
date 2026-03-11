@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # public/piper/ 配下のアセットを tar.gz にパッケージ化する。
 # GitHub Releases にアップロードして CI でダウンロードする用途。
+# ローカルのビルド/リリース作業環境で実行する想定。
 #
 # Usage: ./scripts/package-piper-assets.sh
 
