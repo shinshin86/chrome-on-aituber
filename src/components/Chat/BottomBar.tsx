@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState } from "react";
 import { useChatSubmit } from "use-chat-submit";
 import styles from "./BottomBar.module.css";
 
@@ -22,19 +22,17 @@ export function BottomBar({
   onOpenLicense,
 }: Props) {
   const [text, setText] = useState("");
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { getTextareaProps, textareaRef } = useChatSubmit({
+    onSubmit: submitCurrentText,
+    mode: "enter",
+  });
 
-  const handleSubmit = useCallback(() => {
+  function submitCurrentText() {
     if (!text.trim() || disabled) return;
     onSend(text);
     setText("");
-    inputRef.current?.focus();
-  }, [text, disabled, onSend]);
-
-  const { getTextareaProps } = useChatSubmit({
-    onSubmit: handleSubmit,
-    mode: "enter",
-  });
+    queueMicrotask(() => textareaRef.current?.focus());
+  }
 
   return (
     <div className={styles.bar}>
@@ -68,7 +66,6 @@ export function BottomBar({
         }
         disabled={disabled}
         {...getTextareaProps({
-          ref: inputRef,
           value: text,
           onChange: (e) => setText(e.target.value),
         })}
@@ -76,7 +73,7 @@ export function BottomBar({
 
       <button
         className={styles.sendBtn}
-        onClick={handleSubmit}
+        onClick={submitCurrentText}
         disabled={disabled || !text.trim()}
         aria-label="送信"
         title="メッセージを送信"

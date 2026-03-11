@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Avatar } from "./components/Avatar/Avatar";
 import { ChatLog } from "./components/Chat/ChatLog";
 import { BottomBar } from "./components/Chat/BottomBar";
@@ -28,6 +28,7 @@ function App() {
   const [manualOpen, setManualOpen] = useState(false);
   const [licenseOpen, setLicenseOpen] = useState(false);
   const [broadcastHint, setBroadcastHint] = useState(false);
+  const broadcastHintTimerRef = useRef<number | null>(null);
 
   const isBroadcast = settings.appMode === "broadcast";
   const [avatar, setAvatar] = useState<AvatarPack>(getDefaultAvatar());
@@ -64,15 +65,37 @@ function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // 配信モードに切り替わったらヒントを一定時間表示
   useEffect(() => {
-    if (isBroadcast) {
-      setBroadcastHint(true);
-      const timer = setTimeout(() => setBroadcastHint(false), 4000);
-      return () => clearTimeout(timer);
-    }
-    setBroadcastHint(false);
-  }, [isBroadcast]);
+    return () => {
+      if (broadcastHintTimerRef.current !== null) {
+        clearTimeout(broadcastHintTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleUpdateSettings = useCallback(
+    (patch: Parameters<typeof updateSettings>[0]) => {
+      if (patch.appMode) {
+        if (broadcastHintTimerRef.current !== null) {
+          clearTimeout(broadcastHintTimerRef.current);
+          broadcastHintTimerRef.current = null;
+        }
+
+        if (patch.appMode === "broadcast" && settings.appMode !== "broadcast") {
+          setBroadcastHint(true);
+          broadcastHintTimerRef.current = window.setTimeout(() => {
+            setBroadcastHint(false);
+            broadcastHintTimerRef.current = null;
+          }, 4000);
+        } else if (patch.appMode !== "broadcast") {
+          setBroadcastHint(false);
+        }
+      }
+
+      updateSettings(patch);
+    },
+    [settings.appMode, updateSettings]
+  );
 
   // Twitch OAuth トークン取得（マウント時1回）
   useEffect(() => {
@@ -84,14 +107,24 @@ function App() {
     const state = params.get("state");
     const savedState = sessionStorage.getItem("twitchOauthState");
 
+    let timer: number | null = null;
+
     if (token && state && state === savedState) {
-      updateSettings({ twitchAccessToken: token });
+      timer = window.setTimeout(() => {
+        handleUpdateSettings({ twitchAccessToken: token });
+      }, 0);
       sessionStorage.removeItem("twitchOauthState");
     }
 
     // URL ハッシュをクリア
     history.replaceState(null, "", window.location.pathname + window.location.search);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    return () => {
+      if (timer !== null) {
+        clearTimeout(timer);
+      }
+    };
+  }, [handleUpdateSettings]);
 
   // YouTube Live コメントを受け取って LLM に送信
   const handleYoutubeComment = useCallback(
@@ -129,7 +162,7 @@ function App() {
     isEnabled: settings.twitchEnabled,
     intervalMs: settings.twitchCommentInterval,
     onComment: handleTwitchComment,
-    onTokenExpired: () => updateSettings({ twitchAccessToken: "" }),
+    onTokenExpired: () => handleUpdateSettings({ twitchAccessToken: "" }),
   });
 
   const aiMessages = useMemo(
@@ -190,7 +223,7 @@ function App() {
 
       <SettingsPanel
         settings={settings}
-        onUpdate={updateSettings}
+        onUpdate={handleUpdateSettings}
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         onReset={reset}

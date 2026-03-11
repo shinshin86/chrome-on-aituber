@@ -285,16 +285,12 @@ function phonemesToIds(phonemes: string[]): number[] {
  * SimpleUnifiedPhonemizer を取得する。
  * ローダーがまだ完了していない場合は 'piper-plus-ready' イベントを待つ。
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getPiperPlus(): Promise<any> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if ((window as any).__PiperPlus) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return Promise.resolve((window as any).__PiperPlus);
   }
   return new Promise((resolve) => {
     window.addEventListener("piper-plus-ready", () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       resolve((window as any).__PiperPlus);
     }, { once: true });
   });

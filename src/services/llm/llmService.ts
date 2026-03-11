@@ -7,7 +7,6 @@ declare global {
   interface Window {
     LanguageModel?: LanguageModelAPI;
   }
-  // eslint-disable-next-line no-var
   var LanguageModel: LanguageModelAPI | undefined;
 }
 

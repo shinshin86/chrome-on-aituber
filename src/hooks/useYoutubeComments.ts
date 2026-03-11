@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   fetchAndProcessComments,
   type YouTubeChatMessage,
@@ -28,11 +28,7 @@ export function useYoutubeComments({
   timeLimitMinutes = 10,
   onComment,
 }: Params): void {
-  const [effectiveIntervalMs, setEffectiveIntervalMs] = useState(intervalMs);
-
-  useEffect(() => {
-    setEffectiveIntervalMs(intervalMs);
-  }, [intervalMs, youtubeLiveId, youtubeApiKey, isEnabled]);
+  const [apiRecommendedIntervalMs, setApiRecommendedIntervalMs] = useState(0);
 
   const fetchComments = useCallback(async () => {
     if (!isEnabled || !youtubeLiveId || !youtubeApiKey) return;
@@ -44,10 +40,12 @@ export function useYoutubeComments({
     );
 
     const nextInterval = Math.max(intervalMs, apiRecommended || 0);
-    setEffectiveIntervalMs((current) =>
+    setApiRecommendedIntervalMs((current) =>
       current === nextInterval ? current : nextInterval
     );
   }, [intervalMs, isEnabled, youtubeLiveId, youtubeApiKey, onComment, timeLimitMinutes]);
+
+  const effectiveIntervalMs = Math.max(intervalMs, apiRecommendedIntervalMs);
 
   useInterval(
     fetchComments,

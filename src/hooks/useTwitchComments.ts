@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useEffectEvent } from "react";
 import {
   connectTwitchChat,
   disconnectTwitchChat,
@@ -30,11 +30,12 @@ export function useTwitchComments({
   onComment,
   onTokenExpired,
 }: Params): void {
-  const onCommentRef = useRef(onComment);
-  onCommentRef.current = onComment;
-
-  const onTokenExpiredRef = useRef(onTokenExpired);
-  onTokenExpiredRef.current = onTokenExpired;
+  const onCommentEvent = useEffectEvent((msg: TwitchChatMessage) => {
+    onComment(msg);
+  });
+  const onTokenExpiredEvent = useEffectEvent(() => {
+    onTokenExpired?.();
+  });
 
   useEffect(() => {
     if (
@@ -52,10 +53,10 @@ export function useTwitchComments({
       channelLogin: twitchChannel,
       pollInterval: intervalMs,
       onComment: (msg) => {
-        if (!cancelled) onCommentRef.current(msg);
+        if (!cancelled) onCommentEvent(msg);
       },
       onTokenExpired: () => {
-        if (!cancelled) onTokenExpiredRef.current?.();
+        if (!cancelled) onTokenExpiredEvent();
       },
       token: twitchAccessToken,
       clientId: twitchClientId,
