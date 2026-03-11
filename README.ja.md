@@ -2,6 +2,8 @@
 
 React + Vite で構成された、ブラウザ完結型の AITuber チャットアプリです。Chrome Built-in AI（Gemini Nano / Prompt API）で日本語応答を生成し、piper-plus WASM で音声合成し、4 枚スプライトのアバターを口パクとまばたき付きで表示します。
 
+[English README](./README.md)
+
 ## 機能
 
 - アプリケーションサーバー不要のブラウザ完結動作
@@ -171,5 +173,3 @@ src/
 ## 補足
 
 - 設定、会話履歴、API キー、Twitch アクセストークンはローカルブラウザに保存されます。
-
-[English README](./README.md)

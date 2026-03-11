@@ -2,6 +2,8 @@
 
 Browser-only AITuber chat app built with React and Vite. It uses Chrome Built-in AI (Gemini Nano / Prompt API) for Japanese responses, piper-plus WASM for speech synthesis, and a 4-sprite avatar for lip-sync and blinking animation.
 
+[日本語版 README](./README.ja.md)
+
 ## Features
 
 - Browser-only operation with no application server
@@ -170,5 +172,3 @@ src/
 ## Notes
 
 - Settings, chat history, API keys, and Twitch access tokens are stored in the local browser.
-
-[日本語版 README](./README.ja.md)
