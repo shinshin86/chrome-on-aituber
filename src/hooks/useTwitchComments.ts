@@ -13,6 +13,7 @@ interface Params {
   intervalMs: number;
   onComment: (comment: TwitchChatMessage) => void;
   onTokenExpired?: () => void;
+  onError?: (message: string) => void;
 }
 
 /**
@@ -29,12 +30,16 @@ export function useTwitchComments({
   intervalMs,
   onComment,
   onTokenExpired,
+  onError,
 }: Params): void {
   const onCommentEvent = useEffectEvent((msg: TwitchChatMessage) => {
     onComment(msg);
   });
   const onTokenExpiredEvent = useEffectEvent(() => {
     onTokenExpired?.();
+  });
+  const onErrorEvent = useEffectEvent((message: string) => {
+    onError?.(message);
   });
 
   useEffect(() => {
@@ -48,6 +53,8 @@ export function useTwitchComments({
     }
 
     let cancelled = false;
+
+    onErrorEvent("");
 
     connectTwitchChat({
       channelLogin: twitchChannel,
@@ -63,6 +70,11 @@ export function useTwitchComments({
     }).catch((err) => {
       if (!cancelled) {
         console.error("Twitch connection failed:", err);
+        onErrorEvent(
+          err instanceof Error
+            ? `Twitch コメント取得に失敗しました: ${err.message}`
+            : "Twitch コメント取得に失敗しました。"
+        );
       }
     });
 

@@ -24,6 +24,7 @@ function App() {
   const { settings, updateSettings } = useSettings();
   const { messages, isSending, llmStatus, statusText, mouthOpen, errorMessage, send, reset, clearError } =
     useChat(settings);
+  const [streamErrorMessage, setStreamErrorMessage] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const [licenseOpen, setLicenseOpen] = useState(false);
@@ -111,7 +112,10 @@ function App() {
 
     if (token && state && state === savedState) {
       timer = window.setTimeout(() => {
-        handleUpdateSettings({ twitchAccessToken: token });
+        handleUpdateSettings({
+          twitchAccessToken: token,
+          twitchEnabled: true,
+        });
       }, 0);
       sessionStorage.removeItem("twitchOauthState");
     }
@@ -163,6 +167,7 @@ function App() {
     intervalMs: settings.twitchCommentInterval,
     onComment: handleTwitchComment,
     onTokenExpired: () => handleUpdateSettings({ twitchAccessToken: "" }),
+    onError: setStreamErrorMessage,
   });
 
   const aiMessages = useMemo(
@@ -241,6 +246,13 @@ function App() {
 
       {errorMessage && (
         <Toast message={errorMessage} onClose={clearError} />
+      )}
+
+      {streamErrorMessage && (
+        <Toast
+          message={streamErrorMessage}
+          onClose={() => setStreamErrorMessage("")}
+        />
       )}
     </div>
   );

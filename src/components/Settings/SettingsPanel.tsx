@@ -285,7 +285,7 @@ export function SettingsPanel({ settings, onUpdate, open, onClose, onReset }: Pr
                           client_id: settings.twitchClientId,
                           redirect_uri: twitchRedirectUri,
                           response_type: "token",
-                          scope: "user:read:chat user:bot channel:bot",
+                          scope: "user:read:chat",
                           state,
                         });
 
