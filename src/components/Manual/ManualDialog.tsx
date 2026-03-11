@@ -53,9 +53,14 @@ export function ManualDialog({ open, onClose }: Props) {
             </li>
             <li>Chrome を再起動</li>
             <li>
-              モデルのダウンロードが自動で始まります（画面上部のステータスバーで進捗を確認できます）
+              モデルが未取得の場合は、アプリで <strong>AI を準備</strong>{" "}
+              ボタンを押してダウンロードを開始
             </li>
           </ol>
+          <p>
+            Chrome の制約により、初回モデル準備の開始にはユーザー操作が必要です。
+            ページを開いただけではダウンロードが始まらないことがあります。
+          </p>
         </section>
 
         <section className={styles.section}>
@@ -148,6 +153,10 @@ export function ManualDialog({ open, onClose }: Props) {
           <h3>3. 基本的な使い方</h3>
           <ul>
             <li>
+              初回起動時に <strong>AI を準備</strong>{" "}
+              ボタンが出た場合は、最初に押して Gemini Nano のモデル準備を開始
+            </li>
+            <li>
               画面下部の入力欄にメッセージを入力し、<strong>Enter キー</strong>
               または送信ボタンで送信
             </li>
@@ -168,6 +177,9 @@ export function ManualDialog({ open, onClose }: Props) {
             </li>
             <li>
               <strong>&copy;</strong> — ライセンス情報を表示
+            </li>
+            <li>
+              <strong>AI を準備</strong> — Gemini Nano の初回モデル準備を開始
             </li>
             <li>
               <strong>⚙</strong> —

@@ -90,6 +90,70 @@
   min-width: 0;
 }
 
+.ai-prepare-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 150;
+  pointer-events: none;
+}
+
+.ai-prepare-card {
+  width: min(440px, calc(100vw - 32px));
+  padding: 24px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
+  text-align: center;
+  pointer-events: auto;
+}
+
+.ai-prepare-title {
+  margin: 0 0 10px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #27312f;
+}
+
+.ai-prepare-text {
+  margin: 0 0 18px;
+  line-height: 1.6;
+  color: #4a5a57;
+}
+
+.ai-prepare-button {
+  min-width: 180px;
+  height: 48px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 999px;
+  background: #446454;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s, background 0.15s;
+}
+
+.ai-prepare-button:hover:not(:disabled) {
+  background: #385244;
+  transform: translateY(-1px);
+}
+
+.ai-prepare-button:disabled {
+  opacity: 0.8;
+  cursor: progress;
+}
+
+.ai-prepare-status {
+  margin: 14px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #5d6d69;
+}
+
 /* Responsive: hide side logs on narrow screens */
 @media (max-width: 800px) {
   .log-column {

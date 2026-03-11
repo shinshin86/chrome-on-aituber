@@ -7,6 +7,9 @@ interface Props {
   disabled: boolean;
   isSending: boolean;
   statusText: string;
+  showInitializeAI: boolean;
+  isInitializingAI: boolean;
+  onInitializeAI: () => void;
   onOpenSettings: () => void;
   onOpenManual: () => void;
   onOpenLicense: () => void;
@@ -17,6 +20,9 @@ export function BottomBar({
   disabled,
   isSending,
   statusText,
+  showInitializeAI,
+  isInitializingAI,
+  onInitializeAI,
   onOpenSettings,
   onOpenManual,
   onOpenLicense,
@@ -53,6 +59,17 @@ export function BottomBar({
       >
         &#xa9;
       </button>
+
+      {showInitializeAI && (
+        <button
+          className={styles.prepareBtn}
+          onClick={onInitializeAI}
+          disabled={isInitializingAI}
+          type="button"
+        >
+          {isInitializingAI ? "準備中..." : "AI を準備"}
+        </button>
+      )}
 
       <textarea
         className={styles.input}

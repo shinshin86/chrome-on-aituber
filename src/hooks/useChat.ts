@@ -9,6 +9,20 @@ import {
 
 export type LLMStatus = "checking" | "available" | "downloading" | "unavailable" | "error";
 
+function getContextHistory(messages: ChatMessage[]) {
+  return messages.map((m) => ({ role: m.role, content: m.content }));
+}
+
+function getLLMErrorMessage(error: unknown, fallback: string): string {
+  const detail = error instanceof Error ? error.message : "";
+
+  if (/requires a user gesture/i.test(detail)) {
+    return "AI モデルの準備は「AI を準備」ボタンから開始してください";
+  }
+
+  return detail ? `${fallback}: ${detail}` : fallback;
+}
+
 export function useChat(settings: AppSettings) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
@@ -16,6 +30,8 @@ export function useChat(settings: AppSettings) {
   const [statusText, setStatusText] = useState("AI を確認中...");
   const [mouthOpen, setMouthOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [needsInitialization, setNeedsInitialization] = useState(false);
+  const [isInitializingAI, setIsInitializingAI] = useState(false);
 
   const mouthOpenRef = useRef(setMouthOpen);
   mouthOpenRef.current = setMouthOpen;
@@ -34,43 +50,34 @@ export function useChat(settings: AppSettings) {
 
     switch (status) {
       case "available":
+        setNeedsInitialization(false);
         setStatusText("");
         if (!llm.hasSession()) {
           try {
             await llm.createSession(
               settings.llmSystemPrompt,
-              initialMessages.map((m) => ({ role: m.role, content: m.content }))
+              getContextHistory(initialMessages)
             );
             appliedSystemPromptRef.current = settings.llmSystemPrompt;
           } catch (e) {
-            setStatusText("セッション作成失敗: " + (e as Error).message);
+            setNeedsInitialization(true);
+            setStatusText(getLLMErrorMessage(e, "AI セッションの作成に失敗しました"));
+            setLlmStatus("error");
           }
         }
         break;
       case "downloading":
-        setStatusText("モデルをダウンロード中...");
-        try {
-          await llm.createSession(
-            settings.llmSystemPrompt,
-            initialMessages.map((m) => ({ role: m.role, content: m.content })),
-            (pct) => {
-              setStatusText(`モデルをダウンロード中... ${pct}%`);
-            }
-          );
-          appliedSystemPromptRef.current = settings.llmSystemPrompt;
-          setLlmStatus("available");
-          setStatusText("");
-        } catch (e) {
-          setStatusText("モデルダウンロード失敗: " + (e as Error).message);
-          setLlmStatus("error");
-        }
+        setNeedsInitialization(true);
+        setStatusText("AI を使うには「AI を準備」を押してください");
         break;
       case "unavailable":
+        setNeedsInitialization(false);
         setStatusText(
           "Built-in AI が利用できません。Chrome 138+ でフラグを有効化してください"
         );
         break;
       case "error":
+        setNeedsInitialization(false);
         setStatusText("AI の確認に失敗しました");
         break;
     }
@@ -89,7 +96,7 @@ export function useChat(settings: AppSettings) {
       try {
         await llm.createSession(
           settings.llmSystemPrompt,
-          messages.map((m) => ({ role: m.role, content: m.content }))
+          getContextHistory(messages)
         );
 
         if (!cancelled) {
@@ -98,7 +105,9 @@ export function useChat(settings: AppSettings) {
         }
       } catch (e) {
         if (!cancelled) {
-          setErrorMessage("AI セッションの更新に失敗しました: " + (e as Error).message);
+          setNeedsInitialization(true);
+          setLlmStatus("error");
+          setErrorMessage(getLLMErrorMessage(e, "AI セッションの更新に失敗しました"));
           setStatusText("AI セッションの更新に失敗しました");
         }
       }
@@ -111,6 +120,38 @@ export function useChat(settings: AppSettings) {
     };
   }, [isSending, llmStatus, messages, settings.llmSystemPrompt]);
 
+  const initializeAI = useCallback(async () => {
+    if (isInitializingAI) return;
+
+    setIsInitializingAI(true);
+    setNeedsInitialization(true);
+    setLlmStatus("downloading");
+    setStatusText("AI モデルを準備中...");
+    setErrorMessage("");
+
+    try {
+      await llm.createSession(
+        settings.llmSystemPrompt,
+        getContextHistory(messages),
+        (pct) => {
+          setStatusText(`AI モデルをダウンロード中... ${pct}%`);
+        }
+      );
+      appliedSystemPromptRef.current = settings.llmSystemPrompt;
+      setNeedsInitialization(false);
+      setLlmStatus("available");
+      setStatusText("");
+    } catch (e) {
+      setNeedsInitialization(true);
+      setLlmStatus("downloading");
+      const message = getLLMErrorMessage(e, "AI モデルの準備に失敗しました");
+      setErrorMessage(message);
+      setStatusText(message);
+    } finally {
+      setIsInitializingAI(false);
+    }
+  }, [isInitializingAI, messages, settings.llmSystemPrompt]);
+
   const send = useCallback(
     async (text: string, sender?: { name: string; iconUrl?: string }) => {
       if (isSending || !text.trim()) return;
@@ -120,14 +161,24 @@ export function useChat(settings: AppSettings) {
       mouthOpenRef.current(false);
 
       if (!llm.hasSession()) {
+        if (llmStatus !== "available") {
+          const message = needsInitialization
+            ? "AI を使うには先に「AI を準備」を押してください"
+            : "AI が利用できる状態ではありません";
+          setErrorMessage(message);
+          setStatusText(message);
+          setIsSending(false);
+          return;
+        }
+
         try {
           await llm.createSession(
             settings.llmSystemPrompt,
-            messages.map((m) => ({ role: m.role, content: m.content }))
+            getContextHistory(messages)
           );
           appliedSystemPromptRef.current = settings.llmSystemPrompt;
         } catch (e) {
-          setErrorMessage("AI セッションの作成に失敗しました: " + (e as Error).message);
+          setErrorMessage(getLLMErrorMessage(e, "AI セッションの作成に失敗しました"));
           setIsSending(false);
           return;
         }
@@ -187,7 +238,7 @@ export function useChat(settings: AppSettings) {
         setIsSending(false);
       }
     },
-    [isSending, messages, settings]
+    [isSending, llmStatus, messages, needsInitialization, settings]
   );
 
   const reset = useCallback(async () => {
@@ -196,11 +247,36 @@ export function useChat(settings: AppSettings) {
     llm.destroySession();
     setMessages([]);
     saveMessages([]);
+    setNeedsInitialization(false);
     try {
-      await llm.createSession(settings.llmSystemPrompt);
-      appliedSystemPromptRef.current = settings.llmSystemPrompt;
-    } catch {
-      // ignore
+      const status = await llm.checkAvailability();
+      setLlmStatus(status);
+
+      if (status === "available") {
+        await llm.createSession(settings.llmSystemPrompt);
+        appliedSystemPromptRef.current = settings.llmSystemPrompt;
+        setStatusText("");
+        return;
+      }
+
+      if (status === "downloading") {
+        setNeedsInitialization(true);
+        setStatusText("AI を使うには「AI を準備」を押してください");
+        return;
+      }
+
+      if (status === "unavailable") {
+        setStatusText(
+          "Built-in AI が利用できません。Chrome 138+ でフラグを有効化してください"
+        );
+        return;
+      }
+
+      setStatusText("AI の確認に失敗しました");
+    } catch (e) {
+      setNeedsInitialization(true);
+      setLlmStatus("error");
+      setStatusText(getLLMErrorMessage(e, "AI の再初期化に失敗しました"));
     }
   }, [settings.llmSystemPrompt]);
 
@@ -213,6 +289,9 @@ export function useChat(settings: AppSettings) {
     statusText,
     mouthOpen,
     errorMessage,
+    canInitializeAI: needsInitialization || isInitializingAI,
+    isInitializingAI,
+    initializeAI,
     send,
     reset,
     clearError,

@@ -22,7 +22,20 @@ import "./App.css";
 
 function App() {
   const { settings, updateSettings } = useSettings();
-  const { messages, isSending, llmStatus, statusText, mouthOpen, errorMessage, send, reset, clearError } =
+  const {
+    messages,
+    isSending,
+    llmStatus,
+    statusText,
+    mouthOpen,
+    errorMessage,
+    canInitializeAI,
+    isInitializingAI,
+    initializeAI,
+    send,
+    reset,
+    clearError,
+  } =
     useChat(settings);
   const [streamErrorMessage, setStreamErrorMessage] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -220,10 +233,35 @@ function App() {
           disabled={!llmReady || isSending}
           isSending={isSending}
           statusText={statusText}
+          showInitializeAI={canInitializeAI}
+          isInitializingAI={isInitializingAI}
+          onInitializeAI={initializeAI}
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenManual={() => setManualOpen(true)}
           onOpenLicense={() => setLicenseOpen(true)}
         />
+      )}
+
+      {isBroadcast && canInitializeAI && (
+        <div className="ai-prepare-overlay">
+          <div className="ai-prepare-card">
+            <p className="ai-prepare-title">AI の準備が必要です</p>
+            <p className="ai-prepare-text">
+              Gemini Nano の初回モデル準備は、ユーザー操作から開始してください。
+            </p>
+            <button
+              className="ai-prepare-button"
+              type="button"
+              onClick={initializeAI}
+              disabled={isInitializingAI}
+            >
+              {isInitializingAI ? "AI を準備中..." : "AI を準備"}
+            </button>
+            {statusText && (
+              <p className="ai-prepare-status">{statusText}</p>
+            )}
+          </div>
+        </div>
       )}
 
       <SettingsPanel

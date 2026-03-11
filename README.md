@@ -31,6 +31,8 @@ Chrome Built-in AI must be enabled before the app can answer messages:
 4. Restart Chrome
 5. Wait for the on-device model download to finish
 
+On first launch, if the model is not yet present on the device, Chrome requires a direct user action to begin model preparation. Use the `Prepare AI` button shown in the app before sending messages.
+
 ## Setup
 
 1. Clone the repository and install dependencies
@@ -88,6 +90,7 @@ Open the Vite URL in Chrome, usually `http://localhost:5173`.
 ## Usage
 
 - Type in the bottom input and press `Enter` to send
+- On first use, click `Prepare AI` if shown to start Gemini Nano model preparation
 - Use `Shift+Enter` for a newline
 - Open settings from the bottom bar
 - Press `Ctrl+S` / `Cmd+S` to toggle settings quickly
