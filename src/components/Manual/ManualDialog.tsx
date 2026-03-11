@@ -164,17 +164,14 @@ export function ManualDialog({ open, onClose }: Props) {
           <h3>4. ボタンの説明</h3>
           <ul>
             <li>
-              <strong>🔊 / 🔇</strong> — 音声読み上げ（TTS）の ON / OFF
-            </li>
-            <li>
-              <strong>↻</strong> — 会話をリセット
-            </li>
-            <li>
               <strong>❓</strong> — このマニュアルを表示
             </li>
             <li>
+              <strong>&copy;</strong> — ライセンス情報を表示
+            </li>
+            <li>
               <strong>⚙</strong> —
-              設定パネル（システムプロンプト、読み上げ速度、YouTube Live 連携）
+              設定パネル（音声 ON/OFF、会話リセット、システムプロンプト、読み上げ速度、YouTube Live 連携など）
             </li>
           </ul>
         </section>

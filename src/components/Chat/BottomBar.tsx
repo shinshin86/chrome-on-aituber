@@ -4,12 +4,9 @@ import styles from "./BottomBar.module.css";
 
 interface Props {
   onSend: (text: string) => void;
-  onReset: () => void;
   disabled: boolean;
   isSending: boolean;
-  ttsEnabled: boolean;
   statusText: string;
-  onToggleTts: () => void;
   onOpenSettings: () => void;
   onOpenManual: () => void;
   onOpenLicense: () => void;
@@ -17,12 +14,9 @@ interface Props {
 
 export function BottomBar({
   onSend,
-  onReset,
   disabled,
   isSending,
-  ttsEnabled,
   statusText,
-  onToggleTts,
   onOpenSettings,
   onOpenManual,
   onOpenLicense,
@@ -45,21 +39,21 @@ export function BottomBar({
   return (
     <div className={styles.bar}>
       <button
-        className={`${styles.iconBtn} ${styles.ttsBtn}`}
-        onClick={onToggleTts}
-        aria-label="音声切替"
-        title={ttsEnabled ? "TTS ON" : "TTS OFF"}
+        className={`${styles.iconBtn} ${styles.manualBtn}`}
+        onClick={onOpenManual}
+        aria-label="マニュアル"
+        title="使い方"
       >
-        {ttsEnabled ? "\u{1F50A}" : "\u{1F507}"}
+        &#x2753;
       </button>
 
       <button
-        className={`${styles.iconBtn} ${styles.resetBtnIcon}`}
-        onClick={onReset}
-        aria-label="リセット"
-        title="会話リセット"
+        className={`${styles.iconBtn} ${styles.licenseBtn}`}
+        onClick={onOpenLicense}
+        aria-label="ライセンス"
+        title="ライセンス"
       >
-        &#x21BB;
+        &#xa9;
       </button>
 
       <textarea
@@ -87,24 +81,6 @@ export function BottomBar({
         aria-label="送信"
       >
         &#x27A4;
-      </button>
-
-      <button
-        className={`${styles.iconBtn} ${styles.manualBtn}`}
-        onClick={onOpenManual}
-        aria-label="マニュアル"
-        title="使い方"
-      >
-        &#x2753;
-      </button>
-
-      <button
-        className={`${styles.iconBtn} ${styles.licenseBtn}`}
-        onClick={onOpenLicense}
-        aria-label="ライセンス"
-        title="ライセンス"
-      >
-        &#xa9;
       </button>
 
       <button

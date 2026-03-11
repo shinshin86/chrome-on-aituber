@@ -7,6 +7,7 @@ interface Props {
   onUpdate: (patch: Partial<AppSettings>) => void;
   open: boolean;
   onClose: () => void;
+  onReset: () => void;
 }
 
 const PLATFORM_OPTIONS: { value: StreamingPlatform; label: string }[] = [
@@ -27,7 +28,7 @@ const INTERVAL_OPTIONS = [
   { value: 60000, label: "60秒" },
 ];
 
-export function SettingsPanel({ settings, onUpdate, open, onClose }: Props) {
+export function SettingsPanel({ settings, onUpdate, open, onClose, onReset }: Props) {
   if (!open) return null;
 
   return (
@@ -90,6 +91,17 @@ export function SettingsPanel({ settings, onUpdate, open, onClose }: Props) {
               />
             </label>
 
+            <label className={styles.toggleLabel}>
+              <input
+                type="checkbox"
+                checked={settings.ttsEnabled}
+                onChange={(e) =>
+                  onUpdate({ ttsEnabled: e.target.checked })
+                }
+              />
+              音声読み上げ（TTS）を有効にする
+            </label>
+
             <label className={styles.label}>
               読み上げ速度 ({settings.ttsLengthScale.toFixed(1)}x)
               <input
@@ -105,6 +117,13 @@ export function SettingsPanel({ settings, onUpdate, open, onClose }: Props) {
                 }
               />
             </label>
+
+            <button
+              className={styles.resetBtn}
+              onClick={onReset}
+            >
+              会話をリセット
+            </button>
           </div>
         </details>
 

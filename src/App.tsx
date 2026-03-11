@@ -173,12 +173,9 @@ function App() {
       {!isBroadcast && (
         <BottomBar
           onSend={send}
-          onReset={reset}
           disabled={!llmReady || isSending}
           isSending={isSending}
-          ttsEnabled={settings.ttsEnabled}
           statusText={statusText}
-          onToggleTts={() => updateSettings({ ttsEnabled: !settings.ttsEnabled })}
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenManual={() => setManualOpen(true)}
           onOpenLicense={() => setLicenseOpen(true)}
@@ -190,6 +187,7 @@ function App() {
         onUpdate={updateSettings}
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
+        onReset={reset}
       />
 
       <ManualDialog

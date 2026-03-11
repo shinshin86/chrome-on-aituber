@@ -121,6 +121,23 @@
   font-family: inherit;
 }
 
+.resetBtn {
+  width: 100%;
+  padding: 10px;
+  background: #ef5350;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.resetBtn:hover {
+  background: #e53935;
+}
+
 .closeBtn {
   width: 100%;
   padding: 10px;
