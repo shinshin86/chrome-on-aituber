@@ -10,7 +10,7 @@ const BASE_URL = import.meta.env.BASE_URL;
 
 const DEFAULT_AVATAR: AvatarPack = {
   id: "default",
-  name: "Default",
+  name: "Miko",
   isBuiltIn: true,
   images: {
     mouthCloseEyesOpen: `${BASE_URL}assets/avatars/default/mouth_close_eyes_open.png`,
