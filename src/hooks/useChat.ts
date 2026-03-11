@@ -22,11 +22,12 @@ export function useChat(settings: AppSettings) {
 
   // 初期化
   useEffect(() => {
-    setMessages(loadMessages());
-    initLLM();
+    const initialMessages = loadMessages();
+    setMessages(initialMessages);
+    initLLM(initialMessages);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function initLLM() {
+  async function initLLM(initialMessages: ChatMessage[] = []) {
     const status = await llm.checkAvailability();
     setLlmStatus(status);
 
@@ -35,7 +36,10 @@ export function useChat(settings: AppSettings) {
         setStatusText("");
         if (!llm.hasSession()) {
           try {
-            await llm.createSession(settings.llmSystemPrompt);
+            await llm.createSession(
+              settings.llmSystemPrompt,
+              initialMessages.map((m) => ({ role: m.role, content: m.content }))
+            );
           } catch (e) {
             setStatusText("セッション作成失敗: " + (e as Error).message);
           }
@@ -44,9 +48,13 @@ export function useChat(settings: AppSettings) {
       case "downloading":
         setStatusText("モデルをダウンロード中...");
         try {
-          await llm.createSession(settings.llmSystemPrompt, [], (pct) => {
-            setStatusText(`モデルをダウンロード中... ${pct}%`);
-          });
+          await llm.createSession(
+            settings.llmSystemPrompt,
+            initialMessages.map((m) => ({ role: m.role, content: m.content })),
+            (pct) => {
+              setStatusText(`モデルをダウンロード中... ${pct}%`);
+            }
+          );
           setLlmStatus("available");
           setStatusText("");
         } catch (e) {
