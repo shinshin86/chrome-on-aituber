@@ -112,6 +112,18 @@ export function useChat(settings: AppSettings) {
         saveMessages(updatedWithReply);
 
         if (settings.ttsEnabled) {
+          if (!tts.isReady()) {
+            setStatusText("音声エンジンを初期化中...");
+            try {
+              await tts.initialize((msg) => {
+                if (msg) setStatusText(msg);
+              });
+              setStatusText("");
+            } catch (e) {
+              console.warn("TTS init error:", e);
+              setStatusText("");
+            }
+          }
           tts.speak(reply, (open) => mouthOpenRef.current(open), settings.ttsLengthScale).catch((e) => {
             console.warn("TTS error:", e);
           });
