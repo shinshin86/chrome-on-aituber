@@ -19,6 +19,7 @@ export function useChat(settings: AppSettings) {
 
   const mouthOpenRef = useRef(setMouthOpen);
   mouthOpenRef.current = setMouthOpen;
+  const appliedSystemPromptRef = useRef(settings.llmSystemPrompt);
 
   // 初期化
   useEffect(() => {
@@ -40,6 +41,7 @@ export function useChat(settings: AppSettings) {
               settings.llmSystemPrompt,
               initialMessages.map((m) => ({ role: m.role, content: m.content }))
             );
+            appliedSystemPromptRef.current = settings.llmSystemPrompt;
           } catch (e) {
             setStatusText("セッション作成失敗: " + (e as Error).message);
           }
@@ -55,6 +57,7 @@ export function useChat(settings: AppSettings) {
               setStatusText(`モデルをダウンロード中... ${pct}%`);
             }
           );
+          appliedSystemPromptRef.current = settings.llmSystemPrompt;
           setLlmStatus("available");
           setStatusText("");
         } catch (e) {
@@ -73,6 +76,41 @@ export function useChat(settings: AppSettings) {
     }
   }
 
+  useEffect(() => {
+    if (appliedSystemPromptRef.current === settings.llmSystemPrompt) return;
+    if (isSending || llmStatus !== "available") return;
+
+    let cancelled = false;
+
+    async function recreateSession() {
+      setStatusText("AI セッションを更新中...");
+      llm.destroySession();
+
+      try {
+        await llm.createSession(
+          settings.llmSystemPrompt,
+          messages.map((m) => ({ role: m.role, content: m.content }))
+        );
+
+        if (!cancelled) {
+          appliedSystemPromptRef.current = settings.llmSystemPrompt;
+          setStatusText("");
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setErrorMessage("AI セッションの更新に失敗しました: " + (e as Error).message);
+          setStatusText("AI セッションの更新に失敗しました");
+        }
+      }
+    }
+
+    void recreateSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isSending, llmStatus, messages, settings.llmSystemPrompt]);
+
   const send = useCallback(
     async (text: string, sender?: { name: string; iconUrl?: string }) => {
       if (isSending || !text.trim()) return;
@@ -87,6 +125,7 @@ export function useChat(settings: AppSettings) {
             settings.llmSystemPrompt,
             messages.map((m) => ({ role: m.role, content: m.content }))
           );
+          appliedSystemPromptRef.current = settings.llmSystemPrompt;
         } catch (e) {
           setErrorMessage("AI セッションの作成に失敗しました: " + (e as Error).message);
           setIsSending(false);
@@ -159,6 +198,7 @@ export function useChat(settings: AppSettings) {
     saveMessages([]);
     try {
       await llm.createSession(settings.llmSystemPrompt);
+      appliedSystemPromptRef.current = settings.llmSystemPrompt;
     } catch {
       // ignore
     }
