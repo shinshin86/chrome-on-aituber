@@ -65,7 +65,7 @@ export function useChat(settings: AppSettings) {
   }
 
   const send = useCallback(
-    async (text: string) => {
+    async (text: string, sender?: { name: string; iconUrl?: string }) => {
       if (isSending || !text.trim()) return;
       setIsSending(true);
 
@@ -89,6 +89,10 @@ export function useChat(settings: AppSettings) {
         role: "user",
         content: text.trim(),
         timestamp: Date.now(),
+        ...(sender && {
+          senderName: sender.name,
+          senderIconUrl: sender.iconUrl,
+        }),
       };
 
       const updatedWithUser = [...messages, userMsg];

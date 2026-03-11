@@ -4,6 +4,8 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   timestamp: number;
+  senderName?: string;
+  senderIconUrl?: string;
 }
 
 // Avatar

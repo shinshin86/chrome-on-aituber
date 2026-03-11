@@ -95,7 +95,10 @@ function App() {
   // YouTube Live コメントを受け取って LLM に送信
   const handleYoutubeComment = useCallback(
     (comment: YouTubeChatMessage) => {
-      send(`${comment.userName} さんのコメント: ${comment.userComment}`);
+      send(`${comment.userName} さんのコメント: ${comment.userComment}`, {
+        name: comment.userName,
+        iconUrl: comment.userIconUrl,
+      });
     },
     [send]
   );
@@ -111,7 +114,9 @@ function App() {
   // Twitch コメントを受け取って LLM に送信
   const handleTwitchComment = useCallback(
     (comment: TwitchChatMessage) => {
-      send(`${comment.userName} さんのコメント: ${comment.userComment}`);
+      send(`${comment.userName} さんのコメント: ${comment.userComment}`, {
+        name: comment.userName,
+      });
     },
     [send]
   );

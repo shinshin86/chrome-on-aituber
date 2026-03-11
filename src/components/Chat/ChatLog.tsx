@@ -25,6 +25,19 @@ export function ChatLog({ messages, label }: Props) {
       <div className={styles.messages}>
         {messages.map((msg) => (
           <div key={msg.id} className={`${styles.bubble} ${label === "AI" ? styles.bubbleAi : styles.bubbleUser}`}>
+            {msg.senderName && (
+              <div className={styles.sender}>
+                {msg.senderIconUrl && (
+                  <img
+                    className={styles.senderIcon}
+                    src={msg.senderIconUrl}
+                    alt=""
+                    referrerPolicy="no-referrer"
+                  />
+                )}
+                <span className={styles.senderName}>{msg.senderName}</span>
+              </div>
+            )}
             <span className={styles.text}>{msg.content}</span>
             <span className={styles.time}>{formatTime(msg.timestamp)}</span>
           </div>
