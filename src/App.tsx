@@ -15,6 +15,11 @@ import {
   getAllAvatars,
   revokeAvatarUrls,
 } from "./services/avatar/avatarService";
+import {
+  deleteBackgroundImage,
+  loadBackgroundImage,
+  saveBackgroundImage,
+} from "./services/storage/storageService";
 import type { AvatarPack } from "./types";
 import type { YouTubeChatMessage } from "./services/youtube/youtubeService";
 import type { TwitchChatMessage } from "./services/twitch/twitchService";
@@ -42,7 +47,10 @@ function App() {
   const [manualOpen, setManualOpen] = useState(false);
   const [licenseOpen, setLicenseOpen] = useState(false);
   const [broadcastHint, setBroadcastHint] = useState(false);
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(null);
+  const [backgroundErrorMessage, setBackgroundErrorMessage] = useState("");
   const broadcastHintTimerRef = useRef<number | null>(null);
+  const backgroundUrlRef = useRef<string | null>(null);
 
   const isBroadcast = settings.appMode === "broadcast";
   const [avatar, setAvatar] = useState<AvatarPack>(getDefaultAvatar());
@@ -192,8 +200,118 @@ function App() {
     [messages]
   );
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadBackground() {
+      if (!settings.backgroundImageEnabled) {
+        if (backgroundUrlRef.current) {
+          URL.revokeObjectURL(backgroundUrlRef.current);
+          backgroundUrlRef.current = null;
+        }
+        setBackgroundErrorMessage("");
+        setBackgroundImageUrl(null);
+        return;
+      }
+
+      try {
+        const stored = await loadBackgroundImage();
+        if (!stored) {
+          if (!cancelled) {
+            setBackgroundImageUrl(null);
+            handleUpdateSettings({
+              backgroundImageEnabled: false,
+              backgroundImageUpdatedAt: 0,
+            });
+          }
+          return;
+        }
+
+        const url = URL.createObjectURL(stored.image);
+        if (cancelled) {
+          URL.revokeObjectURL(url);
+          return;
+        }
+
+        if (backgroundUrlRef.current) {
+          URL.revokeObjectURL(backgroundUrlRef.current);
+        }
+        backgroundUrlRef.current = url;
+        setBackgroundErrorMessage("");
+        setBackgroundImageUrl(url);
+      } catch (e) {
+        console.warn("Background image load error:", e);
+        if (!cancelled) {
+          setBackgroundErrorMessage("背景画像の読み込みに失敗しました");
+        }
+      }
+    }
+
+    void loadBackground();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    handleUpdateSettings,
+    settings.backgroundImageEnabled,
+    settings.backgroundImageUpdatedAt,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (backgroundUrlRef.current) {
+        URL.revokeObjectURL(backgroundUrlRef.current);
+        backgroundUrlRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleUploadBackgroundImage = useCallback(
+    async (file: File) => {
+      try {
+        await saveBackgroundImage(file, file.name);
+        handleUpdateSettings({
+          backgroundImageEnabled: true,
+          backgroundImageUpdatedAt: Date.now(),
+        });
+      } catch {
+        throw new Error("背景画像の保存に失敗しました");
+      }
+    },
+    [handleUpdateSettings]
+  );
+
+  const handleResetBackgroundImage = useCallback(async () => {
+    try {
+      await deleteBackgroundImage();
+      handleUpdateSettings({
+        backgroundImageEnabled: false,
+        backgroundImageUpdatedAt: 0,
+      });
+    } catch {
+      throw new Error("背景画像のリセットに失敗しました");
+    }
+  }, [handleUpdateSettings]);
+
+  const appStyle = useMemo(
+    () =>
+      backgroundImageUrl
+        ? {
+            backgroundImage: `url("${backgroundImageUrl}")`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }
+        : undefined,
+    [backgroundImageUrl]
+  );
+
   return (
-    <div className={`app ${isBroadcast ? "broadcast" : ""}`}>
+    <div
+      className={`app ${isBroadcast ? "broadcast" : ""}`}
+      style={appStyle}
+    >
       {/* 配信モードヒント */}
       {broadcastHint && (
         <div className="broadcast-hint">
@@ -267,6 +385,8 @@ function App() {
       <SettingsPanel
         settings={settings}
         onUpdate={handleUpdateSettings}
+        onUploadBackgroundImage={handleUploadBackgroundImage}
+        onResetBackgroundImage={handleResetBackgroundImage}
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         onReset={reset}
@@ -290,6 +410,13 @@ function App() {
         <Toast
           message={streamErrorMessage}
           onClose={() => setStreamErrorMessage("")}
+        />
+      )}
+
+      {backgroundErrorMessage && (
+        <Toast
+          message={backgroundErrorMessage}
+          onClose={() => setBackgroundErrorMessage("")}
         />
       )}
     </div>

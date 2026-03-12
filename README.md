@@ -10,6 +10,7 @@ Browser-only AITuber chat app built with React and Vite. It uses Chrome Built-in
 - Japanese chat powered by Chrome Built-in AI / `LanguageModel`
 - Browser TTS with piper-plus WASM, OpenJTalk, and ONNX Runtime Web
 - 4-sprite avatar animation with mouth movement and random blinking
+- Custom background image with reset back to the default background
 - Two display modes: chat mode and broadcast mode (green background)
 - YouTube Live comment pickup via YouTube Data API v3
 - Twitch chat pickup via EventSub WebSocket + OAuth implicit flow
@@ -96,6 +97,7 @@ Open the Vite URL in Chrome, usually `http://localhost:5173`.
 - Press `Ctrl+S` / `Cmd+S` to toggle settings quickly
 - Switch to broadcast mode for a centered avatar-only layout with a green background
 - Reset the current conversation from the settings panel
+- Change the background image from the settings panel and reset it with `Back to Default`
 - Enable or disable TTS and change speech speed
 - Register custom avatars by uploading 4 images:
   - mouth closed / eyes open

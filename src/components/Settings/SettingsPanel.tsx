@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { AppSettings, AppMode, StreamingPlatform } from "../../types";
 import { AvatarSettings } from "./AvatarSettings";
 import styles from "./Settings.module.css";
@@ -6,6 +6,8 @@ import styles from "./Settings.module.css";
 interface Props {
   settings: AppSettings;
   onUpdate: (patch: Partial<AppSettings>) => void;
+  onUploadBackgroundImage: (file: File) => Promise<void>;
+  onResetBackgroundImage: () => Promise<void>;
   open: boolean;
   onClose: () => void;
   onReset: () => void;
@@ -45,12 +47,60 @@ function createOauthState(): string {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-export function SettingsPanel({ settings, onUpdate, open, onClose, onReset }: Props) {
+export function SettingsPanel({
+  settings,
+  onUpdate,
+  onUploadBackgroundImage,
+  onResetBackgroundImage,
+  open,
+  onClose,
+  onReset,
+}: Props) {
   const [twitchConnectError, setTwitchConnectError] = useState("");
+  const [backgroundBusy, setBackgroundBusy] = useState(false);
+  const [backgroundError, setBackgroundError] = useState("");
+  const backgroundInputRef = useRef<HTMLInputElement | null>(null);
   const twitchRedirectUri =
     typeof window === "undefined"
       ? ""
       : new URL(window.location.pathname, window.location.origin).toString();
+
+  async function handleBackgroundChange(file: File | null) {
+    if (!file || backgroundBusy) return;
+
+    setBackgroundBusy(true);
+    setBackgroundError("");
+
+    try {
+      await onUploadBackgroundImage(file);
+    } catch (e) {
+      setBackgroundError(
+        e instanceof Error ? e.message : "背景画像の保存に失敗しました"
+      );
+    } finally {
+      if (backgroundInputRef.current) {
+        backgroundInputRef.current.value = "";
+      }
+      setBackgroundBusy(false);
+    }
+  }
+
+  async function handleResetBackground() {
+    if (!settings.backgroundImageEnabled || backgroundBusy) return;
+
+    setBackgroundBusy(true);
+    setBackgroundError("");
+
+    try {
+      await onResetBackgroundImage();
+    } catch (e) {
+      setBackgroundError(
+        e instanceof Error ? e.message : "背景画像のリセットに失敗しました"
+      );
+    } finally {
+      setBackgroundBusy(false);
+    }
+  }
 
   if (!open) return null;
 
@@ -84,6 +134,62 @@ export function SettingsPanel({ settings, onUpdate, open, onClose, onReset }: Pr
                 </span>
               )}
             </label>
+          </div>
+        </details>
+
+        <details className={styles.section}>
+          <summary>背景</summary>
+          <div className={styles.sectionContent}>
+            <label className={styles.label}>
+              背景画像
+              <span className={styles.hint}>
+                設定した画像はチャットモードと配信モードの両方に表示されます
+              </span>
+            </label>
+
+            <input
+              ref={backgroundInputRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) =>
+                void handleBackgroundChange(e.target.files?.[0] ?? null)
+              }
+            />
+
+            <div className={styles.actionRow}>
+              <button
+                className={styles.subActionBtn}
+                type="button"
+                disabled={backgroundBusy}
+                onClick={() => backgroundInputRef.current?.click()}
+              >
+                {backgroundBusy
+                  ? "保存中..."
+                  : settings.backgroundImageEnabled
+                    ? "背景画像を変更"
+                    : "背景画像を選択"}
+              </button>
+
+              <button
+                className={styles.secondaryBtn}
+                type="button"
+                disabled={!settings.backgroundImageEnabled || backgroundBusy}
+                onClick={() => void handleResetBackground()}
+              >
+                デフォルトに戻す
+              </button>
+            </div>
+
+            <span className={styles.hint}>
+              {settings.backgroundImageEnabled
+                ? "現在はカスタム背景を表示中です"
+                : "現在はデフォルト背景です"}
+            </span>
+
+            {backgroundError && (
+              <div className={styles.errorText}>{backgroundError}</div>
+            )}
           </div>
         </details>
 

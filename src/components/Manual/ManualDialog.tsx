@@ -166,6 +166,9 @@ export function ManualDialog({ open, onClose }: Props) {
             <li>
               AI の応答はアバターの左側に、あなたのメッセージは右側に表示されます
             </li>
+            <li>
+              設定パネルから背景画像を変更でき、チャットモードと配信モードの両方に反映されます
+            </li>
           </ul>
         </section>
 
@@ -183,7 +186,7 @@ export function ManualDialog({ open, onClose }: Props) {
             </li>
             <li>
               <strong>⚙</strong> —
-              設定パネル（音声 ON/OFF、会話リセット、システムプロンプト、読み上げ速度、YouTube Live 連携など）
+              設定パネル（背景画像、音声 ON/OFF、会話リセット、システムプロンプト、読み上げ速度、YouTube Live 連携など）
             </li>
           </ul>
         </section>

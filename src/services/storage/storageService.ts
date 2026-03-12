@@ -9,8 +9,10 @@ const KEYS = {
 } as const;
 
 const DB_NAME = `${PREFIX}_db`;
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const AVATAR_STORE = "avatars";
+const BACKGROUND_STORE = "backgrounds";
+const BACKGROUND_ID = "screen-background";
 
 // --- LocalStorage (settings / messages) ---
 
@@ -52,6 +54,9 @@ function openDB(): Promise<IDBDatabase> {
       const db = req.result;
       if (!db.objectStoreNames.contains(AVATAR_STORE)) {
         db.createObjectStore(AVATAR_STORE, { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains(BACKGROUND_STORE)) {
+        db.createObjectStore(BACKGROUND_STORE, { keyPath: "id" });
       }
     };
     req.onsuccess = () => resolve(req.result);
@@ -107,6 +112,48 @@ export async function deleteAvatarPack(id: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(AVATAR_STORE, "readwrite");
     tx.objectStore(AVATAR_STORE).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export interface StoredBackgroundImage {
+  id: string;
+  name: string;
+  image: Blob;
+}
+
+export async function saveBackgroundImage(file: Blob, name: string): Promise<void> {
+  const db = await openDB();
+  const payload: StoredBackgroundImage = {
+    id: BACKGROUND_ID,
+    name,
+    image: file,
+  };
+
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(BACKGROUND_STORE, "readwrite");
+    tx.objectStore(BACKGROUND_STORE).put(payload);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function loadBackgroundImage(): Promise<StoredBackgroundImage | undefined> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(BACKGROUND_STORE, "readonly");
+    const req = tx.objectStore(BACKGROUND_STORE).get(BACKGROUND_ID);
+    req.onsuccess = () => resolve(req.result ?? undefined);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export async function deleteBackgroundImage(): Promise<void> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(BACKGROUND_STORE, "readwrite");
+    tx.objectStore(BACKGROUND_STORE).delete(BACKGROUND_ID);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });

@@ -77,6 +77,16 @@
   font-weight: 500;
 }
 
+.actionRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.actionRow > button {
+  flex: 1;
+}
+
 .toggleLabel {
   display: flex;
   align-items: center;
@@ -143,6 +153,40 @@
 
 .resetBtn:hover {
   background: #e53935;
+}
+
+.subActionBtn,
+.secondaryBtn {
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.subActionBtn {
+  background: #5c8d89;
+  color: white;
+}
+
+.subActionBtn:hover:not(:disabled) {
+  background: #4d7a77;
+}
+
+.secondaryBtn {
+  background: #eceff1;
+  color: #455a64;
+}
+
+.secondaryBtn:hover:not(:disabled) {
+  background: #dde3e7;
+}
+
+.subActionBtn:disabled,
+.secondaryBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .closeBtn {
