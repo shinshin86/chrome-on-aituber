@@ -5,6 +5,7 @@ import styles from "./ChatLog.module.css";
 interface Props {
   messages: ChatMessage[];
   label: string;
+  variant: "assistant" | "user";
 }
 
 function formatTime(ts: number): string {
@@ -12,7 +13,7 @@ function formatTime(ts: number): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-export function ChatLog({ messages, label }: Props) {
+export function ChatLog({ messages, label, variant }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -24,7 +25,12 @@ export function ChatLog({ messages, label }: Props) {
       <div className={styles.header}>{label}</div>
       <div className={styles.messages}>
         {messages.map((msg) => (
-          <div key={msg.id} className={`${styles.bubble} ${label === "AI" ? styles.bubbleAi : styles.bubbleUser}`}>
+          <div
+            key={msg.id}
+            className={`${styles.bubble} ${
+              variant === "assistant" ? styles.bubbleAi : styles.bubbleUser
+            }`}
+          >
             {msg.senderName && (
               <div className={styles.sender}>
                 {msg.senderIconUrl && (

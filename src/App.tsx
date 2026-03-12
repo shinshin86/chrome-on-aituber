@@ -326,7 +326,7 @@ function App() {
       <div className="stage">
         {!isBroadcast && (
           <div className="log-column left">
-            <ChatLog messages={aiMessages} label="AI" />
+            <ChatLog messages={aiMessages} label={avatar.name} variant="assistant" />
           </div>
         )}
 
@@ -339,7 +339,7 @@ function App() {
 
         {!isBroadcast && (
           <div className="log-column right">
-            <ChatLog messages={userMessages} label="You" />
+            <ChatLog messages={userMessages} label="You" variant="user" />
           </div>
         )}
       </div>
