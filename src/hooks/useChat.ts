@@ -23,6 +23,12 @@ function getLLMErrorMessage(error: unknown, fallback: string): string {
   return detail ? `${fallback}: ${detail}` : fallback;
 }
 
+function toTtsLengthScale(speedMultiplier: number): number {
+  // Piper's lengthScale controls utterance duration, so larger values make speech slower.
+  // The UI exposes speed, therefore we invert the slider value before passing it to TTS.
+  return speedMultiplier > 0 ? 1 / speedMultiplier : 1;
+}
+
 export function useChat(settings: AppSettings) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
@@ -225,10 +231,16 @@ export function useChat(settings: AppSettings) {
               setStatusText("");
             }
           }
-          tts.speak(reply, (open) => mouthOpenRef.current(open), settings.ttsLengthScale).catch((e) => {
-            setErrorMessage("音声の再生に失敗しました");
-            console.warn("TTS error:", e);
-          });
+          tts
+            .speak(
+              reply,
+              (open) => mouthOpenRef.current(open),
+              toTtsLengthScale(settings.ttsLengthScale)
+            )
+            .catch((e) => {
+              setErrorMessage("音声の再生に失敗しました");
+              console.warn("TTS error:", e);
+            });
         }
       } catch (e) {
         setErrorMessage("AI の応答生成に失敗しました");
