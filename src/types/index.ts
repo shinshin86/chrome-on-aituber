@@ -1,9 +1,18 @@
 // Chat
+export type ChatSource = "chat" | "youtube" | "twitch";
+
+export const CHAT_SOURCE_LABELS: Record<ChatSource, string> = {
+  chat: "chat",
+  youtube: "youtubeコメント",
+  twitch: "twitchコメント",
+};
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: number;
+  source?: ChatSource;
   senderName?: string;
   senderIconUrl?: string;
 }

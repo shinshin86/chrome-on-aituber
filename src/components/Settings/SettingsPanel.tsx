@@ -1,13 +1,17 @@
 import { useRef, useState } from "react";
-import type { AppSettings, AppMode, StreamingPlatform } from "../../types";
+import { CHAT_SOURCE_LABELS } from "../../types";
+import type { AppSettings, AppMode, ChatMessage, StreamingPlatform } from "../../types";
 import { AvatarSettings } from "./AvatarSettings";
 import styles from "./Settings.module.css";
 
 interface Props {
   settings: AppSettings;
+  messages: ChatMessage[];
+  assistantLabel: string;
   onUpdate: (patch: Partial<AppSettings>) => void;
   onUploadBackgroundImage: (file: File) => Promise<void>;
   onResetBackgroundImage: () => Promise<void>;
+  onExportMessages: () => void;
   open: boolean;
   onClose: () => void;
   onReset: () => void;
@@ -31,6 +35,21 @@ const INTERVAL_OPTIONS = [
   { value: 60000, label: "60秒" },
 ];
 
+function formatDateTime(timestamp: number): string {
+  const date = new Date(timestamp);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  const hh = String(date.getHours()).padStart(2, "0");
+  const mi = String(date.getMinutes()).padStart(2, "0");
+  const ss = String(date.getSeconds()).padStart(2, "0");
+  return `${yyyy}/${mm}/${dd} ${hh}:${mi}:${ss}`;
+}
+
+function formatSourceLabel(message: ChatMessage): string {
+  return message.source ? CHAT_SOURCE_LABELS[message.source] : "不明";
+}
+
 function createOauthState(): string {
   if (typeof crypto !== "undefined") {
     if (typeof crypto.randomUUID === "function") {
@@ -49,9 +68,12 @@ function createOauthState(): string {
 
 export function SettingsPanel({
   settings,
+  messages,
+  assistantLabel,
   onUpdate,
   onUploadBackgroundImage,
   onResetBackgroundImage,
+  onExportMessages,
   open,
   onClose,
   onReset,
@@ -100,6 +122,18 @@ export function SettingsPanel({
     } finally {
       setBackgroundBusy(false);
     }
+  }
+
+  function handleDeleteMessages() {
+    if (messages.length === 0) return;
+
+    const confirmed = window.confirm(
+      "保存されているチャットログを削除します。よろしいですか？"
+    );
+
+    if (!confirmed) return;
+
+    onReset();
   }
 
   if (!open) return null;
@@ -247,13 +281,62 @@ export function SettingsPanel({
               />
             </label>
 
-            <button
-              className={styles.resetBtn}
-              type="button"
-              onClick={onReset}
-            >
-              会話をリセット
-            </button>
+          </div>
+        </details>
+
+        <details className={styles.section}>
+          <summary>チャットログ</summary>
+          <div className={styles.sectionContent}>
+            <p className={styles.hint}>
+              保存件数: {messages.length}件
+            </p>
+
+            <div className={styles.chatLogViewer}>
+              {messages.length === 0 ? (
+                <p className={styles.chatLogEmpty}>
+                  まだチャットログはありません
+                </p>
+              ) : (
+                messages.map((message) => (
+                  <div key={message.id} className={styles.chatLogItem}>
+                    <div className={styles.chatLogMeta}>
+                      <span className={styles.chatLogRole}>
+                        {message.role === "assistant" ? assistantLabel : "USER"}
+                      </span>
+                      <span className={styles.chatLogSource}>
+                        {formatSourceLabel(message)}
+                      </span>
+                      <span>{formatDateTime(message.timestamp)}</span>
+                      {message.senderName && (
+                        <span className={styles.chatLogSender}>
+                          {message.senderName}
+                        </span>
+                      )}
+                    </div>
+                    <p className={styles.chatLogText}>{message.content}</p>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className={styles.actionRow}>
+              <button
+                className={styles.secondaryBtn}
+                type="button"
+                disabled={messages.length === 0}
+                onClick={onExportMessages}
+              >
+                CSV をエクスポート
+              </button>
+              <button
+                className={styles.resetBtn}
+                type="button"
+                disabled={messages.length === 0}
+                onClick={handleDeleteMessages}
+              >
+                チャットログを削除
+              </button>
+            </div>
           </div>
         </details>
 
