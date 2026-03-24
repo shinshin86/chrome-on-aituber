@@ -20,10 +20,61 @@ import {
   loadBackgroundImage,
   saveBackgroundImage,
 } from "./services/storage/storageService";
-import type { AvatarPack } from "./types";
+import {
+  CHAT_SOURCE_LABELS,
+  type AvatarPack,
+  type ChatMessage,
+} from "./types";
 import type { YouTubeChatMessage } from "./services/youtube/youtubeService";
 import type { TwitchChatMessage } from "./services/twitch/twitchService";
 import "./App.css";
+
+function escapeCsvField(value: string): string {
+  return `"${value.replace(/"/g, '""')}"`;
+}
+
+function formatCsvDate(timestamp: number): string {
+  const date = new Date(timestamp);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  const hh = String(date.getHours()).padStart(2, "0");
+  const mi = String(date.getMinutes()).padStart(2, "0");
+  const ss = String(date.getSeconds()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+}
+
+function formatMessageLabel(message: ChatMessage, assistantLabel: string): string {
+  return message.role === "assistant" ? assistantLabel : "USER";
+}
+
+function formatMessageSource(message: ChatMessage): string {
+  return message.source ? CHAT_SOURCE_LABELS[message.source] : "不明";
+}
+
+function createChatLogCsv(messages: ChatMessage[], assistantLabel: string): string {
+  const header = ["timestamp", "role", "source", "senderName", "content"];
+  const rows = messages.map((message) => [
+    escapeCsvField(formatCsvDate(message.timestamp)),
+    escapeCsvField(formatMessageLabel(message, assistantLabel)),
+    escapeCsvField(formatMessageSource(message)),
+    escapeCsvField(message.senderName ?? ""),
+    escapeCsvField(message.content),
+  ]);
+
+  return [header.join(","), ...rows.map((row) => row.join(","))].join("\n");
+}
+
+function createExportFileName(): string {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mi = String(now.getMinutes()).padStart(2, "0");
+  const ss = String(now.getSeconds()).padStart(2, "0");
+  return `chat-log-${yyyy}${mm}${dd}-${hh}${mi}${ss}.csv`;
+}
 
 function App() {
   const { settings, updateSettings } = useSettings();
@@ -155,8 +206,11 @@ function App() {
   const handleYoutubeComment = useCallback(
     (comment: YouTubeChatMessage) => {
       send(`${comment.userName} さんのコメント: ${comment.userComment}`, {
-        name: comment.userName,
-        iconUrl: comment.userIconUrl,
+        sender: {
+          name: comment.userName,
+          iconUrl: comment.userIconUrl,
+        },
+        source: "youtube",
       });
     },
     [send]
@@ -174,7 +228,10 @@ function App() {
   const handleTwitchComment = useCallback(
     (comment: TwitchChatMessage) => {
       send(`${comment.userName} さんのコメント: ${comment.userComment}`, {
-        name: comment.userName,
+        sender: {
+          name: comment.userName,
+        },
+        source: "twitch",
       });
     },
     [send]
@@ -294,6 +351,23 @@ function App() {
     }
   }, [handleUpdateSettings]);
 
+  const handleExportMessages = useCallback(() => {
+    if (messages.length === 0) return;
+
+    const csv = createChatLogCsv(messages, avatar.name);
+    const blob = new Blob(["\uFEFF", csv], {
+      type: "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+
+    anchor.href = url;
+    anchor.download = createExportFileName();
+    anchor.click();
+
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  }, [avatar.name, messages]);
+
   const appStyle = useMemo(
     () =>
       backgroundImageUrl
@@ -384,9 +458,12 @@ function App() {
 
       <SettingsPanel
         settings={settings}
+        messages={messages}
+        assistantLabel={avatar.name}
         onUpdate={handleUpdateSettings}
         onUploadBackgroundImage={handleUploadBackgroundImage}
         onResetBackgroundImage={handleResetBackgroundImage}
+        onExportMessages={handleExportMessages}
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         onReset={reset}

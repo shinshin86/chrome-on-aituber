@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import type { ChatMessage, AppSettings } from "../types";
+import type { ChatMessage, AppSettings, ChatSource } from "../types";
 import * as llm from "../services/llm/llmService";
 import * as tts from "../services/tts/ttsService";
 import {
@@ -8,6 +8,11 @@ import {
 } from "../services/storage/storageService";
 
 export type LLMStatus = "checking" | "available" | "downloading" | "unavailable" | "error";
+
+interface SendOptions {
+  sender?: { name: string; iconUrl?: string };
+  source?: ChatSource;
+}
 
 function getContextHistory(messages: ChatMessage[]) {
   return messages.map((m) => ({ role: m.role, content: m.content }));
@@ -159,7 +164,7 @@ export function useChat(settings: AppSettings) {
   }, [isInitializingAI, messages, settings.llmSystemPrompt]);
 
   const send = useCallback(
-    async (text: string, sender?: { name: string; iconUrl?: string }) => {
+    async (text: string, options?: SendOptions) => {
       if (isSending || !text.trim()) return;
       setIsSending(true);
 
@@ -190,14 +195,17 @@ export function useChat(settings: AppSettings) {
         }
       }
 
+      const source = options?.source;
+
       const userMsg: ChatMessage = {
         id: crypto.randomUUID(),
         role: "user",
         content: text.trim(),
         timestamp: Date.now(),
-        ...(sender && {
-          senderName: sender.name,
-          senderIconUrl: sender.iconUrl,
+        source: source ?? "chat",
+        ...(options?.sender && {
+          senderName: options.sender.name,
+          senderIconUrl: options.sender.iconUrl,
         }),
       };
 
@@ -212,6 +220,7 @@ export function useChat(settings: AppSettings) {
           role: "assistant",
           content: reply,
           timestamp: Date.now(),
+          source: source ?? "chat",
         };
         const updatedWithReply = [...updatedWithUser, assistantMsg];
         setMessages(updatedWithReply);

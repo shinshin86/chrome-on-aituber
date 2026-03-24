@@ -87,6 +87,77 @@
   flex: 1;
 }
 
+.chatLogViewer {
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 10px;
+  margin: 8px 0 12px;
+  border: 1px solid #d9e0e4;
+  border-radius: 10px;
+  background: #f8fbfc;
+}
+
+.chatLogViewer::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chatLogViewer::-webkit-scrollbar-thumb {
+  background: rgba(69, 90, 100, 0.25);
+  border-radius: 999px;
+}
+
+.chatLogEmpty {
+  margin: 0;
+  font-size: 13px;
+  color: #78909c;
+}
+
+.chatLogItem {
+  padding: 10px 0;
+  border-bottom: 1px solid #e4ebef;
+}
+
+.chatLogItem:first-child {
+  padding-top: 0;
+}
+
+.chatLogItem:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.chatLogMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-bottom: 6px;
+  font-size: 11px;
+  color: #607d8b;
+}
+
+.chatLogRole,
+.chatLogSender {
+  font-weight: 700;
+  color: #455a64;
+}
+
+.chatLogSource {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #e3f2fd;
+  color: #1565c0;
+  font-weight: 700;
+}
+
+.chatLogText {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #263238;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .toggleLabel {
   display: flex;
   align-items: center;
@@ -139,7 +210,6 @@
 }
 
 .resetBtn {
-  width: 100%;
   padding: 10px;
   background: #ef5350;
   color: white;
