@@ -55,6 +55,13 @@ export function useChat(settings: AppSettings) {
     initLLM(initialMessages);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // TTS エンジン設定を facade に反映
+  useEffect(() => {
+    tts.setEngine(settings.ttsEngine).catch((e) => {
+      console.warn("TTS engine switch error:", e);
+    });
+  }, [settings.ttsEngine]);
+
   async function initLLM(initialMessages: ChatMessage[] = []) {
     const status = await llm.checkAvailability();
     setLlmStatus(status);
