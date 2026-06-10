@@ -1,7 +1,14 @@
 import { useRef, useState } from "react";
-import { CHAT_SOURCE_LABELS } from "../../types";
-import type { AppSettings, AppMode, ChatMessage, StreamingPlatform } from "../../types";
+import { CHAT_SOURCE_LABELS, TTS_ENGINE_LABELS } from "../../types";
+import type {
+  AppSettings,
+  AppMode,
+  ChatMessage,
+  StreamingPlatform,
+  TtsEngine,
+} from "../../types";
 import { AvatarSettings } from "./AvatarSettings";
+import { IrodoriTtsSettings } from "./IrodoriTtsSettings";
 import styles from "./Settings.module.css";
 
 interface Props {
@@ -25,6 +32,11 @@ const PLATFORM_OPTIONS: { value: StreamingPlatform; label: string }[] = [
 const MODE_OPTIONS: { value: AppMode; label: string }[] = [
   { value: "chat", label: "チャットモード" },
   { value: "broadcast", label: "配信モード（グリーンバック）" },
+];
+
+const TTS_ENGINE_OPTIONS: { value: TtsEngine; label: string }[] = [
+  { value: "piper", label: TTS_ENGINE_LABELS.piper },
+  { value: "irodori", label: TTS_ENGINE_LABELS.irodori },
 ];
 
 const INTERVAL_OPTIONS = [
@@ -266,20 +278,41 @@ export function SettingsPanel({
             </label>
 
             <label className={styles.label}>
-              読み上げ速度 ({settings.ttsLengthScale.toFixed(1)}x)
-              <input
-                type="range"
-                min="0.5"
-                max="2.0"
-                step="0.1"
-                value={settings.ttsLengthScale}
+              TTS エンジン
+              <select
+                className={styles.textInput}
+                value={settings.ttsEngine}
                 onChange={(e) =>
-                  onUpdate({
-                    ttsLengthScale: parseFloat(e.target.value),
-                  })
+                  onUpdate({ ttsEngine: e.target.value as TtsEngine })
                 }
-              />
+              >
+                {TTS_ENGINE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </label>
+
+            {settings.ttsEngine === "irodori" && <IrodoriTtsSettings />}
+
+            {settings.ttsEngine === "piper" && (
+              <label className={styles.label}>
+                読み上げ速度 ({settings.ttsLengthScale.toFixed(1)}x)
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2.0"
+                  step="0.1"
+                  value={settings.ttsLengthScale}
+                  onChange={(e) =>
+                    onUpdate({
+                      ttsLengthScale: parseFloat(e.target.value),
+                    })
+                  }
+                />
+              </label>
+            )}
 
           </div>
         </details>
