@@ -31,6 +31,7 @@ import {
   fetchManifest,
   findMissingRuntimeAsset,
   getAssetsBaseUrl,
+  getRuntimeBaseUrl,
   isWebGpuSupported,
   type IrodoriManifest,
 } from "./irodoriAssets";
@@ -216,7 +217,7 @@ export async function initialize(
       await callWorker<void>(
         {
           type: "init",
-          runtimeUrl: `${getAssetsBaseUrl()}runtime/pipeline.mjs?v=${encodeURIComponent(
+          runtimeUrl: `${getRuntimeBaseUrl()}runtime/pipeline.mjs?v=${encodeURIComponent(
             manifest.version
           )}`,
           baseUrl: getAssetsBaseUrl(),

@@ -175,3 +175,37 @@ irodori-fp16-webgpu-v<N>-YYYYMMDD
 
 Increment `v<N>` for incompatible runtime/model layout changes. Change the date
 for ordinary rebuilds.
+
+## 7. Deployment
+
+The asset set is too large (~1.3GB) for GitHub Pages (1GB site limit), and
+GitHub Release assets do not send CORS headers, so the browser cannot fetch
+them directly. Deployment therefore splits in two:
+
+- **Runtime (`runtime/` + `licenses/`, ~113MB)** stays on GitHub Pages because
+  `pipeline.mjs` and the ort-wasm loaders are dynamically imported and require
+  a JavaScript MIME type (Hugging Face serves `.mjs` as `text/plain`). It is
+  shipped as a GitHub Release tarball that CI extracts into `public/` at build
+  time, same as the Piper assets.
+- **Models, tokenizer, manifest (~1.2GB)** go to a public Hugging Face model
+  repository, which serves with CORS and is free. The browser downloads them
+  directly via `VITE_IRODORI_ASSETS_BASE_URL`.
+
+Steps after (re)building `public/irodori/`:
+
+```bash
+# 1. Runtime tarball -> GitHub Release
+./scripts/irodori/release-runtime-assets.sh
+#    -> set repository variable IRODORI_RUNTIME_ASSETS_URL to the printed URL
+
+# 2. Full asset set -> Hugging Face (requires `hf auth login` once)
+./scripts/irodori/release-assets-hf.sh <hf-user>/<repo>
+#    -> set repository variable IRODORI_ASSETS_BASE_URL to the printed URL
+
+# 3. Push to main; .github/workflows/deploy.yml picks both up
+```
+
+The model card uploaded to Hugging Face is kept at
+`scripts/irodori/hf-model-card.md`. Both variables are optional: when unset,
+the deploy workflow simply builds without Irodori support (same-origin
+fallback), which keeps forks working without any of this setup.

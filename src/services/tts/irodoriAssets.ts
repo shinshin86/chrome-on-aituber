@@ -55,6 +55,16 @@ export function getAssetsBaseUrl(): string {
   return base.endsWith("/") ? base : `${base}/`;
 }
 
+/**
+ * ランタイム（pipeline.mjs と ort-wasm ローダー）の配信元。
+ * これらは dynamic import されるため正しい JavaScript MIME タイプが必須で、
+ * 外部ホスティング（Hugging Face 等は text/plain で返す）には置けない。
+ * モデル等のデータ取得（getAssetsBaseUrl）と異なり、常に同一オリジンを使う。
+ */
+export function getRuntimeBaseUrl(): string {
+  return `${import.meta.env.BASE_URL}irodori/`;
+}
+
 /** WebGPU が利用可能か（アダプタ取得まで確認する） */
 export async function isWebGpuSupported(): Promise<boolean> {
   const gpu = (navigator as Navigator & { gpu?: { requestAdapter(): Promise<unknown | null> } }).gpu;

@@ -93,7 +93,9 @@ Piper 音声モデルのクレジット:
 
 既存の `piper-assets-v1` release asset には `piper/licenses/` が含まれていません。このテンプレート込みで tarball を作り直した後は、新しい release asset を公開し、GitHub Actions の repository variable `PIPER_ASSETS_URL` を新しい URL に更新してください。
 
-Irodori TTS を使う場合は、別途 `public/irodori/` に Irodori 用の `manifest.json`、WebGPU 向け fp16 ONNX モデル、tokenizer、`runtime/pipeline.mjs`、ライセンス文を配置します。このディレクトリは Git 管理対象外です。
+Irodori TTS を使う場合は、別途 `public/irodori/` に Irodori 用の `manifest.json`、WebGPU 向け fp16 ONNX モデル、tokenizer、`runtime/pipeline.mjs`、ライセンス文を配置します。このディレクトリは Git 管理対象外です。組み上げ手順は [`scripts/irodori/`](scripts/irodori/README.md) にあります。
+
+デプロイ先では、アセット一式（約 1.3GB）が GitHub Pages のサイト上限を超えること、および GitHub Release asset には CORS ヘッダが付かないことから、Irodori アセットは二分割でホスティングします。ランタイム（`pipeline.mjs` + ONNX Runtime wasm。dynamic `import()` に JavaScript の MIME タイプが必要なため同一オリジン配信）は GitHub Release の tarball としてビルド時に展開され（`IRODORI_RUNTIME_ASSETS_URL`）、モデルと tokenizer はブラウザが公開 Hugging Face リポジトリから直接ダウンロードします（`IRODORI_ASSETS_BASE_URL` → `VITE_IRODORI_ASSETS_BASE_URL`）。どちらの repository variable も任意で、未設定時は同一オリジンの `irodori/` に fallback します。リリース手順は [`scripts/irodori/README.md`](scripts/irodori/README.md) を参照してください。
 
 アプリ上で `Irodori TTS モデルをダウンロード` を押すと、モデル一式はブラウザストレージ（主に IndexedDB）に保存されます。現在の fp16 アセット一式は約 1.2 GiB です。通常ウィンドウでは、設定画面の `モデルを削除して容量を解放` を押すか、Chrome のサイトデータを削除するまで残ります。シークレットモードでは、そのシークレットセッション用の一時保存になり、すべてのシークレットウィンドウを閉じると Web アプリからは参照できなくなります。また、シークレットモードは保存容量の上限が通常ウィンドウより小さくなることがあり、モデル保存が `QuotaExceededError` で失敗する場合があります。参照音声としてアップロードした `.wav` は永続保存されず、セッション内のメモリ上でのみ使われます。
 
