@@ -196,7 +196,8 @@ export function SettingsPanel({
   }
 
   function handleStopTtsSample() {
-    tts.stop();
+    tts.stop({ cancelIrodori: true });
+    setSampleBusy(false);
     setSampleStatus("");
   }
 

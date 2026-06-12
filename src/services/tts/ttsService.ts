@@ -74,8 +74,11 @@ export async function speak(
   await playback.play(audio, sampleRate, onMouthChange);
 }
 
-export function stop(): void {
+export function stop(options?: { cancelIrodori?: boolean }): void {
   playback.stop();
+  if (options?.cancelIrodori && currentEngine === "irodori") {
+    irodori.cancel();
+  }
 }
 
 /** Release all TTS resources (providers + AudioContext) */

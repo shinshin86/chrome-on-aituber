@@ -4,7 +4,7 @@ import {
   downloadAssets,
   fetchManifest,
   formatBytes,
-  isDownloaded,
+  isRuntimeDownloaded,
   isWebGpuSupported,
   type DownloadProgress,
   type IrodoriManifest,
@@ -52,7 +52,7 @@ export function IrodoriTtsSettings() {
         const m = await fetchManifest();
         if (cancelled) return;
         setManifest(m);
-        const downloaded = await isDownloaded(m);
+        const downloaded = await isRuntimeDownloaded(m);
         if (cancelled) return;
         setModelState(downloaded ? "downloaded" : "not_downloaded");
       } catch {
@@ -171,7 +171,7 @@ export function IrodoriTtsSettings() {
             <>
               <p className={styles.hint}>
                 モデルは未ダウンロードです（必要容量:{" "}
-                {manifest ? `約 ${formatBytes(manifest.estimatedSizeBytes)}` : "約 1GB"}
+                {manifest ? `約 ${formatBytes(manifest.estimatedSizeBytes)}` : "約 1.2GB"}
                 の空き容量推奨）。ダウンロードはこのボタンを押したときのみ行われます。
               </p>
 

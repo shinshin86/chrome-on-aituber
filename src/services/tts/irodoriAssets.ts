@@ -8,6 +8,15 @@
  * （未指定時は同一オリジンの `irodori/` 配下）。
  */
 
+import {
+  deleteStoredAssets,
+  getStoredAsset,
+  hasIndexedDbStorage,
+  hasStoredAsset,
+  putStoredAsset,
+  putStoredAssetFromStream,
+} from "./irodoriAssetStore";
+
 export type IrodoriStatus =
   | "checking"
   | "unsupported"
@@ -36,19 +45,6 @@ export interface DownloadProgress {
   fileIndex: number;
   fileCount: number;
   currentFile: string;
-}
-
-const CACHE_NAME = "irodori-tts-assets";
-const DB_NAME = "irodori-tts-assets";
-const DB_VERSION = 1;
-const STORE_NAME = "files";
-
-interface StoredAsset {
-  key: string;
-  blob: Blob;
-  size: number;
-  contentType: string;
-  updatedAt: number;
 }
 
 export function getAssetsBaseUrl(): string {
@@ -86,142 +82,38 @@ export async function fetchManifest(): Promise<IrodoriManifest> {
   return manifest;
 }
 
-function cacheKey(version: string, path: string): string {
-  // 配信元 URL に依存しないキーにし、配信元を切り替えても再利用できるようにする
-  return `https://irodori-assets.local/${version}/${path}`;
-}
-
-function openAssetDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    if (!("indexedDB" in window)) {
-      reject(new Error("このブラウザは IndexedDB に対応していません。"));
-      return;
-    }
-
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: "key" });
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error ?? new Error("IndexedDB を開けませんでした。"));
-  });
-}
-
-function withStore<T>(
-  mode: IDBTransactionMode,
-  fn: (store: IDBObjectStore) => IDBRequest<T> | void
-): Promise<T | undefined> {
-  return openAssetDb().then(
-    (db) =>
-      new Promise<T | undefined>((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME, mode);
-        const store = tx.objectStore(STORE_NAME);
-        let request: IDBRequest<T> | void;
-
-        try {
-          request = fn(store);
-        } catch (err) {
-          db.close();
-          reject(err);
-          return;
-        }
-
-        tx.oncomplete = () => {
-          db.close();
-          resolve(request ? request.result : undefined);
-        };
-        tx.onerror = () => {
-          db.close();
-          reject(tx.error ?? new Error("Irodori アセットの保存に失敗しました。"));
-        };
-        tx.onabort = () => {
-          db.close();
-          reject(tx.error ?? new Error("Irodori アセットの保存が中断されました。"));
-        };
-      })
-  );
-}
-
-async function hasStoredAsset(version: string, path: string): Promise<boolean> {
-  const key = cacheKey(version, path);
-  try {
-    const stored = await withStore<StoredAsset>("readonly", (store) => store.get(key));
-    if (stored) return true;
-  } catch {
-    // Cache Storage 互換チェックへ fallback
-  }
-
-  if (!("caches" in window)) return false;
-  const cache = await caches.open(CACHE_NAME);
-  return (await cache.match(key)) !== undefined;
-}
-
-async function putStoredAsset(
-  version: string,
-  path: string,
-  blob: Blob,
-  contentType: string
-): Promise<void> {
-  const asset: StoredAsset = {
-    key: cacheKey(version, path),
-    blob,
-    size: blob.size,
-    contentType,
-    updatedAt: Date.now(),
-  };
-
-  try {
-    await withStore<void>("readwrite", (store) => {
-      store.put(asset);
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    throw new Error(
-      `Irodori アセットをブラウザに保存できませんでした。空き容量を確認してください: ${path} (${message})`
-    );
-  }
-}
-
-async function getStoredAsset(version: string, path: string): Promise<ArrayBuffer | null> {
-  const key = cacheKey(version, path);
-  try {
-    const stored = await withStore<StoredAsset>("readonly", (store) => store.get(key));
-    if (stored) return stored.blob.arrayBuffer();
-  } catch {
-    // Cache Storage 互換読み出しへ fallback
-  }
-
-  if ("caches" in window) {
-    const cache = await caches.open(CACHE_NAME);
-    const cached = await cache.match(key);
-    if (cached) return cached.arrayBuffer();
-  }
-
-  return null;
-}
-
-function deleteIndexedDb(name: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (!("indexedDB" in window)) {
-      resolve();
-      return;
-    }
-    const req = indexedDB.deleteDatabase(name);
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error ?? new Error("IndexedDB の削除に失敗しました。"));
-    req.onblocked = () => resolve();
-  });
-}
-
 /** manifest の全ファイルがブラウザストレージに揃っているか */
 export async function isDownloaded(manifest: IrodoriManifest): Promise<boolean> {
   for (const file of manifest.files) {
-    if (!(await hasStoredAsset(manifest.version, file.path))) return false;
+    if (!(await hasStoredAsset(manifest.version, file.path, file.size))) return false;
   }
   return true;
+}
+
+function isRuntimeRequiredAsset(path: string): boolean {
+  return (
+    path === "runtime/pipeline.mjs" ||
+    path.startsWith("onnx_fp16/") ||
+    path.startsWith("tokenizer/")
+  );
+}
+
+export async function findMissingRuntimeAsset(
+  manifest: IrodoriManifest
+): Promise<IrodoriManifestFile | null> {
+  for (const file of manifest.files) {
+    if (!isRuntimeRequiredAsset(file.path)) continue;
+    if (!(await hasStoredAsset(manifest.version, file.path, file.size))) {
+      return file;
+    }
+  }
+  return null;
+}
+
+export async function isRuntimeDownloaded(
+  manifest: IrodoriManifest
+): Promise<boolean> {
+  return (await findMissingRuntimeAsset(manifest)) === null;
 }
 
 /**
@@ -233,9 +125,10 @@ export async function downloadAssets(
   onProgress?: (progress: DownloadProgress) => void,
   signal?: AbortSignal
 ): Promise<void> {
-  if (!("indexedDB" in window)) {
+  if (!hasIndexedDbStorage()) {
     throw new Error("このブラウザは IndexedDB に対応していません。");
   }
+  await navigator.storage?.persist?.().catch(() => false);
 
   const baseUrl = getAssetsBaseUrl();
   const totalBytes = manifest.files.reduce((sum, f) => sum + (f.size || 0), 0);
@@ -244,7 +137,7 @@ export async function downloadAssets(
   for (let i = 0; i < manifest.files.length; i++) {
     const file = manifest.files[i];
 
-    if (await hasStoredAsset(manifest.version, file.path)) {
+    if (await hasStoredAsset(manifest.version, file.path, file.size)) {
       loadedBytes += file.size || 0;
       onProgress?.({
         loadedBytes,
@@ -261,27 +154,23 @@ export async function downloadAssets(
       throw new Error(`ダウンロードに失敗しました: ${file.path} (${resp.status})`);
     }
 
-    const reader = resp.body.getReader();
-    const chunks: Uint8Array[] = [];
-    let fileLoaded = 0;
-
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(value);
-      fileLoaded += value.byteLength;
-      onProgress?.({
-        loadedBytes: loadedBytes + fileLoaded,
-        totalBytes,
-        fileIndex: i + 1,
-        fileCount: manifest.files.length,
-        currentFile: file.path,
-      });
-    }
-
-    const blob = new Blob(chunks as BlobPart[]);
     const contentType = resp.headers.get("content-type") ?? "application/octet-stream";
-    await putStoredAsset(manifest.version, file.path, blob, contentType);
+    const fileLoaded = await putStoredAssetFromStream(
+      manifest.version,
+      file.path,
+      resp.body,
+      file.size,
+      contentType,
+      (currentFileLoaded) => {
+        onProgress?.({
+          loadedBytes: loadedBytes + currentFileLoaded,
+          totalBytes,
+          fileIndex: i + 1,
+          fileCount: manifest.files.length,
+          currentFile: file.path,
+        });
+      }
+    );
 
     loadedBytes += fileLoaded;
   }
@@ -289,28 +178,37 @@ export async function downloadAssets(
 
 /** ダウンロード済みアセットを削除して容量を解放する */
 export async function deleteAssets(): Promise<void> {
-  await Promise.all([
-    "caches" in window ? caches.delete(CACHE_NAME) : Promise.resolve(false),
-    deleteIndexedDb(DB_NAME),
-  ]);
+  await deleteStoredAssets();
 }
 
 /**
  * ブラウザストレージからアセットを読み出す（ランタイム連携用）。
- * 見つからない場合は配信元から直接取得する。
+ * 保存値が見つからない・読めない場合は配信元から直接取得し、
+ * 次回以降のためにストレージへ保存し直す（self-healing）。
+ * baseUrl は Worker など getAssetsBaseUrl() を使えない文脈で上書きする。
  */
 export async function loadAsset(
   manifest: IrodoriManifest,
-  path: string
+  path: string,
+  baseUrl: string = getAssetsBaseUrl()
 ): Promise<ArrayBuffer> {
   const stored = await getStoredAsset(manifest.version, path);
   if (stored) return stored;
 
-  const resp = await fetch(`${getAssetsBaseUrl()}${path}`);
+  const resp = await fetch(`${baseUrl}${path}`);
   if (!resp.ok) {
     throw new Error(`Irodori アセットを取得できませんでした: ${path}`);
   }
-  return resp.arrayBuffer();
+  const blob = await resp.blob();
+  const contentType =
+    resp.headers.get("content-type") ?? "application/octet-stream";
+  try {
+    await putStoredAsset(manifest.version, path, blob, contentType);
+  } catch (err) {
+    // 保存し直しは次回起動の高速化のためで、今回の合成には影響しない
+    console.warn(`Irodori アセットの再保存に失敗しました: ${path}`, err);
+  }
+  return blob.arrayBuffer();
 }
 
 export function formatBytes(bytes: number): string {

@@ -80,9 +80,9 @@ If you need that packaging flow, use:
 ./scripts/release-piper-assets.sh
 ```
 
-To use Irodori TTS, place its `manifest.json`, fp16 ONNX models, tokenizer files, `runtime/pipeline.mjs`, and license files under `public/irodori/`. This directory is intentionally not tracked by Git.
+To use Irodori TTS, place its `manifest.json`, WebGPU fp16 ONNX models, tokenizer files, `runtime/pipeline.mjs`, and license files under `public/irodori/`. This directory is intentionally not tracked by Git.
 
-When you click `Download Irodori TTS model` in the app, the asset set is saved to browser storage, primarily IndexedDB. The current fp16 asset set is about 1.3 GB. In a normal browser window, it remains until you click `Delete model and free storage` in settings or clear the site's data in Chrome. In Incognito mode, it is stored only for that Incognito session and becomes unavailable to the web app after all Incognito windows are closed. Uploaded `.wav` reference audio is not persisted; it is kept only in memory for the current session.
+When you click `Download Irodori TTS model` in the app, the asset set is saved to browser storage, primarily IndexedDB. The current fp16 asset set is about 1.2 GiB. In a normal browser window, it remains until you click `Delete model and free storage` in settings or clear the site's data in Chrome. In Incognito mode, it is stored only for that Incognito session and becomes unavailable to the web app after all Incognito windows are closed. Incognito storage quotas can also be smaller than normal-window quotas, so saving the model may fail with `QuotaExceededError`. Uploaded `.wav` reference audio is not persisted; it is kept only in memory for the current session.
 
 3. Start the development server
 
@@ -181,4 +181,5 @@ src/
 ## Notes
 
 - Settings, chat history, API keys, and Twitch access tokens are stored in the local browser.
-- Downloaded Irodori TTS models are stored in browser storage and use about 1.3 GB.
+- Downloaded Irodori TTS models are stored in browser storage and use about 1.2 GiB.
+- Incognito mode may have a smaller browser storage quota, so Irodori TTS model storage is recommended in a normal browser window.

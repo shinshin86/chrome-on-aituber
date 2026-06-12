@@ -28,6 +28,11 @@ function getLLMErrorMessage(error: unknown, fallback: string): string {
   return detail ? `${fallback}: ${detail}` : fallback;
 }
 
+function getTtsErrorMessage(error: unknown, fallback: string): string {
+  const detail = error instanceof Error ? error.message : "";
+  return detail ? `${fallback}: ${detail}` : fallback;
+}
+
 function toTtsLengthScale(speedMultiplier: number): number {
   // Piper's lengthScale controls utterance duration, so larger values make speech slower.
   // The UI exposes speed, therefore we invert the slider value before passing it to TTS.
@@ -242,7 +247,9 @@ export function useChat(settings: AppSettings) {
               });
               setStatusText("");
             } catch (e) {
-              setErrorMessage("音声エンジンの初期化に失敗しました");
+              setErrorMessage(
+                getTtsErrorMessage(e, "音声エンジンの初期化に失敗しました")
+              );
               console.warn("TTS init error:", e);
               setStatusText("");
             }
@@ -254,7 +261,7 @@ export function useChat(settings: AppSettings) {
               toTtsLengthScale(settings.ttsLengthScale)
             )
             .catch((e) => {
-              setErrorMessage("音声の再生に失敗しました");
+              setErrorMessage(getTtsErrorMessage(e, "音声の再生に失敗しました"));
               console.warn("TTS error:", e);
             });
         }
