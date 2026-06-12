@@ -44,6 +44,16 @@ interface IrodoriPipeline {
   dispose?(): Promise<void> | void;
 }
 
+interface IrodoriRuntimeModule {
+  createPipeline?: (options: unknown) => Promise<IrodoriPipeline>;
+}
+
+declare global {
+  interface Window {
+    __loadIrodoriRuntime?: (url: string) => Promise<IrodoriRuntimeModule>;
+  }
+}
+
 let pipeline: IrodoriPipeline | null = null;
 let manifest: IrodoriManifest | null = null;
 let ready = false;
@@ -84,6 +94,48 @@ export function clearReferenceAudio(): void {
   referenceAudio = null;
 }
 
+function ensureRuntimeLoader(): (url: string) => Promise<IrodoriRuntimeModule> {
+  if (window.__loadIrodoriRuntime) return window.__loadIrodoriRuntime;
+
+  window.__loadIrodoriRuntime = (url: string) =>
+    new Promise<IrodoriRuntimeModule>((resolve, reject) => {
+      const callbackName =
+        `__irodoriRuntimeLoaded_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const errorName = `${callbackName}_error`;
+      const script = document.createElement("script");
+
+      const cleanup = () => {
+        script.remove();
+        delete (window as unknown as Record<string, unknown>)[callbackName];
+        delete (window as unknown as Record<string, unknown>)[errorName];
+      };
+
+      (window as unknown as Record<string, unknown>)[callbackName] = (
+        runtime: IrodoriRuntimeModule
+      ) => {
+        cleanup();
+        resolve(runtime);
+      };
+      (window as unknown as Record<string, unknown>)[errorName] = (message: string) => {
+        cleanup();
+        reject(new Error(message));
+      };
+
+      script.type = "module";
+      script.textContent = `
+        import * as runtime from ${JSON.stringify(url)};
+        window[${JSON.stringify(callbackName)}](runtime);
+      `;
+      script.onerror = () => {
+        cleanup();
+        reject(new Error("Irodori runtime loader script failed."));
+      };
+      document.head.appendChild(script);
+    });
+
+  return window.__loadIrodoriRuntime;
+}
+
 export async function initialize(
   onProgress?: (msg: string | null) => void
 ): Promise<void> {
@@ -109,9 +161,9 @@ export async function initialize(
 
       onProgress?.("Irodori ランタイムを読み込み中...");
       const runtimeUrl = `${getAssetsBaseUrl()}runtime/pipeline.mjs`;
-      let runtime: { createPipeline?: (options: unknown) => Promise<IrodoriPipeline> };
+      let runtime: IrodoriRuntimeModule;
       try {
-        runtime = await import(/* @vite-ignore */ runtimeUrl);
+        runtime = await ensureRuntimeLoader()(runtimeUrl);
       } catch {
         throw new Error(
           "Irodori ランタイム (runtime/pipeline.mjs) を読み込めませんでした。アセットの配置を確認してください。"

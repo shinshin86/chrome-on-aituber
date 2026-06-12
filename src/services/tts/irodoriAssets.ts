@@ -1,6 +1,6 @@
 /**
  * Irodori TTS Assets — manifest 取得、WebGPU 対応チェック、
- * Cache Storage へのモデルダウンロードと進捗管理
+ * ブラウザストレージへのモデルダウンロードと進捗管理
  *
  * モデル（fp16 ONNX / tokenizer / runtime）はリポジトリに同梱せず、
  * 明示的なユーザー操作でのみダウンロードする。
@@ -39,6 +39,17 @@ export interface DownloadProgress {
 }
 
 const CACHE_NAME = "irodori-tts-assets";
+const DB_NAME = "irodori-tts-assets";
+const DB_VERSION = 1;
+const STORE_NAME = "files";
+
+interface StoredAsset {
+  key: string;
+  blob: Blob;
+  size: number;
+  contentType: string;
+  updatedAt: number;
+}
 
 export function getAssetsBaseUrl(): string {
   const configured = import.meta.env.VITE_IRODORI_ASSETS_BASE_URL as
@@ -80,41 +91,160 @@ function cacheKey(version: string, path: string): string {
   return `https://irodori-assets.local/${version}/${path}`;
 }
 
-/** manifest の全ファイルが Cache Storage に揃っているか */
-export async function isDownloaded(manifest: IrodoriManifest): Promise<boolean> {
+function openAssetDb(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    if (!("indexedDB" in window)) {
+      reject(new Error("このブラウザは IndexedDB に対応していません。"));
+      return;
+    }
+
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: "key" });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error ?? new Error("IndexedDB を開けませんでした。"));
+  });
+}
+
+function withStore<T>(
+  mode: IDBTransactionMode,
+  fn: (store: IDBObjectStore) => IDBRequest<T> | void
+): Promise<T | undefined> {
+  return openAssetDb().then(
+    (db) =>
+      new Promise<T | undefined>((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, mode);
+        const store = tx.objectStore(STORE_NAME);
+        let request: IDBRequest<T> | void;
+
+        try {
+          request = fn(store);
+        } catch (err) {
+          db.close();
+          reject(err);
+          return;
+        }
+
+        tx.oncomplete = () => {
+          db.close();
+          resolve(request ? request.result : undefined);
+        };
+        tx.onerror = () => {
+          db.close();
+          reject(tx.error ?? new Error("Irodori アセットの保存に失敗しました。"));
+        };
+        tx.onabort = () => {
+          db.close();
+          reject(tx.error ?? new Error("Irodori アセットの保存が中断されました。"));
+        };
+      })
+  );
+}
+
+async function hasStoredAsset(version: string, path: string): Promise<boolean> {
+  const key = cacheKey(version, path);
+  try {
+    const stored = await withStore<StoredAsset>("readonly", (store) => store.get(key));
+    if (stored) return true;
+  } catch {
+    // Cache Storage 互換チェックへ fallback
+  }
+
   if (!("caches" in window)) return false;
   const cache = await caches.open(CACHE_NAME);
+  return (await cache.match(key)) !== undefined;
+}
+
+async function putStoredAsset(
+  version: string,
+  path: string,
+  blob: Blob,
+  contentType: string
+): Promise<void> {
+  const asset: StoredAsset = {
+    key: cacheKey(version, path),
+    blob,
+    size: blob.size,
+    contentType,
+    updatedAt: Date.now(),
+  };
+
+  try {
+    await withStore<void>("readwrite", (store) => {
+      store.put(asset);
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `Irodori アセットをブラウザに保存できませんでした。空き容量を確認してください: ${path} (${message})`
+    );
+  }
+}
+
+async function getStoredAsset(version: string, path: string): Promise<ArrayBuffer | null> {
+  const key = cacheKey(version, path);
+  try {
+    const stored = await withStore<StoredAsset>("readonly", (store) => store.get(key));
+    if (stored) return stored.blob.arrayBuffer();
+  } catch {
+    // Cache Storage 互換読み出しへ fallback
+  }
+
+  if ("caches" in window) {
+    const cache = await caches.open(CACHE_NAME);
+    const cached = await cache.match(key);
+    if (cached) return cached.arrayBuffer();
+  }
+
+  return null;
+}
+
+function deleteIndexedDb(name: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (!("indexedDB" in window)) {
+      resolve();
+      return;
+    }
+    const req = indexedDB.deleteDatabase(name);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error ?? new Error("IndexedDB の削除に失敗しました。"));
+    req.onblocked = () => resolve();
+  });
+}
+
+/** manifest の全ファイルがブラウザストレージに揃っているか */
+export async function isDownloaded(manifest: IrodoriManifest): Promise<boolean> {
   for (const file of manifest.files) {
-    const match = await cache.match(cacheKey(manifest.version, file.path));
-    if (!match) return false;
+    if (!(await hasStoredAsset(manifest.version, file.path))) return false;
   }
   return true;
 }
 
 /**
- * manifest の全ファイルをダウンロードして Cache Storage に保存する。
- * すでにキャッシュ済みのファイルはスキップする（中断後の再開に対応）。
+ * manifest の全ファイルをダウンロードしてブラウザストレージに保存する。
+ * すでに保存済みのファイルはスキップする（中断後の再開に対応）。
  */
 export async function downloadAssets(
   manifest: IrodoriManifest,
   onProgress?: (progress: DownloadProgress) => void,
   signal?: AbortSignal
 ): Promise<void> {
-  if (!("caches" in window)) {
-    throw new Error("このブラウザは Cache Storage に対応していません。");
+  if (!("indexedDB" in window)) {
+    throw new Error("このブラウザは IndexedDB に対応していません。");
   }
 
-  const cache = await caches.open(CACHE_NAME);
   const baseUrl = getAssetsBaseUrl();
   const totalBytes = manifest.files.reduce((sum, f) => sum + (f.size || 0), 0);
   let loadedBytes = 0;
 
   for (let i = 0; i < manifest.files.length; i++) {
     const file = manifest.files[i];
-    const key = cacheKey(manifest.version, file.path);
 
-    const cached = await cache.match(key);
-    if (cached) {
+    if (await hasStoredAsset(manifest.version, file.path)) {
       loadedBytes += file.size || 0;
       onProgress?.({
         loadedBytes,
@@ -151,10 +281,7 @@ export async function downloadAssets(
 
     const blob = new Blob(chunks as BlobPart[]);
     const contentType = resp.headers.get("content-type") ?? "application/octet-stream";
-    await cache.put(
-      key,
-      new Response(blob, { headers: { "content-type": contentType } })
-    );
+    await putStoredAsset(manifest.version, file.path, blob, contentType);
 
     loadedBytes += fileLoaded;
   }
@@ -162,23 +289,23 @@ export async function downloadAssets(
 
 /** ダウンロード済みアセットを削除して容量を解放する */
 export async function deleteAssets(): Promise<void> {
-  if (!("caches" in window)) return;
-  await caches.delete(CACHE_NAME);
+  await Promise.all([
+    "caches" in window ? caches.delete(CACHE_NAME) : Promise.resolve(false),
+    deleteIndexedDb(DB_NAME),
+  ]);
 }
 
 /**
- * Cache Storage からアセットを読み出す（ランタイム連携用）。
+ * ブラウザストレージからアセットを読み出す（ランタイム連携用）。
  * 見つからない場合は配信元から直接取得する。
  */
 export async function loadAsset(
   manifest: IrodoriManifest,
   path: string
 ): Promise<ArrayBuffer> {
-  if ("caches" in window) {
-    const cache = await caches.open(CACHE_NAME);
-    const cached = await cache.match(cacheKey(manifest.version, path));
-    if (cached) return cached.arrayBuffer();
-  }
+  const stored = await getStoredAsset(manifest.version, path);
+  if (stored) return stored;
+
   const resp = await fetch(`${getAssetsBaseUrl()}${path}`);
   if (!resp.ok) {
     throw new Error(`Irodori アセットを取得できませんでした: ${path}`);

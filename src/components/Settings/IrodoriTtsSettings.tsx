@@ -100,7 +100,7 @@ export function IrodoriTtsSettings() {
 
   async function handleDelete() {
     const confirmed = window.confirm(
-      "ダウンロード済みの Irodori TTS モデルを削除して容量を解放します。よろしいですか？"
+      "保存済みまたは途中までダウンロードされた Irodori TTS モデルを削除して容量を解放します。よろしいですか？"
     );
     if (!confirmed) return;
 
@@ -196,6 +196,18 @@ export function IrodoriTtsSettings() {
                   </button>
                 )}
               </div>
+
+              {modelState === "not_downloaded" && (
+                <div className={styles.actionRow}>
+                  <button
+                    className={styles.secondaryBtn}
+                    type="button"
+                    onClick={() => void handleDelete()}
+                  >
+                    保存済みデータを削除
+                  </button>
+                </div>
+              )}
 
               {modelState === "downloading" && (
                 <>
