@@ -16,6 +16,7 @@ const pipeline = resolve(
   argValue("--pipeline", "scripts/irodori/pipeline-src/dist/pipeline.mjs")
 );
 const outDir = resolve(argValue("--out", "public/irodori"));
+const licenseTemplateDir = resolve("scripts/irodori/license-templates");
 const version = argValue("--version", process.env.IRODORI_VERSION);
 
 if (!version) {
@@ -51,6 +52,7 @@ await copy(
   resolve(irodoriWebgpuDir, "LICENSE"),
   resolve(outDir, "licenses/irodori-tts-webgpu-LICENSE")
 );
+await cp(licenseTemplateDir, resolve(outDir, "licenses"), { recursive: true });
 await copy(pipeline, resolve(outDir, "runtime/pipeline.mjs"));
 
 const ortDist = resolve("scripts/irodori/pipeline-src/node_modules/onnxruntime-web/dist");

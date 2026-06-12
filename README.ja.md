@@ -70,8 +70,17 @@ Git 管理されているのは次のみです。
    次のファイルを `public/piper/models/` に配置します。
    - `tsukuyomi-wavlm-300epoch.onnx`
    - `config.json` を `tsukuyomi-config.json` にリネームしたもの
+4. ライセンス表記
+   `scripts/package-piper-assets.sh` は、パッケージ前に `scripts/piper/licenses/` のテンプレートを `public/piper/licenses/` にコピーします。手動で `public/piper/` を組み立てる場合も、このディレクトリを同梱してください。
 
-`scripts/package-piper-assets.sh` はセットアップ用スクリプトではなく、すでに用意済みの `public/piper/` を `piper-assets.tar.gz` に固めて GitHub Releases / CI 配布に使うためのものです。`scripts/release-piper-assets.sh` はさらに GitHub Release へのアップロードまで自動化します。
+Piper 音声モデルのクレジット:
+
+> 本ソフトウェアの音声合成には、フリー素材キャラクター「つくよみちゃん」(c) Rei Yumesaki が無料公開している音声データを使用しています。
+>
+> つくよみちゃんコーパス（CV.夢前黎）<br>
+> https://tyc.rei-yumesaki.net/material/corpus/
+
+`scripts/package-piper-assets.sh` はセットアップ用スクリプトではなく、すでに用意済みの `public/piper/` にライセンステンプレートをコピーした上で `piper-assets.tar.gz` に固めて GitHub Releases / CI 配布に使うためのものです。`scripts/release-piper-assets.sh` はさらに GitHub Release へのアップロードまで自動化します。
 
 どちらも `gh` で GitHub にログイン済みのローカル作業環境で使う想定です。
 
@@ -81,6 +90,8 @@ Git 管理されているのは次のみです。
 ./scripts/package-piper-assets.sh
 ./scripts/release-piper-assets.sh
 ```
+
+既存の `piper-assets-v1` release asset には `piper/licenses/` が含まれていません。このテンプレート込みで tarball を作り直した後は、新しい release asset を公開し、GitHub Actions の repository variable `PIPER_ASSETS_URL` を新しい URL に更新してください。
 
 Irodori TTS を使う場合は、別途 `public/irodori/` に Irodori 用の `manifest.json`、WebGPU 向け fp16 ONNX モデル、tokenizer、`runtime/pipeline.mjs`、ライセンス文を配置します。このディレクトリは Git 管理対象外です。
 

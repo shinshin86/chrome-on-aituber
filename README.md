@@ -68,8 +68,17 @@ Prepare the assets as follows.
    Place these files into `public/piper/models/`:
    - `tsukuyomi-wavlm-300epoch.onnx`
    - `config.json` renamed to `tsukuyomi-config.json`
+4. License notices
+   `scripts/package-piper-assets.sh` copies the templates from `scripts/piper/licenses/` into `public/piper/licenses/` before packaging. If you assemble `public/piper/` manually, include that directory as well.
 
-`scripts/package-piper-assets.sh` is not a setup script. It only packages an already-prepared `public/piper/` directory into `piper-assets.tar.gz` for GitHub Releases / CI deployment. `scripts/release-piper-assets.sh` also uploads that asset to a GitHub Release.
+Piper voice credit:
+
+> This software uses voice data made freely available by the free material character "Tsukuyomi-chan" (c) Rei Yumesaki for speech synthesis.
+>
+> Tsukuyomi-chan Corpus (CV. Rei Yumesaki)<br>
+> https://tyc.rei-yumesaki.net/material/corpus/
+
+`scripts/package-piper-assets.sh` is not a setup script. It only packages an already-prepared `public/piper/` directory into `piper-assets.tar.gz` for GitHub Releases / CI deployment, after copying the license templates. `scripts/release-piper-assets.sh` also uploads that asset to a GitHub Release.
 
 Both scripts are intended for a local release/build environment where `gh` is already authenticated.
 
@@ -79,6 +88,8 @@ If you need that packaging flow, use:
 ./scripts/package-piper-assets.sh
 ./scripts/release-piper-assets.sh
 ```
+
+The existing `piper-assets-v1` release asset does not contain `piper/licenses/`. After rebuilding the tarball with these templates, publish a new release asset and update the GitHub Actions repository variable `PIPER_ASSETS_URL` to that new URL.
 
 To use Irodori TTS, place its `manifest.json`, WebGPU fp16 ONNX models, tokenizer files, `runtime/pipeline.mjs`, and license files under `public/irodori/`. This directory is intentionally not tracked by Git.
 

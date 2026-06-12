@@ -233,13 +233,13 @@ export function ManualDialog({ open, onClose }: Props) {
             </li>
             <li>
               <a
-                href="https://tyc.rei-yumesaki.net/"
+                href="https://tyc.rei-yumesaki.net/material/corpus/"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 つくよみちゃんコーパス
               </a>{" "}
-              — 音声モデルの学習データ（夢前黎 様）
+              — 音声モデルの学習データ（CV.夢前黎）
             </li>
             <li>
               <a

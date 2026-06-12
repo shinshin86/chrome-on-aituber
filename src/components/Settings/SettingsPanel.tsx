@@ -350,21 +350,30 @@ export function SettingsPanel({
             {settings.ttsEngine === "irodori" && <IrodoriTtsSettings />}
 
             {settings.ttsEngine === "piper" && (
-              <label className={styles.label}>
-                読み上げ速度 ({settings.ttsLengthScale.toFixed(1)}x)
-                <input
-                  type="range"
-                  min="0.5"
-                  max="2.0"
-                  step="0.1"
-                  value={settings.ttsLengthScale}
-                  onChange={(e) =>
-                    onUpdate({
-                      ttsLengthScale: parseFloat(e.target.value),
-                    })
-                  }
-                />
-              </label>
+              <>
+                <label className={styles.label}>
+                  読み上げ速度 ({settings.ttsLengthScale.toFixed(1)}x)
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="2.0"
+                    step="0.1"
+                    value={settings.ttsLengthScale}
+                    onChange={(e) =>
+                      onUpdate({
+                        ttsLengthScale: parseFloat(e.target.value),
+                      })
+                    }
+                  />
+                </label>
+                <p className={styles.hint}>
+                  音声モデル: つくよみちゃんコーパス（CV.夢前黎）
+                  <br />
+                  本ソフトウェアの音声合成には、フリー素材キャラクター
+                  「つくよみちゃん」 &copy; Rei Yumesaki
+                  が無料公開している音声データを使用しています。
+                </p>
+              </>
             )}
 
             <div className={styles.ttsSampleBox}>

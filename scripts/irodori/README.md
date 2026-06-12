@@ -100,6 +100,7 @@ This copies:
 - `artifacts/onnx_fp16/` to `public/irodori/onnx_fp16/`
 - `tokenizer/llmjp_tok/` to `public/irodori/tokenizer/llmjp_tok/`
 - `LICENSES/` and repo `LICENSE` to `public/irodori/licenses/`
+- `scripts/irodori/license-templates/` to `public/irodori/licenses/`
 - `pipeline.mjs` to `public/irodori/runtime/pipeline.mjs`
 - selected `onnxruntime-web@1.26.0/dist/ort-wasm-simd-threaded.*` files to
   `public/irodori/runtime/`
@@ -138,6 +139,14 @@ The active license set comes from the reference repo's `LICENSES/` directory:
 
 The package step also copies the reference repo root `LICENSE` as
 `irodori-tts-webgpu-LICENSE`.
+
+Additional templates kept in this repository are copied from
+`scripts/irodori/license-templates/` on every package run:
+
+- `THIRD_PARTY_NOTICES.txt`
+- `Irodori-TTS-MIT-LICENSE.txt`
+- `onnxruntime-MIT-LICENSE.txt`
+- `huggingface-tokenizers-Apache-2.0-LICENSE.txt`
 
 If dependency versions change, re-check and update:
 

@@ -1,0 +1,50 @@
+Irodori Web TTS Assets - Third Party Notices
+
+This directory contains runtime code, ONNX model files, tokenizer files, and
+license notices for the browser WebGPU Irodori TTS runtime.
+
+Components:
+
+- Irodori-TTS
+  Source: https://github.com/Aratako/Irodori-TTS
+  License: MIT
+  License file: Irodori-TTS-MIT-LICENSE.txt
+
+- Irodori-TTS-500M-v3 checkpoint
+  Source: https://huggingface.co/Aratako/Irodori-TTS-500M-v3
+  License: MIT, as declared by the model repository.
+  The model card requests responsible use and prohibits impersonation,
+  fraud, and generation of misleading content.
+
+- Semantic-DACVAE-Japanese-32dim
+  Source: https://huggingface.co/Aratako/Semantic-DACVAE-Japanese-32dim
+  License: MIT, as declared by the model repository.
+  The ONNX encoder/decoder files are derived from this model.
+
+- llm-jp/llm-jp-3-150m tokenizer
+  Source: https://huggingface.co/llm-jp/llm-jp-3-150m
+  License: Apache-2.0, as declared by the model repository.
+  The tokenizer files are included under tokenizer/llmjp_tok/.
+
+- onnxruntime-web
+  Source: https://github.com/microsoft/onnxruntime
+  License: MIT
+  License file: onnxruntime-MIT-LICENSE.txt
+
+- @huggingface/tokenizers
+  Source: https://github.com/huggingface/tokenizers.js
+  License: Apache-2.0
+  License file: huggingface-tokenizers-Apache-2.0-LICENSE.txt
+
+Watermark note:
+
+The Python Irodori-TTS reference implementation can apply SilentCipher
+watermarking after synthesis. This browser runtime does not bundle or execute
+SilentCipher. Audio generated with this WebGPU runtime is therefore not
+watermarked by SilentCipher.
+
+Reference audio note:
+
+No reference audio sample is redistributed with these assets. The application
+accepts only user-uploaded reference audio and keeps it in memory for the
+current session.

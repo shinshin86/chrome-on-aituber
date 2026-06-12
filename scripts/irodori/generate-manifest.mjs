@@ -24,6 +24,10 @@ const DEFAULT_FILES = [
   "licenses/Irodori-TTS-LICENSE",
   "licenses/Semantic-DACVAE-LICENSE",
   "licenses/llm-jp-3-150m-LICENSE",
+  "licenses/THIRD_PARTY_NOTICES.txt",
+  "licenses/Irodori-TTS-MIT-LICENSE.txt",
+  "licenses/onnxruntime-MIT-LICENSE.txt",
+  "licenses/huggingface-tokenizers-Apache-2.0-LICENSE.txt",
 ];
 
 function argValue(name, fallback) {
