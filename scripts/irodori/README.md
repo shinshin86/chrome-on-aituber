@@ -15,10 +15,9 @@ The generated ONNX models and runtime assets are intentionally not committed.
   - `@huggingface/tokenizers@0.1.3`
   - `vite@8.0.16` for the bundle build. Vite 8 emits a Rolldown bundle.
 
-The current `public/irodori/onnx_fp16` files match
-`/private/tmp/irodori-tts-webgpu/artifacts/onnx_fp16` by byte size.
-The current `public/irodori/runtime/pipeline.mjs` matches
-`/private/tmp/irodori-export/pipeline-src/dist/pipeline.mjs`.
+The committed `public/irodori/` set is produced by the steps below: the ONNX
+files come from the reference repo's `artifacts/onnx_fp16/` and the runtime
+bundle from `scripts/irodori/pipeline-src/dist/pipeline.mjs`.
 
 ## 1. Generate ONNX artifacts
 
