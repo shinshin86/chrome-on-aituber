@@ -1,0 +1,38 @@
+Tsukuyomi-chan Corpus Notice
+
+Model:
+  ayousanz/piper-plus-tsukuyomi-chan
+
+Model source:
+  https://huggingface.co/ayousanz/piper-plus-tsukuyomi-chan
+
+Declared model license:
+  tsukuyomi-chan-corpus
+
+Terms:
+  https://tyc.rei-yumesaki.net/material/corpus/
+  https://tyc.rei-yumesaki.net/material/corpus/#terms3
+
+Required credit for this application:
+
+  This software uses voice data made freely available by the free material
+  character "Tsukuyomi-chan" (c) Rei Yumesaki for speech synthesis.
+
+  Tsukuyomi-chan Corpus (CV. Rei Yumesaki)
+  https://tyc.rei-yumesaki.net/material/corpus/
+
+Japanese credit text:
+
+  本ソフトウェアの音声合成には、フリー素材キャラクター「つくよみちゃん」
+  (c) Rei Yumesaki が無料公開している音声データを使用しています。
+
+  つくよみちゃんコーパス（CV.夢前黎）
+  https://tyc.rei-yumesaki.net/material/corpus/
+
+Notes:
+
+- The current GitHub Release asset piper-assets-v1 contains
+  models/tsukuyomi-wavlm-300epoch.onnx and models/tsukuyomi-config.json.
+- Hugging Face currently exposes a newer file set with
+  tsukuyomi-chan-6lang-fp16.onnx. Re-check the model card and terms before
+  replacing the release asset model.

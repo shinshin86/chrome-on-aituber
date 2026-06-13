@@ -38,10 +38,19 @@ export type AppMode = "chat" | "broadcast";
 // Streaming platform
 export type StreamingPlatform = "youtube" | "twitch";
 
+// TTS
+export type TtsEngine = "piper" | "irodori";
+
+export const TTS_ENGINE_LABELS: Record<TtsEngine, string> = {
+  piper: "Piper Plus（標準）",
+  irodori: "Irodori TTS（WebGPU / 高品質）",
+};
+
 // Settings
 export interface AppSettings {
   appMode: AppMode;
   ttsEnabled: boolean;
+  ttsEngine: TtsEngine;
   selectedAvatarId: string;
   backgroundImageEnabled: boolean;
   backgroundImageUpdatedAt: number;
@@ -65,6 +74,7 @@ export interface AppSettings {
 export const DEFAULT_SETTINGS: AppSettings = {
   appMode: "chat",
   ttsEnabled: true,
+  ttsEngine: "piper",
   selectedAvatarId: "default",
   backgroundImageEnabled: false,
   backgroundImageUpdatedAt: 0,

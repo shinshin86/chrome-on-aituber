@@ -18,6 +18,10 @@ env:
   # GitHub Releases にアップロードした piper アセットの URL
   # 例: https://github.com/<owner>/<repo>/releases/download/piper-assets-v1/piper-assets.tar.gz
   PIPER_ASSETS_URL: ${{ vars.PIPER_ASSETS_URL }}
+  # GitHub Releases にアップロードした Irodori ランタイム（pipeline.mjs + ort-wasm + licenses）の URL
+  # 例: https://github.com/<owner>/<repo>/releases/download/irodori-runtime-v1/irodori-runtime-assets.tar.gz
+  # 未設定の場合は Irodori ランタイムを同梱せずにビルドする
+  IRODORI_RUNTIME_ASSETS_URL: ${{ vars.IRODORI_RUNTIME_ASSETS_URL }}
 
 jobs:
   build:
@@ -38,9 +42,19 @@ jobs:
           tar -xzf piper-assets.tar.gz -C public/
           rm piper-assets.tar.gz
 
+      - name: Download Irodori runtime assets
+        if: env.IRODORI_RUNTIME_ASSETS_URL != ''
+        run: |
+          curl -L -o irodori-runtime-assets.tar.gz "$IRODORI_RUNTIME_ASSETS_URL"
+          tar -xzf irodori-runtime-assets.tar.gz -C public/
+          rm irodori-runtime-assets.tar.gz
+
       - name: Build
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          # Irodori モデル等の配信元（Hugging Face など CORS 対応ホスト）。
+          # 例: https://huggingface.co/<user>/<repo>/resolve/main/
+          VITE_IRODORI_ASSETS_BASE_URL: ${{ vars.IRODORI_ASSETS_BASE_URL }}
         run: npm run build
 
       - uses: actions/upload-pages-artifact@v3

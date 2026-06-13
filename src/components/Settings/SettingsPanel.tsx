@@ -1,7 +1,15 @@
 import { useRef, useState } from "react";
-import { CHAT_SOURCE_LABELS } from "../../types";
-import type { AppSettings, AppMode, ChatMessage, StreamingPlatform } from "../../types";
+import { CHAT_SOURCE_LABELS, TTS_ENGINE_LABELS } from "../../types";
+import type {
+  AppSettings,
+  AppMode,
+  ChatMessage,
+  StreamingPlatform,
+  TtsEngine,
+} from "../../types";
+import * as tts from "../../services/tts/ttsService";
 import { AvatarSettings } from "./AvatarSettings";
+import { IrodoriTtsSettings } from "./IrodoriTtsSettings";
 import styles from "./Settings.module.css";
 
 interface Props {
@@ -27,6 +35,11 @@ const MODE_OPTIONS: { value: AppMode; label: string }[] = [
   { value: "broadcast", label: "配信モード（グリーンバック）" },
 ];
 
+const TTS_ENGINE_OPTIONS: { value: TtsEngine; label: string }[] = [
+  { value: "piper", label: TTS_ENGINE_LABELS.piper },
+  { value: "irodori", label: TTS_ENGINE_LABELS.irodori },
+];
+
 const INTERVAL_OPTIONS = [
   { value: 10000, label: "10秒" },
   { value: 15000, label: "15秒" },
@@ -34,6 +47,8 @@ const INTERVAL_OPTIONS = [
   { value: 30000, label: "30秒" },
   { value: 60000, label: "60秒" },
 ];
+
+const TTS_SAMPLE_TEXT = "こんにちは。音声合成のテストです。";
 
 function formatDateTime(timestamp: number): string {
   const date = new Date(timestamp);
@@ -66,6 +81,10 @@ function createOauthState(): string {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function toTtsLengthScale(speedMultiplier: number): number {
+  return speedMultiplier > 0 ? 1 / speedMultiplier : 1;
+}
+
 export function SettingsPanel({
   settings,
   messages,
@@ -81,6 +100,9 @@ export function SettingsPanel({
   const [twitchConnectError, setTwitchConnectError] = useState("");
   const [backgroundBusy, setBackgroundBusy] = useState(false);
   const [backgroundError, setBackgroundError] = useState("");
+  const [sampleBusy, setSampleBusy] = useState(false);
+  const [sampleStatus, setSampleStatus] = useState("");
+  const [sampleError, setSampleError] = useState("");
   const backgroundInputRef = useRef<HTMLInputElement | null>(null);
   const twitchRedirectUri =
     typeof window === "undefined"
@@ -134,6 +156,49 @@ export function SettingsPanel({
     if (!confirmed) return;
 
     onReset();
+  }
+
+  async function handlePlayTtsSample() {
+    if (sampleBusy) return;
+
+    setSampleBusy(true);
+    setSampleError("");
+    setSampleStatus("音声エンジンを準備中...");
+
+    try {
+      await tts.setEngine(settings.ttsEngine);
+
+      if (!tts.isReady()) {
+        await tts.initialize((msg) => {
+          setSampleStatus(msg ?? "");
+        });
+      }
+
+      setSampleStatus("サンプルボイスを生成中...");
+      await tts.speak(
+        TTS_SAMPLE_TEXT,
+        () => undefined,
+        settings.ttsEngine === "piper"
+          ? toTtsLengthScale(settings.ttsLengthScale)
+          : undefined
+      );
+      setSampleStatus("サンプルボイスを再生しました");
+    } catch (e) {
+      setSampleStatus("");
+      setSampleError(
+        e instanceof Error
+          ? e.message
+          : "サンプルボイスの再生に失敗しました"
+      );
+    } finally {
+      setSampleBusy(false);
+    }
+  }
+
+  function handleStopTtsSample() {
+    tts.stop({ cancelIrodori: true });
+    setSampleBusy(false);
+    setSampleStatus("");
   }
 
   if (!open) return null;
@@ -266,20 +331,75 @@ export function SettingsPanel({
             </label>
 
             <label className={styles.label}>
-              読み上げ速度 ({settings.ttsLengthScale.toFixed(1)}x)
-              <input
-                type="range"
-                min="0.5"
-                max="2.0"
-                step="0.1"
-                value={settings.ttsLengthScale}
+              TTS エンジン
+              <select
+                className={styles.textInput}
+                value={settings.ttsEngine}
                 onChange={(e) =>
-                  onUpdate({
-                    ttsLengthScale: parseFloat(e.target.value),
-                  })
+                  onUpdate({ ttsEngine: e.target.value as TtsEngine })
                 }
-              />
+              >
+                {TTS_ENGINE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </label>
+
+            {settings.ttsEngine === "irodori" && <IrodoriTtsSettings />}
+
+            {settings.ttsEngine === "piper" && (
+              <>
+                <label className={styles.label}>
+                  読み上げ速度 ({settings.ttsLengthScale.toFixed(1)}x)
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="2.0"
+                    step="0.1"
+                    value={settings.ttsLengthScale}
+                    onChange={(e) =>
+                      onUpdate({
+                        ttsLengthScale: parseFloat(e.target.value),
+                      })
+                    }
+                  />
+                </label>
+                <p className={styles.hint}>
+                  音声モデル: つくよみちゃんコーパス（CV.夢前黎）
+                  <br />
+                  本ソフトウェアの音声合成には、フリー素材キャラクター
+                  「つくよみちゃん」 &copy; Rei Yumesaki
+                  が無料公開している音声データを使用しています。
+                </p>
+              </>
+            )}
+
+            <div className={styles.ttsSampleBox}>
+              <div className={styles.actionRow}>
+                <button
+                  className={styles.subActionBtn}
+                  type="button"
+                  disabled={sampleBusy}
+                  onClick={() => void handlePlayTtsSample()}
+                >
+                  {sampleBusy ? "サンプル生成中..." : "サンプルボイスを再生"}
+                </button>
+                <button
+                  className={styles.secondaryBtn}
+                  type="button"
+                  onClick={handleStopTtsSample}
+                >
+                  停止
+                </button>
+              </div>
+              <p className={styles.hint}>
+                現在選択中の {TTS_ENGINE_LABELS[settings.ttsEngine]} でテスト再生します。
+              </p>
+              {sampleStatus && <p className={styles.hint}>{sampleStatus}</p>}
+              {sampleError && <p className={styles.errorText}>{sampleError}</p>}
+            </div>
 
           </div>
         </details>

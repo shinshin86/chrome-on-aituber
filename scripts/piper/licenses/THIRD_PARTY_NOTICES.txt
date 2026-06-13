@@ -1,0 +1,117 @@
+Piper Plus Web TTS Assets - Third Party Notices
+
+This directory contains license notices for the browser Piper Plus TTS asset
+set packaged by scripts/package-piper-assets.sh.
+
+Current release inventory checked:
+
+- GitHub Release:
+  https://github.com/shinshin86/chrome-on-aituber/releases/tag/piper-assets-v1
+- Asset:
+  piper-assets.tar.gz
+- Release asset SHA-256:
+  f1d1ba5d655cb2ec659e7f47efbe729ed062b3119fdd352663aa3542766f43de
+
+Packaged files in piper-assets-v1:
+
+- piper/piper-global-loader.js
+- piper/dist/openjtalk.js
+- piper/dist/openjtalk.wasm
+- piper/dist/ort.min.js
+- piper/dist/ort-wasm.wasm
+- piper/dist/ort-wasm-simd.wasm
+- piper/src/api.js
+- piper/src/custom_dictionary.js
+- piper/src/dictionary-loader.js
+- piper/src/japanese_phoneme_extract.js
+- piper/src/openjtalk_wrapper.js
+- piper/src/phonemizer.js
+- piper/src/simple_english_phonemizer.js
+- piper/src/simple_unified_api.js
+- piper/assets/dict/COPYING
+- piper/assets/dict/char.bin
+- piper/assets/dict/left-id.def
+- piper/assets/dict/matrix.bin
+- piper/assets/dict/pos-id.def
+- piper/assets/dict/rewrite.def
+- piper/assets/dict/right-id.def
+- piper/assets/dict/sys.dic
+- piper/assets/dict/unk.dic
+- piper/assets/voice/mei_normal.htsvoice
+- piper/models/tsukuyomi-config.json
+- piper/models/tsukuyomi-wavlm-300epoch.onnx
+
+Existing license/notice files in piper-assets-v1:
+
+- piper/assets/dict/COPYING
+
+No piper/licenses/ directory, THIRD_PARTY_NOTICES file, piper-plus MIT
+license text, ONNX Runtime MIT license text, MeCab license text, HTS voice
+license text, or Tsukuyomi-chan corpus notice was present in piper-assets-v1.
+
+Components included in the packaged asset:
+
+- piper-plus / openjtalk-web JavaScript glue
+  Source: https://github.com/ayutaz/piper-plus/tree/dev/src/wasm/openjtalk-web
+  License: MIT
+  License file: piper-plus-MIT-LICENSE.txt
+
+- Open JTalk
+  Source: https://open-jtalk.sourceforge.net/
+  License: BSD 3-Clause
+  License file: openjtalk-dict-COPYING.txt
+  Included via: piper/dist/openjtalk.js and piper/dist/openjtalk.wasm
+
+- HTS Engine API
+  Source: http://hts-engine.sourceforge.net/
+  License: BSD 3-Clause
+  License file: openjtalk-dict-COPYING.txt
+  Included via: piper/dist/openjtalk.wasm
+
+- MeCab
+  Source: https://taku910.github.io/mecab/
+  License: BSD 3-Clause
+  License file: MeCab-BSD-3-Clause-LICENSE.txt
+  Included via: piper/dist/openjtalk.wasm
+
+- NAIST Japanese Dictionary / UniDic dictionary data
+  Source: Open JTalk dictionary assets
+  License: BSD 3-Clause
+  License file: openjtalk-dict-COPYING.txt
+  Included via: piper/assets/dict/
+
+- HTS Voice "Mei"
+  Source: Open JTalk / MMDAgent voice assets
+  License: Creative Commons Attribution 3.0 Unported
+  License file: CC-BY-3.0-LICENSE.txt
+  Included via: piper/assets/voice/mei_normal.htsvoice
+
+- ONNX Runtime Web
+  Source: https://github.com/microsoft/onnxruntime
+  License: MIT
+  License file: onnxruntime-web-MIT-LICENSE.txt
+  Included via: piper/dist/ort.min.js, piper/dist/ort-wasm.wasm,
+  piper/dist/ort-wasm-simd.wasm
+  Note: piper-assets-v1 contains ONNX Runtime Web v1.17.1 in ort.min.js.
+
+- Tsukuyomi-chan voice model
+  Source: https://huggingface.co/ayousanz/piper-plus-tsukuyomi-chan
+  Declared license: tsukuyomi-chan-corpus
+  Notice file: tsukuyomi-chan-corpus-NOTICE.txt
+  Included via: piper/models/tsukuyomi-wavlm-300epoch.onnx and
+  piper/models/tsukuyomi-config.json
+
+Components checked but not included in piper-assets-v1:
+
+- espeak-ng
+  piper-assets-v1 contains no espeak-ng JavaScript, worker, data file, or
+  binary path. The only espeak occurrences are comments in source files and a
+  metadata object in tsukuyomi-config.json. The active model configuration has
+  phoneme_type: "openjtalk".
+
+- @piper-plus/g2p / g2p-en
+  The current upstream piper-plus openjtalk-web package declares
+  @piper-plus/g2p, but piper-assets-v1 contains no @piper-plus/g2p package,
+  rust-wasm g2p bundle, or g2p-en data. This app's piper provider imports
+  SimpleUnifiedPhonemizer from piper/src/simple_unified_api.js and uses
+  OpenJTalk for Japanese text.

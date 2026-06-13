@@ -5,10 +5,8 @@ interface Props {
   onClose: () => void;
 }
 
-const REPO_BLOB_BASE_URL =
-  "https://github.com/shinshin86/chrome-on-aituber/blob/main";
-const REPO_TREE_BASE_URL =
-  "https://github.com/shinshin86/chrome-on-aituber/tree/main";
+const PIPER_LICENSE_BASE_URL = `${import.meta.env.BASE_URL}piper/licenses`;
+const IRODORI_LICENSE_BASE_URL = `${import.meta.env.BASE_URL}irodori/licenses`;
 
 export function LicenseDialog({ open, onClose }: Props) {
   if (!open) return null;
@@ -24,7 +22,7 @@ export function LicenseDialog({ open, onClose }: Props) {
           <p style={{ fontSize: 15, fontWeight: 500, color: "#333" }}>
             本ソフトウェアの音声合成には、フリー素材キャラクター
             「つくよみちゃん」 &copy; Rei Yumesaki
-            が公開している音声データおよび、その利用条件に準拠した関連モデルを使用しています。
+            が無料公開している音声データおよび、その利用条件に準拠した関連モデルを使用しています。
           </p>
           <p>つくよみちゃんコーパス（CV.夢前黎）</p>
           <p>
@@ -145,25 +143,24 @@ export function LicenseDialog({ open, onClose }: Props) {
         <section className={styles.section}>
           <h3>Third-Party Notices / License Texts</h3>
           <p>
-            第三者コンポーネントの notices とライセンス本文は、
-            リポジトリ内の `THIRD_PARTY_NOTICES.md` および `licenses/`
-            にまとめています。
+            Piper Plus と Irodori TTS の notices とライセンス本文は、
+            配信アセット内の <code>licenses/</code> に同梱しています。
           </p>
           <p>
             <a
-              href={`${REPO_BLOB_BASE_URL}/THIRD_PARTY_NOTICES.md`}
+              href={`${PIPER_LICENSE_BASE_URL}/THIRD_PARTY_NOTICES.txt`}
               target="_blank"
               rel="noopener noreferrer"
             >
-              THIRD_PARTY_NOTICES.md
+              Piper THIRD_PARTY_NOTICES
             </a>
             {" / "}
             <a
-              href={`${REPO_TREE_BASE_URL}/licenses`}
+              href={`${IRODORI_LICENSE_BASE_URL}/THIRD_PARTY_NOTICES.txt`}
               target="_blank"
               rel="noopener noreferrer"
             >
-              licenses/
+              Irodori THIRD_PARTY_NOTICES
             </a>
           </p>
         </section>

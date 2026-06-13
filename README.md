@@ -68,8 +68,17 @@ Prepare the assets as follows.
    Place these files into `public/piper/models/`:
    - `tsukuyomi-wavlm-300epoch.onnx`
    - `config.json` renamed to `tsukuyomi-config.json`
+4. License notices
+   `scripts/package-piper-assets.sh` copies the templates from `scripts/piper/licenses/` into `public/piper/licenses/` before packaging. If you assemble `public/piper/` manually, include that directory as well.
 
-`scripts/package-piper-assets.sh` is not a setup script. It only packages an already-prepared `public/piper/` directory into `piper-assets.tar.gz` for GitHub Releases / CI deployment. `scripts/release-piper-assets.sh` also uploads that asset to a GitHub Release.
+Piper voice credit:
+
+> This software uses voice data made freely available by the free material character "Tsukuyomi-chan" (c) Rei Yumesaki for speech synthesis.
+>
+> Tsukuyomi-chan Corpus (CV. Rei Yumesaki)<br>
+> https://tyc.rei-yumesaki.net/material/corpus/
+
+`scripts/package-piper-assets.sh` is not a setup script. It only packages an already-prepared `public/piper/` directory into `piper-assets.tar.gz` for GitHub Releases / CI deployment, after copying the license templates. `scripts/release-piper-assets.sh` also uploads that asset to a GitHub Release.
 
 Both scripts are intended for a local release/build environment where `gh` is already authenticated.
 
@@ -79,6 +88,14 @@ If you need that packaging flow, use:
 ./scripts/package-piper-assets.sh
 ./scripts/release-piper-assets.sh
 ```
+
+The existing `piper-assets-v1` release asset does not contain `piper/licenses/`. After rebuilding the tarball with these templates, publish a new release asset and update the GitHub Actions repository variable `PIPER_ASSETS_URL` to that new URL.
+
+To use Irodori TTS, place its `manifest.json`, WebGPU fp16 ONNX models, tokenizer files, `runtime/pipeline.mjs`, and license files under `public/irodori/`. This directory is intentionally not tracked by Git. The build recipe lives in [`scripts/irodori/`](scripts/irodori/README.md).
+
+For the deployed site, Irodori assets are hosted in two parts because the set (~1.3GB) exceeds the GitHub Pages site limit and GitHub Release assets do not send CORS headers: the runtime (`pipeline.mjs` + ONNX Runtime wasm, served same-origin because dynamic `import()` requires a JavaScript MIME type) ships as a GitHub Release tarball extracted at build time (`IRODORI_RUNTIME_ASSETS_URL`), while models and tokenizer are downloaded by the browser directly from a public Hugging Face repository (`IRODORI_ASSETS_BASE_URL` → `VITE_IRODORI_ASSETS_BASE_URL`). Both repository variables are optional; when unset the app falls back to same-origin `irodori/`. See [`scripts/irodori/README.md`](scripts/irodori/README.md) for the release steps.
+
+When you click `Download Irodori TTS model` in the app, the asset set is saved to browser storage, primarily IndexedDB. The current fp16 asset set is about 1.2 GiB. In a normal browser window, it remains until you click `Delete model and free storage` in settings or clear the site's data in Chrome. In Incognito mode, it is stored only for that Incognito session and becomes unavailable to the web app after all Incognito windows are closed. Incognito storage quotas can also be smaller than normal-window quotas, so saving the model may fail with `QuotaExceededError`. Uploaded `.wav` reference audio is not persisted; it is kept only in memory for the current session.
 
 3. Start the development server
 
@@ -177,3 +194,5 @@ src/
 ## Notes
 
 - Settings, chat history, API keys, and Twitch access tokens are stored in the local browser.
+- Downloaded Irodori TTS models are stored in browser storage and use about 1.2 GiB.
+- Incognito mode may have a smaller browser storage quota, so Irodori TTS model storage is recommended in a normal browser window.

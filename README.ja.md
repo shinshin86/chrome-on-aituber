@@ -70,8 +70,17 @@ Git 管理されているのは次のみです。
    次のファイルを `public/piper/models/` に配置します。
    - `tsukuyomi-wavlm-300epoch.onnx`
    - `config.json` を `tsukuyomi-config.json` にリネームしたもの
+4. ライセンス表記
+   `scripts/package-piper-assets.sh` は、パッケージ前に `scripts/piper/licenses/` のテンプレートを `public/piper/licenses/` にコピーします。手動で `public/piper/` を組み立てる場合も、このディレクトリを同梱してください。
 
-`scripts/package-piper-assets.sh` はセットアップ用スクリプトではなく、すでに用意済みの `public/piper/` を `piper-assets.tar.gz` に固めて GitHub Releases / CI 配布に使うためのものです。`scripts/release-piper-assets.sh` はさらに GitHub Release へのアップロードまで自動化します。
+Piper 音声モデルのクレジット:
+
+> 本ソフトウェアの音声合成には、フリー素材キャラクター「つくよみちゃん」(c) Rei Yumesaki が無料公開している音声データを使用しています。
+>
+> つくよみちゃんコーパス（CV.夢前黎）<br>
+> https://tyc.rei-yumesaki.net/material/corpus/
+
+`scripts/package-piper-assets.sh` はセットアップ用スクリプトではなく、すでに用意済みの `public/piper/` にライセンステンプレートをコピーした上で `piper-assets.tar.gz` に固めて GitHub Releases / CI 配布に使うためのものです。`scripts/release-piper-assets.sh` はさらに GitHub Release へのアップロードまで自動化します。
 
 どちらも `gh` で GitHub にログイン済みのローカル作業環境で使う想定です。
 
@@ -81,6 +90,14 @@ Git 管理されているのは次のみです。
 ./scripts/package-piper-assets.sh
 ./scripts/release-piper-assets.sh
 ```
+
+既存の `piper-assets-v1` release asset には `piper/licenses/` が含まれていません。このテンプレート込みで tarball を作り直した後は、新しい release asset を公開し、GitHub Actions の repository variable `PIPER_ASSETS_URL` を新しい URL に更新してください。
+
+Irodori TTS を使う場合は、別途 `public/irodori/` に Irodori 用の `manifest.json`、WebGPU 向け fp16 ONNX モデル、tokenizer、`runtime/pipeline.mjs`、ライセンス文を配置します。このディレクトリは Git 管理対象外です。組み上げ手順は [`scripts/irodori/`](scripts/irodori/README.md) にあります。
+
+デプロイ先では、アセット一式（約 1.3GB）が GitHub Pages のサイト上限を超えること、および GitHub Release asset には CORS ヘッダが付かないことから、Irodori アセットは二分割でホスティングします。ランタイム（`pipeline.mjs` + ONNX Runtime wasm。dynamic `import()` に JavaScript の MIME タイプが必要なため同一オリジン配信）は GitHub Release の tarball としてビルド時に展開され（`IRODORI_RUNTIME_ASSETS_URL`）、モデルと tokenizer はブラウザが公開 Hugging Face リポジトリから直接ダウンロードします（`IRODORI_ASSETS_BASE_URL` → `VITE_IRODORI_ASSETS_BASE_URL`）。どちらの repository variable も任意で、未設定時は同一オリジンの `irodori/` に fallback します。リリース手順は [`scripts/irodori/README.md`](scripts/irodori/README.md) を参照してください。
+
+アプリ上で `Irodori TTS モデルをダウンロード` を押すと、モデル一式はブラウザストレージ（主に IndexedDB）に保存されます。現在の fp16 アセット一式は約 1.2 GiB です。通常ウィンドウでは、設定画面の `モデルを削除して容量を解放` を押すか、Chrome のサイトデータを削除するまで残ります。シークレットモードでは、そのシークレットセッション用の一時保存になり、すべてのシークレットウィンドウを閉じると Web アプリからは参照できなくなります。また、シークレットモードは保存容量の上限が通常ウィンドウより小さくなることがあり、モデル保存が `QuotaExceededError` で失敗する場合があります。参照音声としてアップロードした `.wav` は永続保存されず、セッション内のメモリ上でのみ使われます。
 
 3. 開発サーバーを起動する
 
@@ -178,3 +195,5 @@ src/
 ## 補足
 
 - 設定、会話履歴、API キー、Twitch アクセストークンはローカルブラウザに保存されます。
+- Irodori TTS のダウンロード済みモデルはブラウザストレージに保存されるため、保存容量を約 1.2 GiB 使用します。
+- シークレットモードでは保存容量の上限が小さくなる場合があるため、Irodori TTS のモデル保存には通常ウィンドウの利用を推奨します。
