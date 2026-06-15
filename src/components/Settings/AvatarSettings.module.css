@@ -123,6 +123,11 @@
   border-color: #90caf9;
 }
 
+.slotPreview.dragActive {
+  border-color: #42a5f5;
+  background: #e3f2fd;
+}
+
 .slotPreview img {
   width: 100%;
   height: 100%;
