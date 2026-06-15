@@ -90,6 +90,15 @@
   min-width: 0;
 }
 
+.avatar-loading {
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #4f5f5b;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .ai-prepare-overlay {
   position: fixed;
   inset: 0;
