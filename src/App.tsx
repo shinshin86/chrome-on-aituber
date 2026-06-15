@@ -12,7 +12,7 @@ import { useYoutubeComments } from "./hooks/useYoutubeComments";
 import { useTwitchComments } from "./hooks/useTwitchComments";
 import {
   getDefaultAvatar,
-  getAllAvatars,
+  getAvatarById,
   revokeAvatarUrls,
 } from "./services/avatar/avatarService";
 import {
@@ -104,7 +104,13 @@ function App() {
   const backgroundUrlRef = useRef<string | null>(null);
 
   const isBroadcast = settings.appMode === "broadcast";
-  const [avatar, setAvatar] = useState<AvatarPack>(getDefaultAvatar());
+  const [avatar, setAvatar] = useState<AvatarPack | null>(() =>
+    settings.selectedAvatarId === "default" ? getDefaultAvatar() : null
+  );
+  const [avatarLoading, setAvatarLoading] = useState(
+    settings.selectedAvatarId !== "default"
+  );
+  const assistantLabel = avatar?.name ?? "AI";
   const llmReady = llmStatus === "available";
 
   // selectedAvatarId に応じてアバターを読み込む
@@ -112,14 +118,28 @@ function App() {
     let cancelled = false;
     async function load() {
       if (settings.selectedAvatarId === "default") {
+        revokeAvatarUrls();
         setAvatar(getDefaultAvatar());
+        setAvatarLoading(false);
         return;
       }
+      setAvatar(null);
+      setAvatarLoading(true);
       revokeAvatarUrls();
-      const all = await getAllAvatars();
-      const found = all.find((a) => a.id === settings.selectedAvatarId);
-      if (!cancelled) {
-        setAvatar(found ?? getDefaultAvatar());
+      try {
+        const found = await getAvatarById(settings.selectedAvatarId);
+        if (!cancelled) {
+          setAvatar(found ?? getDefaultAvatar());
+        }
+      } catch (e) {
+        console.warn("Avatar load error:", e);
+        if (!cancelled) {
+          setAvatar(getDefaultAvatar());
+        }
+      } finally {
+        if (!cancelled) {
+          setAvatarLoading(false);
+        }
       }
     }
     load();
@@ -354,7 +374,7 @@ function App() {
   const handleExportMessages = useCallback(() => {
     if (messages.length === 0) return;
 
-    const csv = createChatLogCsv(messages, avatar.name);
+    const csv = createChatLogCsv(messages, assistantLabel);
     const blob = new Blob(["\uFEFF", csv], {
       type: "text/csv;charset=utf-8",
     });
@@ -366,7 +386,7 @@ function App() {
     anchor.click();
 
     window.setTimeout(() => URL.revokeObjectURL(url), 0);
-  }, [avatar.name, messages]);
+  }, [assistantLabel, messages]);
 
   const appStyle = useMemo(
     () =>
@@ -400,15 +420,21 @@ function App() {
       <div className="stage">
         {!isBroadcast && (
           <div className="log-column left">
-            <ChatLog messages={aiMessages} label={avatar.name} variant="assistant" />
+            <ChatLog messages={aiMessages} label={assistantLabel} variant="assistant" />
           </div>
         )}
 
         <div className="avatar-center">
-          <Avatar
-            images={avatar.images}
-            mouthOpen={mouthOpen}
-          />
+          {avatar ? (
+            <Avatar
+              images={avatar.images}
+              mouthOpen={mouthOpen}
+            />
+          ) : (
+            <div className="avatar-loading" role="status" aria-live="polite">
+              {avatarLoading ? "アバターを読み込み中..." : "アバターを表示できません"}
+            </div>
+          )}
         </div>
 
         {!isBroadcast && (
@@ -459,7 +485,7 @@ function App() {
       <SettingsPanel
         settings={settings}
         messages={messages}
-        assistantLabel={avatar.name}
+        assistantLabel={assistantLabel}
         onUpdate={handleUpdateSettings}
         onUploadBackgroundImage={handleUploadBackgroundImage}
         onResetBackgroundImage={handleResetBackgroundImage}

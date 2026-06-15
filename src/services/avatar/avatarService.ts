@@ -1,5 +1,6 @@
 import type { AvatarPack, AvatarImages } from "../../types";
 import {
+  loadAvatarPack,
   listAvatarPacks,
   saveAvatarPack,
   deleteAvatarPack,
@@ -28,6 +29,12 @@ export async function getAllAvatars(): Promise<AvatarPack[]> {
   const stored = await listAvatarPacks();
   const custom: AvatarPack[] = stored.map(storedToAvatarPack);
   return [DEFAULT_AVATAR, ...custom];
+}
+
+export async function getAvatarById(id: string): Promise<AvatarPack | undefined> {
+  if (id === DEFAULT_AVATAR.id) return DEFAULT_AVATAR;
+  const stored = await loadAvatarPack(id);
+  return stored ? storedToAvatarPack(stored) : undefined;
 }
 
 export async function registerAvatar(
