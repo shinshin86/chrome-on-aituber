@@ -15,9 +15,12 @@
   padding: 8px;
   border: 2px solid #e0e0e0;
   border-radius: 10px;
+  background: #fff;
+  font-family: inherit;
   cursor: pointer;
   transition: border-color 0.15s;
   width: 80px;
+  box-sizing: border-box;
 }
 
 .avatarItem:hover {
@@ -69,6 +72,33 @@
 
 .avatarItem:hover .deleteBtn {
   opacity: 1;
+}
+
+.addAvatarItem {
+  justify-content: center;
+  min-height: 100px;
+  border-style: dashed;
+  color: #666;
+}
+
+.addAvatarItem:hover,
+.addAvatarItemActive {
+  border-color: #42a5f5;
+  background: #f3f9ff;
+}
+
+.addAvatarIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
+  background: #fafafa;
+  color: #1976d2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1;
 }
 
 /* Register section */
@@ -186,6 +216,11 @@
   box-sizing: border-box;
 }
 
+.registerActions {
+  display: flex;
+  gap: 8px;
+}
+
 .registerBtn {
   width: 100%;
   padding: 9px;
@@ -198,11 +233,38 @@
   cursor: pointer;
 }
 
+.registerActions .registerBtn {
+  flex: 1;
+  width: auto;
+}
+
 .registerBtn:hover:not(:disabled) {
   background: #4caf50;
 }
 
 .registerBtn:disabled {
   opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cancelBtn {
+  flex: 0 0 110px;
+  padding: 9px;
+  background: #fff;
+  color: #555;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.cancelBtn:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+
+.cancelBtn:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }

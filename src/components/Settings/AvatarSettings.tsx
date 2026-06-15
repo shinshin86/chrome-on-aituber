@@ -60,6 +60,7 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
     mouthOpenEyesOpen: null,
     mouthOpenEyesClose: null,
   });
+  const [showRegisterForm, setShowRegisterForm] = useState(false);
   const [name, setName] = useState("");
   const [registering, setRegistering] = useState(false);
   const [draggingSlot, setDraggingSlot] = useState<SlotKey | null>(null);
@@ -101,6 +102,17 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
 
   function handleFileChange(key: SlotKey, file: File | null) {
     setFiles((prev) => ({ ...prev, [key]: file }));
+  }
+
+  function resetRegisterForm() {
+    setFiles({
+      mouthCloseEyesOpen: null,
+      mouthCloseEyesClose: null,
+      mouthOpenEyesOpen: null,
+      mouthOpenEyesClose: null,
+    });
+    setName("");
+    setDraggingSlot(null);
   }
 
   function pickImageFile(fileList: FileList): File | null {
@@ -149,13 +161,8 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
         mouthOpenEyesClose: files.mouthOpenEyesClose!,
       });
       onSelectAvatar(pack.id);
-      setFiles({
-        mouthCloseEyesOpen: null,
-        mouthCloseEyesClose: null,
-        mouthOpenEyesOpen: null,
-        mouthOpenEyesClose: null,
-      });
-      setName("");
+      resetRegisterForm();
+      setShowRegisterForm(false);
       await loadAvatars();
     } finally {
       setRegistering(false);
@@ -202,77 +209,102 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
             )}
           </div>
         ))}
-      </div>
-
-      {/* 新規登録 */}
-      <div className={styles.registerSection}>
-        <h4 className={styles.registerTitle}>新しいアバターを登録</h4>
-        <span className={styles.registerHint}>
-          4 枚の画像をクリックまたはドラッグ＆ドロップで設定してください（PNG / JPG 推奨）
-        </span>
-
-        <div className={styles.slotGrid}>
-          {SLOTS.map((slot) => (
-            <div key={slot.key} className={styles.slot}>
-              <div
-                className={`${styles.slotPreview} ${
-                  draggingSlot === slot.key ? styles.dragActive : ""
-                }`}
-                onClick={() => fileInputRefs.current[slot.key]?.click()}
-                onDragOver={(e) => handleSlotDragOver(e, slot.key)}
-                onDragLeave={(e) => handleSlotDragLeave(e, slot.key)}
-                onDragEnd={() => setDraggingSlot(null)}
-                onDrop={(e) => handleSlotDrop(e, slot.key)}
-              >
-                {previews[slot.key] ? (
-                  <img
-                    className={styles.slotImage}
-                    src={previews[slot.key]!}
-                    alt={slot.label}
-                  />
-                ) : (
-                  <>
-                    <img
-                      className={styles.slotGuideImage}
-                      src={DEFAULT_AVATAR_IMAGES[slot.key]}
-                      alt=""
-                      aria-hidden="true"
-                    />
-                    <span className={styles.slotPlaceholder}>+</span>
-                  </>
-                )}
-              </div>
-              <div className={styles.slotLabel}>{slot.label}</div>
-              <div className={styles.slotDesc}>{slot.description}</div>
-              <input
-                ref={(el) => { fileInputRefs.current[slot.key] = el; }}
-                type="file"
-                accept="image/*"
-                hidden
-                onChange={(e) =>
-                  handleFileChange(slot.key, e.target.files?.[0] ?? null)
-                }
-              />
-            </div>
-          ))}
-        </div>
-
-        <input
-          className={styles.nameInput}
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="アバター名"
-        />
-
         <button
-          className={styles.registerBtn}
-          disabled={!allFilesSet || !name.trim() || registering}
-          onClick={handleRegister}
+          type="button"
+          className={`${styles.avatarItem} ${styles.addAvatarItem} ${
+            showRegisterForm ? styles.addAvatarItemActive : ""
+          }`}
+          onClick={() => setShowRegisterForm(true)}
         >
-          {registering ? "登録中..." : "登録する"}
+          <span className={styles.addAvatarIcon}>+</span>
+          <span className={styles.avatarName}>追加</span>
         </button>
       </div>
+
+      {showRegisterForm && (
+        <div className={styles.registerSection}>
+          <h4 className={styles.registerTitle}>新しいアバターを登録</h4>
+          <span className={styles.registerHint}>
+            4 枚の画像をクリックまたはドラッグ＆ドロップで設定してください（PNG / JPG 推奨）
+          </span>
+
+          <div className={styles.slotGrid}>
+            {SLOTS.map((slot) => (
+              <div key={slot.key} className={styles.slot}>
+                <div
+                  className={`${styles.slotPreview} ${
+                    draggingSlot === slot.key ? styles.dragActive : ""
+                  }`}
+                  onClick={() => fileInputRefs.current[slot.key]?.click()}
+                  onDragOver={(e) => handleSlotDragOver(e, slot.key)}
+                  onDragLeave={(e) => handleSlotDragLeave(e, slot.key)}
+                  onDragEnd={() => setDraggingSlot(null)}
+                  onDrop={(e) => handleSlotDrop(e, slot.key)}
+                >
+                  {previews[slot.key] ? (
+                    <img
+                      className={styles.slotImage}
+                      src={previews[slot.key]!}
+                      alt={slot.label}
+                    />
+                  ) : (
+                    <>
+                      <img
+                        className={styles.slotGuideImage}
+                        src={DEFAULT_AVATAR_IMAGES[slot.key]}
+                        alt=""
+                        aria-hidden="true"
+                      />
+                      <span className={styles.slotPlaceholder}>+</span>
+                    </>
+                  )}
+                </div>
+                <div className={styles.slotLabel}>{slot.label}</div>
+                <div className={styles.slotDesc}>{slot.description}</div>
+                <input
+                  ref={(el) => { fileInputRefs.current[slot.key] = el; }}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) =>
+                    handleFileChange(slot.key, e.target.files?.[0] ?? null)
+                  }
+                />
+              </div>
+            ))}
+          </div>
+
+          <input
+            className={styles.nameInput}
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="アバター名"
+          />
+
+          <div className={styles.registerActions}>
+            <button
+              className={styles.cancelBtn}
+              type="button"
+              disabled={registering}
+              onClick={() => {
+                resetRegisterForm();
+                setShowRegisterForm(false);
+              }}
+            >
+              キャンセル
+            </button>
+            <button
+              className={styles.registerBtn}
+              type="button"
+              disabled={!allFilesSet || !name.trim() || registering}
+              onClick={handleRegister}
+            >
+              {registering ? "登録中..." : "登録する"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
