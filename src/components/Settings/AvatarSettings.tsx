@@ -3,6 +3,7 @@ import type { DragEvent } from "react";
 import type { AvatarPack } from "../../types";
 import {
   getAllAvatars,
+  getDefaultAvatar,
   registerAvatar,
   removeAvatar,
   revokeAvatarUrls,
@@ -42,6 +43,8 @@ const SLOTS: { key: SlotKey; label: string; description: string }[] = [
     description: "口開き・目閉じ",
   },
 ];
+
+const DEFAULT_AVATAR_IMAGES = getDefaultAvatar().images;
 
 export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
   const [avatars, setAvatars] = useState<AvatarPack[]>([]);
@@ -222,9 +225,21 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
                 onDrop={(e) => handleSlotDrop(e, slot.key)}
               >
                 {previews[slot.key] ? (
-                  <img src={previews[slot.key]!} alt={slot.label} />
+                  <img
+                    className={styles.slotImage}
+                    src={previews[slot.key]!}
+                    alt={slot.label}
+                  />
                 ) : (
-                  <span className={styles.slotPlaceholder}>+</span>
+                  <>
+                    <img
+                      className={styles.slotGuideImage}
+                      src={DEFAULT_AVATAR_IMAGES[slot.key]}
+                      alt=""
+                      aria-hidden="true"
+                    />
+                    <span className={styles.slotPlaceholder}>+</span>
+                  </>
                 )}
               </div>
               <div className={styles.slotLabel}>{slot.label}</div>
