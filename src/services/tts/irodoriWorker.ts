@@ -158,7 +158,7 @@ workerSelf.addEventListener("message", (event) => {
           if (!pipeline) throw new Error("Irodori TTS not initialized");
           if (!referenceAudio) {
             throw new Error(
-              "参照音声が未設定です。設定画面から .wav をアップロードしてください。"
+              "参照音声が未設定です。設定画面から .wav または .mp3 をアップロードしてください。"
             );
           }
 
