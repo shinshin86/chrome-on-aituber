@@ -23,7 +23,7 @@
  * }
  * ```
  *
- * 参照音声はユーザーがアップロードした .wav のみを使い、
+ * 参照音声はユーザーがアップロードした .wav / .mp3 を使い、
  * 永続保存せずセッション内（メモリ上）でのみ保持する。
  */
 
@@ -163,7 +163,7 @@ async function toMono48k(decoded: AudioBuffer): Promise<Float32Array> {
   return new Float32Array(rendered.getChannelData(0));
 }
 
-/** アップロードされた .wav を 48kHz mono にデコードし、セッション内に保持する */
+/** アップロードされた参照音声を 48kHz mono にデコードし、セッション内に保持する */
 export async function setReferenceAudio(file: File): Promise<void> {
   const arrayBuffer = await file.arrayBuffer();
   const ctx = new AudioContext();
@@ -246,7 +246,7 @@ export async function synthesize(
   if (!ready) throw new Error("Irodori TTS not initialized");
   if (!referenceAudio) {
     throw new Error(
-      "参照音声が未設定です。設定画面から .wav をアップロードしてください。"
+      "参照音声が未設定です。設定画面から .wav または .mp3 をアップロードしてください。"
     );
   }
   return callWorker<{ audio: Float32Array; sampleRate: number }>({

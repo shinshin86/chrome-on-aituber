@@ -122,7 +122,9 @@ export function IrodoriTtsSettings() {
       await setReferenceAudio(file);
       setReferenceAudioName(file.name);
     } catch {
-      setError("参照音声の読み込みに失敗しました。.wav ファイルを選択してください。");
+      setError(
+        "参照音声の読み込みに失敗しました。.wav または .mp3 ファイルを選択してください。"
+      );
     } finally {
       if (referenceInputRef.current) {
         referenceInputRef.current.value = "";
@@ -234,13 +236,13 @@ export function IrodoriTtsSettings() {
               {/* 参照音声アップロード */}
               <p className={styles.hint}>
                 Irodori TTS は参照音声をもとに声質を生成します。使用権限のある .wav
-                音声を選択してください。参照音声は保存されず、このセッション内でのみ使用されます。
+                または .mp3 音声を選択してください。参照音声は保存されず、このセッション内でのみ使用されます。
               </p>
 
               <input
                 ref={referenceInputRef}
                 type="file"
-                accept=".wav,audio/wav,audio/x-wav"
+                accept=".wav,.mp3,audio/wav,audio/x-wav,audio/mpeg"
                 hidden
                 onChange={(e) =>
                   void handleReferenceAudioChange(e.target.files?.[0] ?? null)
@@ -258,7 +260,7 @@ export function IrodoriTtsSettings() {
                     ? "読み込み中..."
                     : referenceAudioName
                       ? "参照音声を変更"
-                      : "参照音声（.wav）を選択"}
+                      : "参照音声（.wav / .mp3）を選択"}
                 </button>
                 <button
                   className={styles.secondaryBtn}
