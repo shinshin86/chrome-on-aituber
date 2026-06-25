@@ -1,12 +1,20 @@
-import { useRef, useState } from "react";
-import { CHAT_SOURCE_LABELS, TTS_ENGINE_LABELS } from "../../types";
+import { useMemo, useRef, useState } from "react";
+import {
+  DEFAULT_SYSTEM_PROMPT_EN,
+  DEFAULT_SYSTEM_PROMPT_JA,
+  LANGUAGE_LABELS,
+  isDefaultSystemPrompt,
+} from "../../types";
 import type {
   AppSettings,
   AppMode,
   ChatMessage,
+  ChatSource,
+  Language,
   StreamingPlatform,
   TtsEngine,
 } from "../../types";
+import { useI18n } from "../../i18n/I18nContext";
 import * as tts from "../../services/tts/ttsService";
 import { AvatarSettings } from "./AvatarSettings";
 import { IrodoriTtsSettings } from "./IrodoriTtsSettings";
@@ -30,26 +38,6 @@ const PLATFORM_OPTIONS: { value: StreamingPlatform; label: string }[] = [
   { value: "twitch", label: "Twitch" },
 ];
 
-const MODE_OPTIONS: { value: AppMode; label: string }[] = [
-  { value: "chat", label: "チャットモード" },
-  { value: "broadcast", label: "配信モード（グリーンバック）" },
-];
-
-const TTS_ENGINE_OPTIONS: { value: TtsEngine; label: string }[] = [
-  { value: "piper", label: TTS_ENGINE_LABELS.piper },
-  { value: "irodori", label: TTS_ENGINE_LABELS.irodori },
-];
-
-const INTERVAL_OPTIONS = [
-  { value: 10000, label: "10秒" },
-  { value: 15000, label: "15秒" },
-  { value: 20000, label: "20秒（推奨）" },
-  { value: 30000, label: "30秒" },
-  { value: 60000, label: "60秒" },
-];
-
-const TTS_SAMPLE_TEXT = "こんにちは。音声合成のテストです。";
-
 function formatDateTime(timestamp: number): string {
   const date = new Date(timestamp);
   const yyyy = date.getFullYear();
@@ -61,8 +49,12 @@ function formatDateTime(timestamp: number): string {
   return `${yyyy}/${mm}/${dd} ${hh}:${mi}:${ss}`;
 }
 
-function formatSourceLabel(message: ChatMessage): string {
-  return message.source ? CHAT_SOURCE_LABELS[message.source] : "不明";
+function formatSourceLabel(
+  message: ChatMessage,
+  sourceLabels: Record<ChatSource, string>,
+  unknownLabel: string
+): string {
+  return message.source ? sourceLabels[message.source] : unknownLabel;
 }
 
 function createOauthState(): string {
@@ -97,6 +89,7 @@ export function SettingsPanel({
   onClose,
   onReset,
 }: Props) {
+  const { t } = useI18n();
   const [twitchConnectError, setTwitchConnectError] = useState("");
   const [backgroundBusy, setBackgroundBusy] = useState(false);
   const [backgroundError, setBackgroundError] = useState("");
@@ -108,6 +101,41 @@ export function SettingsPanel({
     typeof window === "undefined"
       ? ""
       : new URL(window.location.pathname, window.location.origin).toString();
+  const modeOptions = useMemo<{ value: AppMode; label: string }[]>(
+    () => [
+      { value: "chat", label: t("settings.displayMode.chat") },
+      { value: "broadcast", label: t("settings.displayMode.broadcast") },
+    ],
+    [t]
+  );
+  const ttsEngineOptions = useMemo<{ value: TtsEngine; label: string }[]>(
+    () => [
+      { value: "piper", label: t("common.ttsEngine.piper") },
+      { value: "irodori", label: t("common.ttsEngine.irodori") },
+    ],
+    [t]
+  );
+  const intervalOptions = useMemo(
+    () => [
+      { value: 10000, label: t("settings.interval.seconds", { seconds: 10 }) },
+      { value: 15000, label: t("settings.interval.seconds", { seconds: 15 }) },
+      {
+        value: 20000,
+        label: t("settings.interval.recommendedSeconds", { seconds: 20 }),
+      },
+      { value: 30000, label: t("settings.interval.seconds", { seconds: 30 }) },
+      { value: 60000, label: t("settings.interval.seconds", { seconds: 60 }) },
+    ],
+    [t]
+  );
+  const sourceLabels = useMemo<Record<ChatSource, string>>(
+    () => ({
+      chat: t("common.source.chat"),
+      youtube: t("common.source.youtube"),
+      twitch: t("common.source.twitch"),
+    }),
+    [t]
+  );
 
   async function handleBackgroundChange(file: File | null) {
     if (!file || backgroundBusy) return;
@@ -119,7 +147,7 @@ export function SettingsPanel({
       await onUploadBackgroundImage(file);
     } catch (e) {
       setBackgroundError(
-        e instanceof Error ? e.message : "背景画像の保存に失敗しました"
+        e instanceof Error ? e.message : t("settings.background.saveFailed")
       );
     } finally {
       if (backgroundInputRef.current) {
@@ -139,7 +167,7 @@ export function SettingsPanel({
       await onResetBackgroundImage();
     } catch (e) {
       setBackgroundError(
-        e instanceof Error ? e.message : "背景画像のリセットに失敗しました"
+        e instanceof Error ? e.message : t("settings.background.resetFailed")
       );
     } finally {
       setBackgroundBusy(false);
@@ -149,9 +177,7 @@ export function SettingsPanel({
   function handleDeleteMessages() {
     if (messages.length === 0) return;
 
-    const confirmed = window.confirm(
-      "保存されているチャットログを削除します。よろしいですか？"
-    );
+    const confirmed = window.confirm(t("settings.chatLog.confirmDelete"));
 
     if (!confirmed) return;
 
@@ -163,7 +189,7 @@ export function SettingsPanel({
 
     setSampleBusy(true);
     setSampleError("");
-    setSampleStatus("音声エンジンを準備中...");
+    setSampleStatus(t("settings.aiVoice.samplePreparing"));
 
     try {
       await tts.setEngine(settings.ttsEngine);
@@ -174,21 +200,21 @@ export function SettingsPanel({
         });
       }
 
-      setSampleStatus("サンプルボイスを生成中...");
+      setSampleStatus(t("settings.aiVoice.sampleGeneratingStatus"));
       await tts.speak(
-        TTS_SAMPLE_TEXT,
+        t("settings.aiVoice.sampleText"),
         () => undefined,
         settings.ttsEngine === "piper"
           ? toTtsLengthScale(settings.ttsLengthScale)
           : undefined
       );
-      setSampleStatus("サンプルボイスを再生しました");
+      setSampleStatus(t("settings.aiVoice.samplePlayed"));
     } catch (e) {
       setSampleStatus("");
       setSampleError(
         e instanceof Error
           ? e.message
-          : "サンプルボイスの再生に失敗しました"
+          : t("settings.aiVoice.sampleFailed")
       );
     } finally {
       setSampleBusy(false);
@@ -201,16 +227,53 @@ export function SettingsPanel({
     setSampleStatus("");
   }
 
+  function handleLanguageChange(language: Language) {
+    if (isDefaultSystemPrompt(settings.llmSystemPrompt)) {
+      onUpdate({
+        language,
+        llmSystemPrompt:
+          language === "en"
+            ? DEFAULT_SYSTEM_PROMPT_EN
+            : DEFAULT_SYSTEM_PROMPT_JA,
+      });
+      return;
+    }
+
+    onUpdate({ language });
+  }
+
   if (!open) return null;
 
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.panel} onClick={(e) => e.stopPropagation()}>
-        <h2 className={styles.title}>設定</h2>
+        <h2 className={styles.title}>{t("settings.title")}</h2>
+
+        <details className={styles.section} open>
+          <summary>{t("settings.language.summary")}</summary>
+          <div className={styles.sectionContent}>
+            <label className={styles.label}>
+              {t("settings.language.label")}
+              <select
+                className={styles.textInput}
+                value={settings.language}
+                onChange={(e) =>
+                  handleLanguageChange(e.target.value as Language)
+                }
+              >
+                {Object.entries(LANGUAGE_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </details>
 
         {/* 表示モード */}
         <details className={styles.section}>
-          <summary>表示モード</summary>
+          <summary>{t("settings.displayMode.summary")}</summary>
           <div className={styles.sectionContent}>
             <label className={styles.label}>
               <select
@@ -220,7 +283,7 @@ export function SettingsPanel({
                   onUpdate({ appMode: e.target.value as AppMode })
                 }
               >
-                {MODE_OPTIONS.map((opt) => (
+                {modeOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
@@ -228,8 +291,8 @@ export function SettingsPanel({
               </select>
               {settings.appMode === "broadcast" && (
                 <span className={styles.hint}>
-                  配信モード中は <kbd>Ctrl</kbd>+<kbd>S</kbd>{" "}
-                  でこの設定を開けます
+                  {t("settings.displayMode.broadcastHint")} <kbd>Ctrl</kbd>+
+                  <kbd>S</kbd> {t("settings.displayMode.broadcastHintSuffix")}
                 </span>
               )}
             </label>
@@ -237,12 +300,12 @@ export function SettingsPanel({
         </details>
 
         <details className={styles.section}>
-          <summary>背景</summary>
+          <summary>{t("settings.background.summary")}</summary>
           <div className={styles.sectionContent}>
             <label className={styles.label}>
-              背景画像
+              {t("settings.background.label")}
               <span className={styles.hint}>
-                設定した画像はチャットモードと配信モードの両方に表示されます
+                {t("settings.background.hint")}
               </span>
             </label>
 
@@ -264,10 +327,10 @@ export function SettingsPanel({
                 onClick={() => backgroundInputRef.current?.click()}
               >
                 {backgroundBusy
-                  ? "保存中..."
+                  ? t("settings.background.saving")
                   : settings.backgroundImageEnabled
-                    ? "背景画像を変更"
-                    : "背景画像を選択"}
+                    ? t("settings.background.change")
+                    : t("settings.background.select")}
               </button>
 
               <button
@@ -276,14 +339,14 @@ export function SettingsPanel({
                 disabled={!settings.backgroundImageEnabled || backgroundBusy}
                 onClick={() => void handleResetBackground()}
               >
-                デフォルトに戻す
+                {t("settings.background.reset")}
               </button>
             </div>
 
             <span className={styles.hint}>
               {settings.backgroundImageEnabled
-                ? "現在はカスタム背景を表示中です"
-                : "現在はデフォルト背景です"}
+                ? t("settings.background.customActive")
+                : t("settings.background.defaultActive")}
             </span>
 
             {backgroundError && (
@@ -294,7 +357,7 @@ export function SettingsPanel({
 
         {/* アバター設定 */}
         <details className={styles.section}>
-          <summary>アバター設定</summary>
+          <summary>{t("settings.avatar.summary")}</summary>
           <div className={styles.sectionContent}>
             <AvatarSettings
               selectedAvatarId={settings.selectedAvatarId}
@@ -305,10 +368,10 @@ export function SettingsPanel({
 
         {/* AI / 音声 */}
         <details className={styles.section}>
-          <summary>AI / 音声</summary>
+          <summary>{t("settings.aiVoice.summary")}</summary>
           <div className={styles.sectionContent}>
             <label className={styles.label}>
-              システムプロンプト
+              {t("settings.aiVoice.systemPrompt")}
               <textarea
                 className={styles.textarea}
                 value={settings.llmSystemPrompt}
@@ -327,11 +390,11 @@ export function SettingsPanel({
                   onUpdate({ ttsEnabled: e.target.checked })
                 }
               />
-              音声読み上げ（TTS）を有効にする
+              {t("settings.aiVoice.ttsEnabled")}
             </label>
 
             <label className={styles.label}>
-              TTS エンジン
+              {t("settings.aiVoice.ttsEngine")}
               <select
                 className={styles.textInput}
                 value={settings.ttsEngine}
@@ -339,7 +402,7 @@ export function SettingsPanel({
                   onUpdate({ ttsEngine: e.target.value as TtsEngine })
                 }
               >
-                {TTS_ENGINE_OPTIONS.map((opt) => (
+                {ttsEngineOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
@@ -352,7 +415,9 @@ export function SettingsPanel({
             {settings.ttsEngine === "piper" && (
               <>
                 <label className={styles.label}>
-                  読み上げ速度 ({settings.ttsLengthScale.toFixed(1)}x)
+                  {t("settings.aiVoice.speed", {
+                    value: settings.ttsLengthScale.toFixed(1),
+                  })}
                   <input
                     type="range"
                     min="0.5"
@@ -367,11 +432,9 @@ export function SettingsPanel({
                   />
                 </label>
                 <p className={styles.hint}>
-                  音声モデル: つくよみちゃんコーパス（CV.夢前黎）
+                  {t("settings.aiVoice.piperCreditLine1")}
                   <br />
-                  本ソフトウェアの音声合成には、フリー素材キャラクター
-                  「つくよみちゃん」 &copy; Rei Yumesaki
-                  が無料公開している音声データを使用しています。
+                  {t("settings.aiVoice.piperCreditLine2")}
                 </p>
               </>
             )}
@@ -384,18 +447,22 @@ export function SettingsPanel({
                   disabled={sampleBusy}
                   onClick={() => void handlePlayTtsSample()}
                 >
-                  {sampleBusy ? "サンプル生成中..." : "サンプルボイスを再生"}
+                  {sampleBusy
+                    ? t("settings.aiVoice.sampleGenerating")
+                    : t("settings.aiVoice.samplePlay")}
                 </button>
                 <button
                   className={styles.secondaryBtn}
                   type="button"
                   onClick={handleStopTtsSample}
                 >
-                  停止
+                  {t("settings.aiVoice.sampleStop")}
                 </button>
               </div>
               <p className={styles.hint}>
-                現在選択中の {TTS_ENGINE_LABELS[settings.ttsEngine]} でテスト再生します。
+                {t("settings.aiVoice.sampleHint", {
+                  engine: t(`common.ttsEngine.${settings.ttsEngine}`),
+                })}
               </p>
               {sampleStatus && <p className={styles.hint}>{sampleStatus}</p>}
               {sampleError && <p className={styles.errorText}>{sampleError}</p>}
@@ -405,16 +472,16 @@ export function SettingsPanel({
         </details>
 
         <details className={styles.section}>
-          <summary>チャットログ</summary>
+          <summary>{t("settings.chatLog.summary")}</summary>
           <div className={styles.sectionContent}>
             <p className={styles.hint}>
-              保存件数: {messages.length}件
+              {t("settings.chatLog.count", { count: messages.length })}
             </p>
 
             <div className={styles.chatLogViewer}>
               {messages.length === 0 ? (
                 <p className={styles.chatLogEmpty}>
-                  まだチャットログはありません
+                  {t("settings.chatLog.empty")}
                 </p>
               ) : (
                 messages.map((message) => (
@@ -424,7 +491,11 @@ export function SettingsPanel({
                         {message.role === "assistant" ? assistantLabel : "USER"}
                       </span>
                       <span className={styles.chatLogSource}>
-                        {formatSourceLabel(message)}
+                        {formatSourceLabel(
+                          message,
+                          sourceLabels,
+                          t("common.source.unknown")
+                        )}
                       </span>
                       <span>{formatDateTime(message.timestamp)}</span>
                       {message.senderName && (
@@ -446,7 +517,7 @@ export function SettingsPanel({
                 disabled={messages.length === 0}
                 onClick={onExportMessages}
               >
-                CSV をエクスポート
+                {t("settings.chatLog.exportCsv")}
               </button>
               <button
                 className={styles.resetBtn}
@@ -454,7 +525,7 @@ export function SettingsPanel({
                 disabled={messages.length === 0}
                 onClick={handleDeleteMessages}
               >
-                チャットログを削除
+                {t("settings.chatLog.delete")}
               </button>
             </div>
           </div>
@@ -462,10 +533,10 @@ export function SettingsPanel({
 
         {/* 配信チャット連携 */}
         <details className={styles.section}>
-          <summary>配信チャット連携</summary>
+          <summary>{t("settings.streaming.summary")}</summary>
           <div className={styles.sectionContent}>
             <label className={styles.label}>
-              プラットフォーム
+              {t("settings.streaming.platform")}
               <select
                 className={styles.textInput}
                 value={settings.streamingPlatform}
@@ -499,7 +570,7 @@ export function SettingsPanel({
                 </label>
 
                 <label className={styles.label}>
-                  ライブ配信 ID
+                  {t("settings.streaming.youtubeLiveId")}
                   <input
                     className={styles.textInput}
                     type="text"
@@ -512,7 +583,7 @@ export function SettingsPanel({
                 </label>
 
                 <label className={styles.label}>
-                  コメント取得間隔
+                  {t("settings.streaming.interval")}
                   <select
                     className={styles.textInput}
                     value={settings.youtubeCommentInterval}
@@ -522,7 +593,7 @@ export function SettingsPanel({
                       })
                     }
                   >
-                    {INTERVAL_OPTIONS.map((opt) => (
+                    {intervalOptions.map((opt) => (
                       <option key={opt.value} value={opt.value}>
                         {opt.label}
                       </option>
@@ -538,7 +609,7 @@ export function SettingsPanel({
                       onUpdate({ youtubeEnabled: e.target.checked })
                     }
                   />
-                  YouTube Live コメント取得を有効にする
+                  {t("settings.streaming.youtubeEnabled")}
                 </label>
               </>
             )}
@@ -561,7 +632,7 @@ export function SettingsPanel({
                 {settings.twitchAccessToken ? (
                   <div className={styles.label}>
                     <span style={{ color: "#4caf50", fontWeight: 600 }}>
-                      Twitch 接続済み
+                      {t("settings.streaming.twitchConnected")}
                     </span>
                     <button
                       className={styles.closeBtn}
@@ -574,7 +645,7 @@ export function SettingsPanel({
                         onUpdate({ twitchAccessToken: "" })
                       }
                     >
-                      切断
+                      {t("settings.streaming.disconnect")}
                     </button>
                   </div>
                 ) : (
@@ -604,19 +675,19 @@ export function SettingsPanel({
                       } catch (error) {
                         console.error("Failed to start Twitch OAuth:", error);
                         setTwitchConnectError(
-                          "Twitch 接続を開始できませんでした。Client ID とブラウザ設定を確認してください。"
+                          t("settings.streaming.twitchConnectFailed")
                         );
                       }
                     }}
                   >
-                    Twitch に接続
+                    {t("settings.streaming.connectTwitch")}
                   </button>
                 )}
 
                 {!settings.twitchAccessToken && (
                   <>
                     <p className={styles.hint}>
-                      Twitch Developers の OAuth Redirect URL には次を登録してください:
+                      {t("settings.streaming.twitchRedirectHint")}
                     </p>
                     <p className={styles.hint}>{twitchRedirectUri}</p>
                     {twitchConnectError && (
@@ -626,7 +697,7 @@ export function SettingsPanel({
                 )}
 
                 <label className={styles.label}>
-                  チャンネル名
+                  {t("settings.streaming.twitchChannel")}
                   <input
                     className={styles.textInput}
                     type="text"
@@ -639,7 +710,7 @@ export function SettingsPanel({
                 </label>
 
                 <label className={styles.label}>
-                  コメント取得間隔
+                  {t("settings.streaming.interval")}
                   <select
                     className={styles.textInput}
                     value={settings.twitchCommentInterval}
@@ -649,7 +720,7 @@ export function SettingsPanel({
                       })
                     }
                   >
-                    {INTERVAL_OPTIONS.map((opt) => (
+                    {intervalOptions.map((opt) => (
                       <option key={opt.value} value={opt.value}>
                         {opt.label}
                       </option>
@@ -665,7 +736,7 @@ export function SettingsPanel({
                       onUpdate({ twitchEnabled: e.target.checked })
                     }
                   />
-                  Twitch コメント取得を有効にする
+                  {t("settings.streaming.twitchEnabled")}
                 </label>
               </>
             )}
@@ -673,7 +744,7 @@ export function SettingsPanel({
         </details>
 
         <button className={styles.closeBtn} type="button" onClick={onClose}>
-          閉じる
+          {t("settings.close")}
         </button>
       </div>
     </div>

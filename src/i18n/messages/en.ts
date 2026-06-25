@@ -1,0 +1,182 @@
+import type { ja } from "./ja";
+
+type MessageShape<T> = {
+  readonly [K in keyof T]: T[K] extends string ? string : MessageShape<T[K]>;
+};
+
+export const en = {
+  common: {
+    source: {
+      chat: "chat",
+      youtube: "YouTube comment",
+      twitch: "Twitch comment",
+      unknown: "Unknown",
+    },
+    ttsEngine: {
+      piper: "Piper Plus (standard)",
+      irodori: "Irodori TTS (WebGPU / high quality)",
+    },
+  },
+  app: {
+    broadcastHintTitle: "Broadcast mode",
+    broadcastHintText: "to open settings and return to chat mode",
+    avatarLoading: "Loading avatar...",
+    avatarUnavailable: "Avatar cannot be displayed",
+    aiPrepareTitle: "AI setup required",
+    aiPrepareText:
+      "Start Gemini Nano's first-time model setup from a user action.",
+    aiPreparing: "Preparing AI...",
+    aiPrepare: "Prepare AI",
+    backgroundLoadFailed: "Failed to load background image",
+    backgroundSaveFailed: "Failed to save background image",
+    backgroundResetFailed: "Failed to reset background image",
+    incomingComment: "{name}'s comment: {comment}",
+  },
+  bottomBar: {
+    manualLabel: "Manual",
+    manualTitle: "Open the user manual",
+    licenseLabel: "Licenses",
+    licenseTitle: "Show license information",
+    prepareBusy: "Preparing...",
+    prepareAi: "Prepare AI",
+    generating: "Generating response...",
+    inputPlaceholder: "Type a message (Enter to send, Shift+Enter for newline)",
+    sendLabel: "Send",
+    sendTitle: "Send message",
+    settingsLabel: "Settings",
+    settingsTitle: "Open settings",
+  },
+  toast: {
+    close: "Close",
+  },
+  chat: {
+    status: {
+      checkingAi: "Checking AI...",
+      userGestureRequired:
+        "Start AI model setup from the \"Prepare AI\" button",
+      sessionCreateFailed: "Failed to create AI session",
+      pressPrepare: "Press \"Prepare AI\" to use AI",
+      unavailable:
+        "Built-in AI is unavailable. Enable the flags in Chrome 138+.",
+      checkFailed: "Failed to check AI availability",
+      sessionUpdating: "Updating AI session...",
+      sessionUpdateFailed: "Failed to update AI session",
+      modelPreparing: "Preparing AI model...",
+      modelDownloading: "Downloading AI model... {pct}%",
+      modelPrepareFailed: "Failed to prepare AI model",
+      pressPrepareFirst: "Press \"Prepare AI\" before using AI",
+      notAvailable: "AI is not available",
+      ttsInitializing: "Initializing voice engine...",
+      ttsInitializeFailed: "Failed to initialize voice engine",
+      ttsPlaybackFailed: "Failed to play voice",
+      responseFailed: "Failed to generate AI response",
+      reinitializeFailed: "Failed to reinitialize AI",
+      withDetail: "{fallback}: {detail}",
+    },
+  },
+  settings: {
+    title: "Settings",
+    language: {
+      summary: "Language / 言語",
+      label: "Language",
+    },
+    displayMode: {
+      summary: "Display mode",
+      chat: "Chat mode",
+      broadcast: "Broadcast mode (green screen)",
+      broadcastHint: "In broadcast mode, press",
+      broadcastHintSuffix: "to open these settings",
+    },
+    background: {
+      summary: "Background",
+      label: "Background image",
+      hint: "The selected image appears in both chat mode and broadcast mode",
+      saving: "Saving...",
+      change: "Change background image",
+      select: "Select background image",
+      reset: "Restore default",
+      customActive: "A custom background is currently shown",
+      defaultActive: "The default background is currently shown",
+      saveFailed: "Failed to save background image",
+      resetFailed: "Failed to reset background image",
+    },
+    avatar: {
+      summary: "Avatar settings",
+      slots: {
+        normal: {
+          label: "Normal",
+          description: "Mouth closed, eyes open",
+        },
+        blink: {
+          label: "Blink",
+          description: "Mouth closed, eyes closed",
+        },
+        speaking: {
+          label: "Speaking",
+          description: "Mouth open, eyes open",
+        },
+        speakingBlink: {
+          label: "Speaking + blink",
+          description: "Mouth open, eyes closed",
+        },
+      },
+      deleteTitle: "Delete",
+      add: "Add",
+      registerTitle: "Register a new avatar",
+      registerHint:
+        "Click or drag and drop to set all 4 images (PNG / JPG recommended)",
+      namePlaceholder: "Avatar name",
+      cancel: "Cancel",
+      registering: "Registering...",
+      register: "Register",
+    },
+    aiVoice: {
+      summary: "AI / Voice",
+      systemPrompt: "System prompt",
+      ttsEnabled: "Enable text-to-speech (TTS)",
+      ttsEngine: "TTS engine",
+      speed: "Speech speed ({value}x)",
+      piperCreditLine1: "Voice model: Tsukuyomi-chan Corpus (CV: Rei Yumesaki)",
+      piperCreditLine2:
+        "This app uses voice data published for free by the free-material character Tsukuyomi-chan © Rei Yumesaki.",
+      sampleGenerating: "Generating sample...",
+      samplePlay: "Play sample voice",
+      sampleStop: "Stop",
+      sampleHint: "Test playback with the selected {engine}.",
+      sampleText: "Hello. This is a text-to-speech test.",
+      samplePreparing: "Preparing voice engine...",
+      sampleGeneratingStatus: "Generating sample voice...",
+      samplePlayed: "Sample voice played",
+      sampleFailed: "Failed to play sample voice",
+    },
+    chatLog: {
+      summary: "Chat log",
+      count: "Saved messages: {count}",
+      empty: "No chat logs yet",
+      exportCsv: "Export CSV",
+      delete: "Delete chat log",
+      confirmDelete: "Delete the saved chat log?",
+    },
+    streaming: {
+      summary: "Streaming chat integration",
+      platform: "Platform",
+      youtubeLiveId: "Live stream ID",
+      interval: "Comment polling interval",
+      youtubeEnabled: "Enable YouTube Live comments",
+      twitchConnected: "Twitch connected",
+      disconnect: "Disconnect",
+      twitchConnectFailed:
+        "Could not start Twitch connection. Check your Client ID and browser settings.",
+      connectTwitch: "Connect to Twitch",
+      twitchRedirectHint:
+        "Register this OAuth Redirect URL in Twitch Developers:",
+      twitchChannel: "Channel name",
+      twitchEnabled: "Enable Twitch comments",
+    },
+    interval: {
+      seconds: "{seconds}s",
+      recommendedSeconds: "{seconds}s (recommended)",
+    },
+    close: "Close",
+  },
+} as const satisfies MessageShape<typeof ja>;

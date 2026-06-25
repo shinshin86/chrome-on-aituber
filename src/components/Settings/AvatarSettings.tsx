@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { DragEvent } from "react";
+import { useI18n } from "../../i18n/I18nContext";
 import type { AvatarPack } from "../../types";
 import {
   getAllAvatars,
@@ -21,32 +22,17 @@ type SlotKey =
   | "mouthOpenEyesOpen"
   | "mouthOpenEyesClose";
 
-const SLOTS: { key: SlotKey; label: string; description: string }[] = [
-  {
-    key: "mouthCloseEyesOpen",
-    label: "通常",
-    description: "口閉じ・目開き",
-  },
-  {
-    key: "mouthCloseEyesClose",
-    label: "まばたき",
-    description: "口閉じ・目閉じ",
-  },
-  {
-    key: "mouthOpenEyesOpen",
-    label: "発話中",
-    description: "口開き・目開き",
-  },
-  {
-    key: "mouthOpenEyesClose",
-    label: "発話+まばたき",
-    description: "口開き・目閉じ",
-  },
+const SLOT_KEYS: SlotKey[] = [
+  "mouthCloseEyesOpen",
+  "mouthCloseEyesClose",
+  "mouthOpenEyesOpen",
+  "mouthOpenEyesClose",
 ];
 
 const DEFAULT_AVATAR_IMAGES = getDefaultAvatar().images;
 
 export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
+  const { t } = useI18n();
   const [avatars, setAvatars] = useState<AvatarPack[]>([]);
   const [files, setFiles] = useState<Record<SlotKey, File | null>>({
     mouthCloseEyesOpen: null,
@@ -70,6 +56,31 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
     mouthOpenEyesOpen: null,
     mouthOpenEyesClose: null,
   });
+  const slots = useMemo(
+    () => [
+      {
+        key: "mouthCloseEyesOpen" as const,
+        label: t("settings.avatar.slots.normal.label"),
+        description: t("settings.avatar.slots.normal.description"),
+      },
+      {
+        key: "mouthCloseEyesClose" as const,
+        label: t("settings.avatar.slots.blink.label"),
+        description: t("settings.avatar.slots.blink.description"),
+      },
+      {
+        key: "mouthOpenEyesOpen" as const,
+        label: t("settings.avatar.slots.speaking.label"),
+        description: t("settings.avatar.slots.speaking.description"),
+      },
+      {
+        key: "mouthOpenEyesClose" as const,
+        label: t("settings.avatar.slots.speakingBlink.label"),
+        description: t("settings.avatar.slots.speakingBlink.description"),
+      },
+    ],
+    [t]
+  );
 
   const loadAvatars = useCallback(async () => {
     revokeAvatarUrls();
@@ -85,14 +96,14 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
   useEffect(() => {
     const urls: string[] = [];
     const newPreviews = { ...previews };
-    for (const slot of SLOTS) {
-      const file = files[slot.key];
+    for (const key of SLOT_KEYS) {
+      const file = files[key];
       if (file) {
         const url = URL.createObjectURL(file);
         urls.push(url);
-        newPreviews[slot.key] = url;
+        newPreviews[key] = url;
       } else {
-        newPreviews[slot.key] = null;
+        newPreviews[key] = null;
       }
     }
     setPreviews(newPreviews);
@@ -148,7 +159,7 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
     }
   }
 
-  const allFilesSet = SLOTS.every((s) => files[s.key] !== null);
+  const allFilesSet = SLOT_KEYS.every((key) => files[key] !== null);
 
   async function handleRegister() {
     if (!allFilesSet || !name.trim() || registering) return;
@@ -202,7 +213,7 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
                   e.stopPropagation();
                   handleDelete(a.id);
                 }}
-                title="削除"
+                title={t("settings.avatar.deleteTitle")}
               >
                 &times;
               </button>
@@ -217,19 +228,21 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
           onClick={() => setShowRegisterForm(true)}
         >
           <span className={styles.addAvatarIcon}>+</span>
-          <span className={styles.avatarName}>追加</span>
+          <span className={styles.avatarName}>{t("settings.avatar.add")}</span>
         </button>
       </div>
 
       {showRegisterForm && (
         <div className={styles.registerSection}>
-          <h4 className={styles.registerTitle}>新しいアバターを登録</h4>
+          <h4 className={styles.registerTitle}>
+            {t("settings.avatar.registerTitle")}
+          </h4>
           <span className={styles.registerHint}>
-            4 枚の画像をクリックまたはドラッグ＆ドロップで設定してください（PNG / JPG 推奨）
+            {t("settings.avatar.registerHint")}
           </span>
 
           <div className={styles.slotGrid}>
-            {SLOTS.map((slot) => (
+            {slots.map((slot) => (
               <div key={slot.key} className={styles.slot}>
                 <div
                   className={`${styles.slotPreview} ${
@@ -279,7 +292,7 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="アバター名"
+            placeholder={t("settings.avatar.namePlaceholder")}
           />
 
           <div className={styles.registerActions}>
@@ -292,7 +305,7 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
                 setShowRegisterForm(false);
               }}
             >
-              キャンセル
+              {t("settings.avatar.cancel")}
             </button>
             <button
               className={styles.registerBtn}
@@ -300,7 +313,9 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
               disabled={!allFilesSet || !name.trim() || registering}
               onClick={handleRegister}
             >
-              {registering ? "登録中..." : "登録する"}
+              {registering
+                ? t("settings.avatar.registering")
+                : t("settings.avatar.register")}
             </button>
           </div>
         </div>

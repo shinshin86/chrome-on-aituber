@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useI18n, type I18nKey, type I18nParams } from "../i18n/I18nContext";
 import type { ChatMessage, AppSettings, ChatSource } from "../types";
 import * as llm from "../services/llm/llmService";
 import * as tts from "../services/tts/ttsService";
@@ -18,19 +19,26 @@ function getContextHistory(messages: ChatMessage[]) {
   return messages.map((m) => ({ role: m.role, content: m.content }));
 }
 
-function getLLMErrorMessage(error: unknown, fallback: string): string {
+type Translate = (key: I18nKey, params?: I18nParams) => string;
+
+function getLLMErrorMessage(
+  error: unknown,
+  fallback: string,
+  userGestureMessage: string,
+  t: Translate
+): string {
   const detail = error instanceof Error ? error.message : "";
 
   if (/requires a user gesture/i.test(detail)) {
-    return "AI モデルの準備は「AI を準備」ボタンから開始してください";
+    return userGestureMessage;
   }
 
-  return detail ? `${fallback}: ${detail}` : fallback;
+  return detail ? t("chat.status.withDetail", { fallback, detail }) : fallback;
 }
 
-function getTtsErrorMessage(error: unknown, fallback: string): string {
+function getTtsErrorMessage(error: unknown, fallback: string, t: Translate): string {
   const detail = error instanceof Error ? error.message : "";
-  return detail ? `${fallback}: ${detail}` : fallback;
+  return detail ? t("chat.status.withDetail", { fallback, detail }) : fallback;
 }
 
 function toTtsLengthScale(speedMultiplier: number): number {
@@ -40,10 +48,11 @@ function toTtsLengthScale(speedMultiplier: number): number {
 }
 
 export function useChat(settings: AppSettings) {
+  const { t } = useI18n();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [llmStatus, setLlmStatus] = useState<LLMStatus>("checking");
-  const [statusText, setStatusText] = useState("AI を確認中...");
+  const [statusText, setStatusText] = useState(() => t("chat.status.checkingAi"));
   const [mouthOpen, setMouthOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [needsInitialization, setNeedsInitialization] = useState(false);
@@ -84,24 +93,29 @@ export function useChat(settings: AppSettings) {
             appliedSystemPromptRef.current = settings.llmSystemPrompt;
           } catch (e) {
             setNeedsInitialization(true);
-            setStatusText(getLLMErrorMessage(e, "AI セッションの作成に失敗しました"));
+            setStatusText(
+              getLLMErrorMessage(
+                e,
+                t("chat.status.sessionCreateFailed"),
+                t("chat.status.userGestureRequired"),
+                t
+              )
+            );
             setLlmStatus("error");
           }
         }
         break;
       case "downloading":
         setNeedsInitialization(true);
-        setStatusText("AI を使うには「AI を準備」を押してください");
+        setStatusText(t("chat.status.pressPrepare"));
         break;
       case "unavailable":
         setNeedsInitialization(false);
-        setStatusText(
-          "Built-in AI が利用できません。Chrome 138+ でフラグを有効化してください"
-        );
+        setStatusText(t("chat.status.unavailable"));
         break;
       case "error":
         setNeedsInitialization(false);
-        setStatusText("AI の確認に失敗しました");
+        setStatusText(t("chat.status.checkFailed"));
         break;
     }
   }
@@ -113,7 +127,7 @@ export function useChat(settings: AppSettings) {
     let cancelled = false;
 
     async function recreateSession() {
-      setStatusText("AI セッションを更新中...");
+      setStatusText(t("chat.status.sessionUpdating"));
       llm.destroySession();
 
       try {
@@ -130,8 +144,15 @@ export function useChat(settings: AppSettings) {
         if (!cancelled) {
           setNeedsInitialization(true);
           setLlmStatus("error");
-          setErrorMessage(getLLMErrorMessage(e, "AI セッションの更新に失敗しました"));
-          setStatusText("AI セッションの更新に失敗しました");
+          setErrorMessage(
+            getLLMErrorMessage(
+              e,
+              t("chat.status.sessionUpdateFailed"),
+              t("chat.status.userGestureRequired"),
+              t
+            )
+          );
+          setStatusText(t("chat.status.sessionUpdateFailed"));
         }
       }
     }
@@ -141,7 +162,7 @@ export function useChat(settings: AppSettings) {
     return () => {
       cancelled = true;
     };
-  }, [isSending, llmStatus, messages, settings.llmSystemPrompt]);
+  }, [isSending, llmStatus, messages, settings.llmSystemPrompt, t]);
 
   const initializeAI = useCallback(async () => {
     if (isInitializingAI) return;
@@ -149,7 +170,7 @@ export function useChat(settings: AppSettings) {
     setIsInitializingAI(true);
     setNeedsInitialization(true);
     setLlmStatus("downloading");
-    setStatusText("AI モデルを準備中...");
+    setStatusText(t("chat.status.modelPreparing"));
     setErrorMessage("");
 
     try {
@@ -157,7 +178,7 @@ export function useChat(settings: AppSettings) {
         settings.llmSystemPrompt,
         getContextHistory(messages),
         (pct) => {
-          setStatusText(`AI モデルをダウンロード中... ${pct}%`);
+          setStatusText(t("chat.status.modelDownloading", { pct }));
         }
       );
       appliedSystemPromptRef.current = settings.llmSystemPrompt;
@@ -167,13 +188,18 @@ export function useChat(settings: AppSettings) {
     } catch (e) {
       setNeedsInitialization(true);
       setLlmStatus("downloading");
-      const message = getLLMErrorMessage(e, "AI モデルの準備に失敗しました");
+      const message = getLLMErrorMessage(
+        e,
+        t("chat.status.modelPrepareFailed"),
+        t("chat.status.userGestureRequired"),
+        t
+      );
       setErrorMessage(message);
       setStatusText(message);
     } finally {
       setIsInitializingAI(false);
     }
-  }, [isInitializingAI, messages, settings.llmSystemPrompt]);
+  }, [isInitializingAI, messages, settings.llmSystemPrompt, t]);
 
   const send = useCallback(
     async (text: string, options?: SendOptions) => {
@@ -186,8 +212,8 @@ export function useChat(settings: AppSettings) {
       if (!llm.hasSession()) {
         if (llmStatus !== "available") {
           const message = needsInitialization
-            ? "AI を使うには先に「AI を準備」を押してください"
-            : "AI が利用できる状態ではありません";
+            ? t("chat.status.pressPrepareFirst")
+            : t("chat.status.notAvailable");
           setErrorMessage(message);
           setStatusText(message);
           setIsSending(false);
@@ -201,7 +227,14 @@ export function useChat(settings: AppSettings) {
           );
           appliedSystemPromptRef.current = settings.llmSystemPrompt;
         } catch (e) {
-          setErrorMessage(getLLMErrorMessage(e, "AI セッションの作成に失敗しました"));
+          setErrorMessage(
+            getLLMErrorMessage(
+              e,
+              t("chat.status.sessionCreateFailed"),
+              t("chat.status.userGestureRequired"),
+              t
+            )
+          );
           setIsSending(false);
           return;
         }
@@ -240,7 +273,7 @@ export function useChat(settings: AppSettings) {
 
         if (settings.ttsEnabled) {
           if (!tts.isReady()) {
-            setStatusText("音声エンジンを初期化中...");
+            setStatusText(t("chat.status.ttsInitializing"));
             try {
               await tts.initialize((msg) => {
                 if (msg) setStatusText(msg);
@@ -248,7 +281,7 @@ export function useChat(settings: AppSettings) {
               setStatusText("");
             } catch (e) {
               setErrorMessage(
-                getTtsErrorMessage(e, "音声エンジンの初期化に失敗しました")
+                getTtsErrorMessage(e, t("chat.status.ttsInitializeFailed"), t)
               );
               console.warn("TTS init error:", e);
               setStatusText("");
@@ -261,19 +294,21 @@ export function useChat(settings: AppSettings) {
               toTtsLengthScale(settings.ttsLengthScale)
             )
             .catch((e) => {
-              setErrorMessage(getTtsErrorMessage(e, "音声の再生に失敗しました"));
+              setErrorMessage(
+                getTtsErrorMessage(e, t("chat.status.ttsPlaybackFailed"), t)
+              );
               console.warn("TTS error:", e);
             });
         }
       } catch (e) {
-        setErrorMessage("AI の応答生成に失敗しました");
+        setErrorMessage(t("chat.status.responseFailed"));
         console.error("LLM error:", e);
         llm.destroySession();
       } finally {
         setIsSending(false);
       }
     },
-    [isSending, llmStatus, messages, needsInitialization, settings]
+    [isSending, llmStatus, messages, needsInitialization, settings, t]
   );
 
   const reset = useCallback(async () => {
@@ -296,24 +331,29 @@ export function useChat(settings: AppSettings) {
 
       if (status === "downloading") {
         setNeedsInitialization(true);
-        setStatusText("AI を使うには「AI を準備」を押してください");
+        setStatusText(t("chat.status.pressPrepare"));
         return;
       }
 
       if (status === "unavailable") {
-        setStatusText(
-          "Built-in AI が利用できません。Chrome 138+ でフラグを有効化してください"
-        );
+        setStatusText(t("chat.status.unavailable"));
         return;
       }
 
-      setStatusText("AI の確認に失敗しました");
+      setStatusText(t("chat.status.checkFailed"));
     } catch (e) {
       setNeedsInitialization(true);
       setLlmStatus("error");
-      setStatusText(getLLMErrorMessage(e, "AI の再初期化に失敗しました"));
+      setStatusText(
+        getLLMErrorMessage(
+          e,
+          t("chat.status.reinitializeFailed"),
+          t("chat.status.userGestureRequired"),
+          t
+        )
+      );
     }
-  }, [settings.llmSystemPrompt]);
+  }, [settings.llmSystemPrompt, t]);
 
   const clearError = useCallback(() => setErrorMessage(""), []);
 
