@@ -49,6 +49,14 @@ export const en = {
   toast: {
     close: "Close",
   },
+  manual: {
+    title: "User Manual",
+    close: "Close",
+  },
+  license: {
+    title: "Licenses / Credits",
+    close: "Close",
+  },
   chat: {
     status: {
       checkingAi: "Checking AI...",

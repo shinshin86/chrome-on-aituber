@@ -43,6 +43,14 @@ export const ja = {
   toast: {
     close: "閉じる",
   },
+  manual: {
+    title: "使い方マニュアル",
+    close: "閉じる",
+  },
+  license: {
+    title: "ライセンス / クレジット",
+    close: "閉じる",
+  },
   chat: {
     status: {
       checkingAi: "AI を確認中...",
