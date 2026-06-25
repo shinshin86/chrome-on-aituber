@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useI18n } from "../../i18n/I18nContext";
 import styles from "./Toast.module.css";
 
 interface Props {
@@ -8,6 +9,8 @@ interface Props {
 }
 
 export function Toast({ message, onClose, duration = 5000 }: Props) {
+  const { t } = useI18n();
+
   useEffect(() => {
     const timer = setTimeout(onClose, duration);
     return () => clearTimeout(timer);
@@ -16,7 +19,7 @@ export function Toast({ message, onClose, duration = 5000 }: Props) {
   return (
     <div className={styles.toast} role="alert">
       <span className={styles.message}>{message}</span>
-      <button className={styles.close} onClick={onClose} aria-label="閉じる">
+      <button className={styles.close} onClick={onClose} aria-label={t("toast.close")}>
         &times;
       </button>
     </div>

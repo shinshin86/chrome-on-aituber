@@ -6,6 +6,7 @@ import { SettingsPanel } from "./components/Settings/SettingsPanel";
 import { ManualDialog } from "./components/Manual/ManualDialog";
 import { LicenseDialog } from "./components/License/LicenseDialog";
 import { Toast } from "./components/Toast/Toast";
+import { I18nProvider, useI18n } from "./i18n/I18nContext";
 import { useChat } from "./hooks/useChat";
 import { useSettings } from "./hooks/useSettings";
 import { useYoutubeComments } from "./hooks/useYoutubeComments";
@@ -20,11 +21,7 @@ import {
   loadBackgroundImage,
   saveBackgroundImage,
 } from "./services/storage/storageService";
-import {
-  CHAT_SOURCE_LABELS,
-  type AvatarPack,
-  type ChatMessage,
-} from "./types";
+import type { AppSettings, AvatarPack, ChatMessage, ChatSource } from "./types";
 import type { YouTubeChatMessage } from "./services/youtube/youtubeService";
 import type { TwitchChatMessage } from "./services/twitch/twitchService";
 import "./App.css";
@@ -48,16 +45,27 @@ function formatMessageLabel(message: ChatMessage, assistantLabel: string): strin
   return message.role === "assistant" ? assistantLabel : "USER";
 }
 
-function formatMessageSource(message: ChatMessage): string {
-  return message.source ? CHAT_SOURCE_LABELS[message.source] : "不明";
+type SourceLabels = Record<ChatSource, string>;
+
+function formatMessageSource(
+  message: ChatMessage,
+  sourceLabels: SourceLabels,
+  unknownLabel: string
+): string {
+  return message.source ? sourceLabels[message.source] : unknownLabel;
 }
 
-function createChatLogCsv(messages: ChatMessage[], assistantLabel: string): string {
+function createChatLogCsv(
+  messages: ChatMessage[],
+  assistantLabel: string,
+  sourceLabels: SourceLabels,
+  unknownLabel: string
+): string {
   const header = ["timestamp", "role", "source", "senderName", "content"];
   const rows = messages.map((message) => [
     escapeCsvField(formatCsvDate(message.timestamp)),
     escapeCsvField(formatMessageLabel(message, assistantLabel)),
-    escapeCsvField(formatMessageSource(message)),
+    escapeCsvField(formatMessageSource(message, sourceLabels, unknownLabel)),
     escapeCsvField(message.senderName ?? ""),
     escapeCsvField(message.content),
   ]);
@@ -76,8 +84,13 @@ function createExportFileName(): string {
   return `chat-log-${yyyy}${mm}${dd}-${hh}${mi}${ss}.csv`;
 }
 
-function App() {
-  const { settings, updateSettings } = useSettings();
+interface AppContentProps {
+  settings: AppSettings;
+  updateSettings: (patch: Partial<AppSettings>) => void;
+}
+
+function AppContent({ settings, updateSettings }: AppContentProps) {
+  const { t } = useI18n();
   const {
     messages,
     isSending,
@@ -112,6 +125,14 @@ function App() {
   );
   const assistantLabel = avatar?.name ?? "AI";
   const llmReady = llmStatus === "available";
+  const sourceLabels = useMemo<SourceLabels>(
+    () => ({
+      chat: t("common.source.chat"),
+      youtube: t("common.source.youtube"),
+      twitch: t("common.source.twitch"),
+    }),
+    [t]
+  );
 
   // selectedAvatarId に応じてアバターを読み込む
   useEffect(() => {
@@ -225,15 +246,21 @@ function App() {
   // YouTube Live コメントを受け取って LLM に送信
   const handleYoutubeComment = useCallback(
     (comment: YouTubeChatMessage) => {
-      send(`${comment.userName} さんのコメント: ${comment.userComment}`, {
-        sender: {
+      send(
+        t("app.incomingComment", {
           name: comment.userName,
-          iconUrl: comment.userIconUrl,
-        },
-        source: "youtube",
-      });
+          comment: comment.userComment,
+        }),
+        {
+          sender: {
+            name: comment.userName,
+            iconUrl: comment.userIconUrl,
+          },
+          source: "youtube",
+        }
+      );
     },
-    [send]
+    [send, t]
   );
 
   useYoutubeComments({
@@ -247,14 +274,20 @@ function App() {
   // Twitch コメントを受け取って LLM に送信
   const handleTwitchComment = useCallback(
     (comment: TwitchChatMessage) => {
-      send(`${comment.userName} さんのコメント: ${comment.userComment}`, {
-        sender: {
+      send(
+        t("app.incomingComment", {
           name: comment.userName,
-        },
-        source: "twitch",
-      });
+          comment: comment.userComment,
+        }),
+        {
+          sender: {
+            name: comment.userName,
+          },
+          source: "twitch",
+        }
+      );
     },
-    [send]
+    [send, t]
   );
 
   useTwitchComments({
@@ -319,7 +352,7 @@ function App() {
       } catch (e) {
         console.warn("Background image load error:", e);
         if (!cancelled) {
-          setBackgroundErrorMessage("背景画像の読み込みに失敗しました");
+          setBackgroundErrorMessage(t("app.backgroundLoadFailed"));
         }
       }
     }
@@ -333,6 +366,7 @@ function App() {
     handleUpdateSettings,
     settings.backgroundImageEnabled,
     settings.backgroundImageUpdatedAt,
+    t,
   ]);
 
   useEffect(() => {
@@ -353,10 +387,10 @@ function App() {
           backgroundImageUpdatedAt: Date.now(),
         });
       } catch {
-        throw new Error("背景画像の保存に失敗しました");
+        throw new Error(t("app.backgroundSaveFailed"));
       }
     },
-    [handleUpdateSettings]
+    [handleUpdateSettings, t]
   );
 
   const handleResetBackgroundImage = useCallback(async () => {
@@ -367,14 +401,19 @@ function App() {
         backgroundImageUpdatedAt: 0,
       });
     } catch {
-      throw new Error("背景画像のリセットに失敗しました");
+      throw new Error(t("app.backgroundResetFailed"));
     }
-  }, [handleUpdateSettings]);
+  }, [handleUpdateSettings, t]);
 
   const handleExportMessages = useCallback(() => {
     if (messages.length === 0) return;
 
-    const csv = createChatLogCsv(messages, assistantLabel);
+    const csv = createChatLogCsv(
+      messages,
+      assistantLabel,
+      sourceLabels,
+      t("common.source.unknown")
+    );
     const blob = new Blob(["\uFEFF", csv], {
       type: "text/csv;charset=utf-8",
     });
@@ -386,7 +425,7 @@ function App() {
     anchor.click();
 
     window.setTimeout(() => URL.revokeObjectURL(url), 0);
-  }, [assistantLabel, messages]);
+  }, [assistantLabel, messages, sourceLabels, t]);
 
   const appStyle = useMemo(
     () =>
@@ -409,9 +448,9 @@ function App() {
       {/* 配信モードヒント */}
       {broadcastHint && (
         <div className="broadcast-hint">
-          <p>配信モードです</p>
+          <p>{t("app.broadcastHintTitle")}</p>
           <p>
-            <kbd>Ctrl</kbd>+<kbd>S</kbd> で設定を開き、チャットモードに戻せます
+            <kbd>Ctrl</kbd>+<kbd>S</kbd> {t("app.broadcastHintText")}
           </p>
         </div>
       )}
@@ -432,7 +471,7 @@ function App() {
             />
           ) : (
             <div className="avatar-loading" role="status" aria-live="polite">
-              {avatarLoading ? "アバターを読み込み中..." : "アバターを表示できません"}
+              {avatarLoading ? t("app.avatarLoading") : t("app.avatarUnavailable")}
             </div>
           )}
         </div>
@@ -463,9 +502,9 @@ function App() {
       {isBroadcast && canInitializeAI && (
         <div className="ai-prepare-overlay">
           <div className="ai-prepare-card">
-            <p className="ai-prepare-title">AI の準備が必要です</p>
+            <p className="ai-prepare-title">{t("app.aiPrepareTitle")}</p>
             <p className="ai-prepare-text">
-              Gemini Nano の初回モデル準備は、ユーザー操作から開始してください。
+              {t("app.aiPrepareText")}
             </p>
             <button
               className="ai-prepare-button"
@@ -473,7 +512,7 @@ function App() {
               onClick={initializeAI}
               disabled={isInitializingAI}
             >
-              {isInitializingAI ? "AI を準備中..." : "AI を準備"}
+              {isInitializingAI ? t("app.aiPreparing") : t("app.aiPrepare")}
             </button>
             {statusText && (
               <p className="ai-prepare-status">{statusText}</p>
@@ -523,6 +562,16 @@ function App() {
         />
       )}
     </div>
+  );
+}
+
+function App() {
+  const { settings, updateSettings } = useSettings();
+
+  return (
+    <I18nProvider language={settings.language}>
+      <AppContent settings={settings} updateSettings={updateSettings} />
+    </I18nProvider>
   );
 }
 

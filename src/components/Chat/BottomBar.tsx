@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useChatSubmit } from "use-chat-submit";
+import { useI18n } from "../../i18n/I18nContext";
 import styles from "./BottomBar.module.css";
 
 interface Props {
@@ -27,6 +28,7 @@ export function BottomBar({
   onOpenManual,
   onOpenLicense,
 }: Props) {
+  const { t } = useI18n();
   const [text, setText] = useState("");
   const { getTextareaProps, textareaRef } = useChatSubmit({
     onSubmit: submitCurrentText,
@@ -45,8 +47,8 @@ export function BottomBar({
       <button
         className={`${styles.iconBtn} ${styles.manualBtn}`}
         onClick={onOpenManual}
-        aria-label="マニュアル"
-        title="使い方マニュアルを開く"
+        aria-label={t("bottomBar.manualLabel")}
+        title={t("bottomBar.manualTitle")}
       >
         &#x2753;
       </button>
@@ -54,8 +56,8 @@ export function BottomBar({
       <button
         className={`${styles.iconBtn} ${styles.licenseBtn}`}
         onClick={onOpenLicense}
-        aria-label="ライセンス"
-        title="ライセンス情報を表示"
+        aria-label={t("bottomBar.licenseLabel")}
+        title={t("bottomBar.licenseTitle")}
       >
         &#xa9;
       </button>
@@ -67,7 +69,7 @@ export function BottomBar({
           disabled={isInitializingAI}
           type="button"
         >
-          {isInitializingAI ? "準備中..." : "AI を準備"}
+          {isInitializingAI ? t("bottomBar.prepareBusy") : t("bottomBar.prepareAi")}
         </button>
       )}
 
@@ -76,10 +78,10 @@ export function BottomBar({
         rows={1}
         placeholder={
           isSending
-            ? "応答を生成中..."
+            ? t("bottomBar.generating")
             : statusText
               ? statusText
-              : "メッセージを入力（Enterで送信、Shift+Enterで改行）"
+              : t("bottomBar.inputPlaceholder")
         }
         disabled={disabled}
         {...getTextareaProps({
@@ -92,8 +94,8 @@ export function BottomBar({
         className={styles.sendBtn}
         onClick={submitCurrentText}
         disabled={disabled || !text.trim()}
-        aria-label="送信"
-        title="メッセージを送信"
+        aria-label={t("bottomBar.sendLabel")}
+        title={t("bottomBar.sendTitle")}
       >
         &#x27A4;
       </button>
@@ -101,8 +103,8 @@ export function BottomBar({
       <button
         className={`${styles.iconBtn} ${styles.settingsBtn}`}
         onClick={onOpenSettings}
-        aria-label="設定"
-        title="設定を開く"
+        aria-label={t("bottomBar.settingsLabel")}
+        title={t("bottomBar.settingsTitle")}
       >
         &#x2699;
       </button>
