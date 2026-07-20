@@ -53,13 +53,14 @@ export function useChat(settings: AppSettings) {
   const [isSending, setIsSending] = useState(false);
   const [llmStatus, setLlmStatus] = useState<LLMStatus>("checking");
   const [statusText, setStatusText] = useState(() => t("chat.status.checkingAi"));
-  const [mouthOpen, setMouthOpen] = useState(false);
+  const [mouthLevel, setMouthLevel] = useState(0);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [needsInitialization, setNeedsInitialization] = useState(false);
   const [isInitializingAI, setIsInitializingAI] = useState(false);
 
-  const mouthOpenRef = useRef(setMouthOpen);
-  mouthOpenRef.current = setMouthOpen;
+  const mouthLevelRef = useRef(setMouthLevel);
+  mouthLevelRef.current = setMouthLevel;
   const appliedSystemPromptRef = useRef(settings.llmSystemPrompt);
 
   // 初期化
@@ -207,7 +208,8 @@ export function useChat(settings: AppSettings) {
       setIsSending(true);
 
       tts.stop();
-      mouthOpenRef.current(false);
+      mouthLevelRef.current(0);
+      setIsSpeaking(false);
 
       if (!llm.hasSession()) {
         if (llmStatus !== "available") {
@@ -287,10 +289,11 @@ export function useChat(settings: AppSettings) {
               setStatusText("");
             }
           }
-          tts
+          setIsSpeaking(true);
+          void tts
             .speak(
               reply,
-              (open) => mouthOpenRef.current(open),
+              (level) => mouthLevelRef.current(level),
               toTtsLengthScale(settings.ttsLengthScale)
             )
             .catch((e) => {
@@ -298,6 +301,10 @@ export function useChat(settings: AppSettings) {
                 getTtsErrorMessage(e, t("chat.status.ttsPlaybackFailed"), t)
               );
               console.warn("TTS error:", e);
+            })
+            .finally(() => {
+              mouthLevelRef.current(0);
+              setIsSpeaking(false);
             });
         }
       } catch (e) {
@@ -313,7 +320,8 @@ export function useChat(settings: AppSettings) {
 
   const reset = useCallback(async () => {
     tts.stop();
-    mouthOpenRef.current(false);
+    mouthLevelRef.current(0);
+    setIsSpeaking(false);
     llm.destroySession();
     setMessages([]);
     saveMessages([]);
@@ -362,7 +370,9 @@ export function useChat(settings: AppSettings) {
     isSending,
     llmStatus,
     statusText,
-    mouthOpen,
+    mouthLevel,
+    mouthOpen: mouthLevel > 0.18,
+    isSpeaking,
     errorMessage,
     canInitializeAI: needsInitialization || isInitializingAI,
     isInitializingAI,

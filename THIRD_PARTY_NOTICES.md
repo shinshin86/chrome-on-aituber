@@ -150,3 +150,47 @@ If you redistribute them, keep the following in mind:
 
 Each third-party software component, model, corpus, and related material is provided by its respective rights holder.
 Except to the extent stated in each applicable license or terms, the distributor of this software provides no express or implied warranty regarding those third-party components.
+
+---
+
+## 10. Avatar renderers and libraries
+
+The multi-format avatar implementation incorporates or depends on the following components:
+
+- AITuber OnAir example implementations — MIT License
+- three.js — MIT License
+- @pixiv/three-vrm and @pixiv/three-vrm-animation — MIT License
+- @webtoon/psd — MIT License
+- ag-psd — MIT License
+- Anime2.5DRig by 852wa (hakoniwa) — MIT License
+- PuruPuruPNGTuber concepts and file format — Apache License 2.0
+
+The corresponding license texts are distributed in `public/avatar-licenses/` and `src/avatar-runtime/psd/vendor/anime25drig/LICENSE`.
+
+The bundled Inochi2D browser runtime statically links Inox2D and other open-source Rust crates. Its detailed notices are distributed in `public/inochi2d/runtime/THIRD-PARTY-NOTICES.md` and must remain with the runtime files.
+
+---
+
+## 11. Bundled Aka Inochi2D model
+
+The bundled Aka model is derived from the Inochi2D example model `Aka`.
+
+- Title: Aka
+- Author: seagetch
+- Source: https://github.com/Inochi2D/example-models
+- License: Creative Commons Attribution 4.0 International
+- License URL: https://creativecommons.org/licenses/by/4.0/
+- Changes: Rig and idle motion adapted for the AITuber OnAir Inochi2D example.
+
+The complete attribution notice is distributed in `public/inochi2d/models/Aka.ATTRIBUTION.md`.
+
+---
+
+## 12. Bundled Miko avatar assets
+
+The bundled PNGTuber, PuruPuru PNGTuber, Pet, and VRM defaults use Miko, the official character of AITuber OnAir.
+
+- Copyright: AITuber OnAir / shinshin86
+- Website: https://miko.aituberonair.com/
+
+The Miko PuruPuru package is included for use with this application. Do not extract or redistribute its images as your own character, and do not use them for AI/model training.

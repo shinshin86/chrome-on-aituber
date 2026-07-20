@@ -8,6 +8,9 @@ interface Props {
 
 const PIPER_LICENSE_BASE_URL = `${import.meta.env.BASE_URL}piper/licenses`;
 const IRODORI_LICENSE_BASE_URL = `${import.meta.env.BASE_URL}irodori/licenses`;
+const AVATAR_LICENSE_BASE_URL = `${import.meta.env.BASE_URL}avatar-licenses`;
+const INOCHI_NOTICE_URL = `${import.meta.env.BASE_URL}inochi2d/runtime/THIRD-PARTY-NOTICES.md`;
+const AKA_ATTRIBUTION_URL = `${import.meta.env.BASE_URL}inochi2d/models/Aka.ATTRIBUTION.md`;
 
 function LicenseBodyJa() {
   return (
@@ -192,12 +195,40 @@ function LicenseBodyJa() {
       </section>
 
       <section className={styles.section}>
-        <h3>ミコ — PNGTuber アバター素材</h3>
+        <h3>アバター描画ライブラリ</h3>
         <p>
-          デフォルトアバターとして使用している PNGTuber 素材「ミコ」は
-          AITuber OnAir が提供するフリー素材です。
+          AITuber OnAir のサンプル実装、three.js / three-vrm、@webtoon/psd、
+          ag-psd、Anime2.5DRig を各ライセンスに従って使用しています。
         </p>
-        <p>&copy; AITuber OnAir / Miko</p>
+        <p>
+          <a href={`${AVATAR_LICENSE_BASE_URL}/AITUBER-ONAIR-MIT.txt`} target="_blank" rel="noopener noreferrer">AITuber OnAir MIT</a>
+          {" / "}
+          <a href={`${AVATAR_LICENSE_BASE_URL}/THREE-VRM-MIT.txt`} target="_blank" rel="noopener noreferrer">three-vrm MIT</a>
+          {" / "}
+          <a href={`${AVATAR_LICENSE_BASE_URL}/WEBTOON-PSD-MIT.txt`} target="_blank" rel="noopener noreferrer">@webtoon/psd MIT</a>
+        </p>
+      </section>
+
+      <section className={styles.section}>
+        <h3>Inochi2D runtime / Aka model</h3>
+        <p>
+          Inochi2D runtime の依存ライセンスは同梱 notice を参照してください。
+          Aka model: seagetch / CC BY 4.0（AITuber OnAir 向けにリグ・モーションを調整）。
+        </p>
+        <p>
+          <a href={INOCHI_NOTICE_URL} target="_blank" rel="noopener noreferrer">Runtime notices</a>
+          {" / "}
+          <a href={AKA_ATTRIBUTION_URL} target="_blank" rel="noopener noreferrer">Aka attribution</a>
+        </p>
+      </section>
+
+      <section className={styles.section}>
+        <h3>ミコ — 内蔵アバター素材</h3>
+        <p>
+          PNGTuber、ぷるぷるPNGTuber、Pet、VRM の内蔵デフォルトで使用する
+          「ミコ」は AITuber OnAir の公式キャラクターです。
+        </p>
+        <p>&copy; AITuber OnAir / shinshin86</p>
         <p>
           <a
             href="https://miko.aituberonair.com/"
@@ -397,12 +428,42 @@ function LicenseBodyEn() {
       </section>
 
       <section className={styles.section}>
-        <h3>Miko — PNGTuber avatar asset</h3>
+        <h3>Avatar rendering libraries</h3>
         <p>
-          The PNGTuber asset "Miko", used as the default avatar, is a free
-          asset provided by AITuber OnAir.
+          This app uses AITuber OnAir example implementations, three.js /
+          three-vrm, @webtoon/psd, ag-psd, and Anime2.5DRig under their
+          respective licenses.
         </p>
-        <p>&copy; AITuber OnAir / Miko</p>
+        <p>
+          <a href={`${AVATAR_LICENSE_BASE_URL}/AITUBER-ONAIR-MIT.txt`} target="_blank" rel="noopener noreferrer">AITuber OnAir MIT</a>
+          {" / "}
+          <a href={`${AVATAR_LICENSE_BASE_URL}/THREE-VRM-MIT.txt`} target="_blank" rel="noopener noreferrer">three-vrm MIT</a>
+          {" / "}
+          <a href={`${AVATAR_LICENSE_BASE_URL}/WEBTOON-PSD-MIT.txt`} target="_blank" rel="noopener noreferrer">@webtoon/psd MIT</a>
+        </p>
+      </section>
+
+      <section className={styles.section}>
+        <h3>Inochi2D runtime / Aka model</h3>
+        <p>
+          See the bundled notices for the Inochi2D runtime dependencies.
+          Aka model: seagetch / CC BY 4.0, with rig and motion adapted for the
+          AITuber OnAir example.
+        </p>
+        <p>
+          <a href={INOCHI_NOTICE_URL} target="_blank" rel="noopener noreferrer">Runtime notices</a>
+          {" / "}
+          <a href={AKA_ATTRIBUTION_URL} target="_blank" rel="noopener noreferrer">Aka attribution</a>
+        </p>
+      </section>
+
+      <section className={styles.section}>
+        <h3>Miko — bundled avatar assets</h3>
+        <p>
+          Miko, used by the bundled PNGTuber, PuruPuru PNGTuber, Pet, and VRM
+          defaults, is the official character of AITuber OnAir.
+        </p>
+        <p>&copy; AITuber OnAir / shinshin86</p>
         <p>
           <a
             href="https://miko.aituberonair.com/"

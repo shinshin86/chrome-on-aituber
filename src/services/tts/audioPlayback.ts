@@ -2,7 +2,7 @@
  * Audio Playback — Float32Array 音声の再生・停止・口パク解析の共通処理
  *
  * TTS エンジン（Piper Plus / Irodori）に依存しない再生レイヤー。
- * AnalyserNode の振幅から口パク（開閉）を判定する。
+ * AnalyserNode の振幅から連続した口の開き具合を算出する。
  */
 
 let audioCtx: AudioContext | null = null;
@@ -10,12 +10,12 @@ let sourceNode: AudioBufferSourceNode | null = null;
 let analyserNode: AnalyserNode | null = null;
 let animFrameId: number | null = null;
 
-const MOUTH_THRESHOLD = 20;
+const RMS_CEILING = 0.12;
 
 export async function play(
   audio: Float32Array,
   sampleRate: number,
-  onMouthChange: (open: boolean) => void
+  onMouthChange: (level: number) => void
 ): Promise<void> {
   stop();
 
@@ -39,19 +39,25 @@ export async function play(
   analyserNode = audioCtx.createAnalyser();
   analyserNode.fftSize = 256;
 
-  sourceNode = audioCtx.createBufferSource();
-  sourceNode.buffer = buffer;
-  sourceNode.connect(analyserNode);
+  const playbackSource = audioCtx.createBufferSource();
+  sourceNode = playbackSource;
+  playbackSource.buffer = buffer;
+  playbackSource.connect(analyserNode);
   analyserNode.connect(audioCtx.destination);
 
-  sourceNode.onended = () => {
-    stopMouthAnimation();
-    onMouthChange(false);
-    sourceNode = null;
-  };
+  await new Promise<void>((resolve) => {
+    playbackSource.onended = () => {
+      if (sourceNode === playbackSource) {
+        stopMouthAnimation();
+        onMouthChange(0);
+        sourceNode = null;
+      }
+      resolve();
+    };
 
-  sourceNode.start();
-  startMouthAnimation(onMouthChange);
+    playbackSource.start();
+    startMouthAnimation(onMouthChange);
+  });
 }
 
 export function stop(): void {
@@ -79,18 +85,23 @@ export async function dispose(): Promise<void> {
   analyserNode = null;
 }
 
-function startMouthAnimation(onMouthChange: (open: boolean) => void): void {
+function startMouthAnimation(onMouthChange: (level: number) => void): void {
   if (!analyserNode) return;
   const data = new Uint8Array(analyserNode.frequencyBinCount);
+  let smoothedLevel = 0;
 
   function tick() {
     analyserNode!.getByteTimeDomainData(data);
-    let max = 0;
+    let squareSum = 0;
     for (let i = 0; i < data.length; i++) {
-      const a = Math.abs(data[i] - 128);
-      if (a > max) max = a;
+      const sample = (data[i] - 128) / 128;
+      squareSum += sample * sample;
     }
-    onMouthChange(max > MOUTH_THRESHOLD);
+    const rms = Math.sqrt(squareSum / data.length);
+    const targetLevel = Math.min(1, rms / RMS_CEILING);
+    const smoothing = targetLevel > smoothedLevel ? 0.48 : 0.24;
+    smoothedLevel += (targetLevel - smoothedLevel) * smoothing;
+    onMouthChange(smoothedLevel);
     animFrameId = requestAnimationFrame(tick);
   }
   animFrameId = requestAnimationFrame(tick);

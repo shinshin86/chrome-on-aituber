@@ -1,4 +1,9 @@
-import type { AppSettings, ChatMessage } from "../../types";
+import type {
+  AppSettings,
+  AvatarKind,
+  ChatMessage,
+  PetManifest,
+} from "../../types";
 import { DEFAULT_SETTINGS } from "../../types";
 
 const PREFIX = "chrome-on-aituber";
@@ -67,12 +72,17 @@ function openDB(): Promise<IDBDatabase> {
 export interface StoredAvatarPack {
   id: string;
   name: string;
-  images: {
+  /** Missing on records created before multi-format avatar support. */
+  kind?: AvatarKind;
+  images?: {
     mouthCloseEyesOpen: Blob;
     mouthCloseEyesClose: Blob;
     mouthOpenEyesOpen: Blob;
     mouthOpenEyesClose: Blob;
   };
+  asset?: Blob;
+  secondaryAsset?: Blob;
+  manifest?: PetManifest;
 }
 
 export async function saveAvatarPack(pack: StoredAvatarPack): Promise<void> {

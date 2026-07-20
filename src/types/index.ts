@@ -25,11 +25,30 @@ export interface ChatMessage {
 }
 
 // Avatar
-export interface AvatarPack {
+export type AvatarKind =
+  | "png"
+  | "purupuru"
+  | "pet"
+  | "vrm"
+  | "psd"
+  | "inochi2d";
+
+export const AVATAR_KIND_LABELS: Record<AvatarKind, string> = {
+  png: "PNGTuber",
+  purupuru: "ぷるぷるPNGTuber",
+  pet: "Pet",
+  vrm: "VRM",
+  psd: "PSD",
+  inochi2d: "Inochi2D",
+};
+
+interface AvatarPackBase {
   id: string;
   name: string;
-  images: AvatarImages;
+  kind: AvatarKind;
   isBuiltIn: boolean;
+  thumbnailUrl?: string;
+  dispose?: () => void;
 }
 
 export interface AvatarImages {
@@ -38,6 +57,43 @@ export interface AvatarImages {
   mouthOpenEyesOpen: string;
   mouthOpenEyesClose: string;
 }
+
+export interface PetManifest {
+  id?: string;
+  displayName?: string;
+  description?: string;
+  spritesheetPath?: string;
+}
+
+export type AvatarPack =
+  | (AvatarPackBase & {
+      kind: "png";
+      images: AvatarImages;
+    })
+  | (AvatarPackBase & {
+      kind: "purupuru";
+      packageUrl: string;
+    })
+  | (AvatarPackBase & {
+      kind: "pet";
+      manifest: PetManifest;
+      spritesheetUrl: string;
+    })
+  | (AvatarPackBase & {
+      kind: "vrm";
+      modelUrl: string;
+      animationUrl?: string;
+    })
+  | (AvatarPackBase & {
+      kind: "psd";
+      modelUrl: string;
+    })
+  | (AvatarPackBase & {
+      kind: "inochi2d";
+      modelUrl?: string;
+      motionUrl?: string;
+      manifestModelId?: string;
+    });
 
 // App mode
 export type AppMode = "chat" | "broadcast";
