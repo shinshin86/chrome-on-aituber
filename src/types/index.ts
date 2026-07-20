@@ -95,6 +95,17 @@ export type AvatarPack =
       manifestModelId?: string;
     });
 
+export interface AvatarViewTransform {
+  x: number;
+  y: number;
+  scale: number;
+}
+
+export interface VrmViewTransform {
+  cameraPosition: [number, number, number];
+  target: [number, number, number];
+}
+
 // App mode
 export type AppMode = "chat" | "broadcast";
 

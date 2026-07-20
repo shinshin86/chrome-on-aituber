@@ -7,6 +7,7 @@ import {
   Clock,
   DirectionalLight,
   LoopRepeat,
+  MOUSE,
   PerspectiveCamera,
   Scene,
   Vector3,
@@ -25,15 +26,22 @@ import {
   createVRMAnimationClip,
   type VRMAnimation,
 } from "@pixiv/three-vrm-animation";
+import {
+  deleteAvatarViewTransform,
+  loadVrmViewTransform,
+  saveVrmViewTransform,
+} from "../../../services/storage/storageService";
+import type { VrmViewTransform } from "../../../types";
 import styles from "../Avatar.module.css";
 
 interface Props {
+  avatarId: string;
   modelUrl: string;
   animationUrl?: string;
   mouthLevel: number;
 }
 
-export function VrmAvatar({ modelUrl, animationUrl, mouthLevel }: Props) {
+export function VrmAvatar({ avatarId, modelUrl, animationUrl, mouthLevel }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const mouthLevelRef = useRef(mouthLevel);
@@ -66,11 +74,55 @@ export function VrmAvatar({ modelUrl, animationUrl, mouthLevel }: Props) {
     const controls = new OrbitControls(camera, canvas);
     controls.enablePan = true;
     controls.enableDamping = true;
+    controls.screenSpacePanning = true;
+    controls.mouseButtons.LEFT = MOUSE.PAN;
+    controls.mouseButtons.MIDDLE = MOUSE.DOLLY;
+    controls.mouseButtons.RIGHT = MOUSE.ROTATE;
     const clock = new Clock();
     let disposed = false;
     let animationFrameId = 0;
     let loadedVrm: VRM | null = null;
     let mixer: AnimationMixer | null = null;
+    let defaultViewTransform: VrmViewTransform | null = null;
+
+    const updateViewDataAttributes = () => {
+      canvas.dataset.avatarViewCamera = camera.position
+        .toArray()
+        .map((value) => value.toFixed(4))
+        .join(",");
+      canvas.dataset.avatarViewTarget = controls.target
+        .toArray()
+        .map((value) => value.toFixed(4))
+        .join(",");
+    };
+
+    const applyViewTransform = (view: VrmViewTransform) => {
+      camera.position.fromArray(view.cameraPosition);
+      controls.target.fromArray(view.target);
+      controls.update();
+      updateViewDataAttributes();
+    };
+
+    const saveCurrentViewTransform = () => {
+      if (!defaultViewTransform) return;
+      saveVrmViewTransform(avatarId, {
+        cameraPosition: camera.position.toArray(),
+        target: controls.target.toArray(),
+      });
+      updateViewDataAttributes();
+    };
+
+    const resetViewTransform = (event: MouseEvent) => {
+      if (!defaultViewTransform) return;
+      event.preventDefault();
+      applyViewTransform(defaultViewTransform);
+      deleteAvatarViewTransform(avatarId);
+    };
+
+    const preventContextMenu = (event: MouseEvent) => event.preventDefault();
+    controls.addEventListener("end", saveCurrentViewTransform);
+    canvas.addEventListener("dblclick", resetViewTransform);
+    canvas.addEventListener("contextmenu", preventContextMenu);
 
     const resize = () => {
       const width = Math.max(container.clientWidth, 1);
@@ -108,7 +160,14 @@ export function VrmAvatar({ modelUrl, animationUrl, mouthLevel }: Props) {
         controls.target.set(0, lookAtY, 0);
         controls.minDistance = distance * 0.65;
         controls.maxDistance = distance * 1.8;
+        defaultViewTransform = {
+          cameraPosition: camera.position.toArray(),
+          target: controls.target.toArray(),
+        };
+        const storedViewTransform = loadVrmViewTransform(avatarId);
+        if (storedViewTransform) applyViewTransform(storedViewTransform);
         controls.update();
+        updateViewDataAttributes();
         scene.add(vrm.scene);
         loadedVrm = vrm;
 
@@ -162,16 +221,24 @@ export function VrmAvatar({ modelUrl, animationUrl, mouthLevel }: Props) {
       disposed = true;
       cancelAnimationFrame(animationFrameId);
       resizeObserver.disconnect();
+      controls.removeEventListener("end", saveCurrentViewTransform);
       controls.dispose();
+      canvas.removeEventListener("dblclick", resetViewTransform);
+      canvas.removeEventListener("contextmenu", preventContextMenu);
       mixer?.stopAllAction();
       if (loadedVrm) VRMUtils.deepDispose(loadedVrm.scene);
       renderer.dispose();
     };
-  }, [animationUrl, modelUrl]);
+  }, [animationUrl, avatarId, modelUrl]);
 
   return (
     <div ref={containerRef} className={styles.renderer}>
-      <canvas ref={canvasRef} className={styles.canvas} aria-label="VRM avatar" />
+      <canvas
+        ref={canvasRef}
+        className={`${styles.canvas} ${styles.interactiveCanvas}`}
+        aria-label="VRM avatar"
+        data-avatar-view-id={avatarId}
+      />
       {error && <div className={styles.status}>{error}</div>}
     </div>
   );

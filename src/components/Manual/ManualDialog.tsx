@@ -163,6 +163,9 @@ function ManualBodyJa() {
             AI の応答はアバターの左側に、あなたのメッセージは右側に表示されます
           </li>
           <li>
+            アバターは左ドラッグで移動、ホイールで拡大縮小、ダブルクリックで初期表示に戻せます。VRMは右ドラッグで回転できます
+          </li>
+          <li>
             設定パネルから背景画像を変更でき、チャットモードと配信モードの両方に反映されます
           </li>
         </ul>
@@ -422,6 +425,10 @@ function ManualBodyEn() {
           <li>
             AI responses appear on the left side of the avatar, and your
             messages appear on the right
+          </li>
+          <li>
+            Left-drag to move the avatar, use the mouse wheel to zoom, and
+            double-click to reset the view. Right-drag rotates VRM avatars
           </li>
           <li>
             You can change the background image from the settings panel, and it

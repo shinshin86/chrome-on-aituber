@@ -9,6 +9,7 @@ import {
   listAvatarPacks,
   saveAvatarPack,
   deleteAvatarPack,
+  deleteAvatarViewTransform,
   type StoredAvatarPack,
 } from "../storage/storageService";
 
@@ -155,6 +156,7 @@ export async function registerPetAvatar(
 export async function removeAvatar(id: string): Promise<void> {
   if (BUILT_IN_IDS.has(id)) return;
   await deleteAvatarPack(id);
+  deleteAvatarViewTransform(id);
 }
 
 function createCustomId(kind: AvatarKind): string {

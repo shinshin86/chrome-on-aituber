@@ -28,11 +28,14 @@ export function Avatar({ avatar, mouthLevel, isSpeaking, isProcessing }: Props) 
   let content;
   switch (avatar.kind) {
     case "png":
-      content = <PngAvatar images={avatar.images} mouthLevel={mouthLevel} />;
+      content = (
+        <PngAvatar avatarId={avatar.id} images={avatar.images} mouthLevel={mouthLevel} />
+      );
       break;
     case "purupuru":
       content = (
         <PuruPuruAvatar
+          avatarId={avatar.id}
           packageUrl={avatar.packageUrl}
           mouthLevel={mouthLevel}
           isSpeaking={isSpeaking}
@@ -42,6 +45,7 @@ export function Avatar({ avatar, mouthLevel, isSpeaking, isProcessing }: Props) 
     case "pet":
       content = (
         <PetAvatar
+          avatarId={avatar.id}
           manifest={avatar.manifest}
           spritesheetUrl={avatar.spritesheetUrl}
           mouthLevel={mouthLevel}
@@ -53,6 +57,7 @@ export function Avatar({ avatar, mouthLevel, isSpeaking, isProcessing }: Props) 
     case "vrm":
       content = (
         <VrmAvatar
+          avatarId={avatar.id}
           modelUrl={avatar.modelUrl}
           animationUrl={avatar.animationUrl}
           mouthLevel={mouthLevel}
@@ -60,11 +65,18 @@ export function Avatar({ avatar, mouthLevel, isSpeaking, isProcessing }: Props) 
       );
       break;
     case "psd":
-      content = <PsdAvatar modelUrl={avatar.modelUrl} mouthLevel={mouthLevel} />;
+      content = (
+        <PsdAvatar
+          avatarId={avatar.id}
+          modelUrl={avatar.modelUrl}
+          mouthLevel={mouthLevel}
+        />
+      );
       break;
     case "inochi2d":
       content = (
         <Inochi2DAvatar
+          avatarId={avatar.id}
           name={avatar.name}
           modelUrl={avatar.modelUrl}
           motionUrl={avatar.motionUrl}
@@ -78,7 +90,9 @@ export function Avatar({ avatar, mouthLevel, isSpeaking, isProcessing }: Props) 
   return (
     <div className={styles.container}>
       <Suspense fallback={<div className={styles.status}>アバターを読み込み中…</div>}>
-        {content}
+        <div key={avatar.id} className={styles.renderer}>
+          {content}
+        </div>
       </Suspense>
     </div>
   );

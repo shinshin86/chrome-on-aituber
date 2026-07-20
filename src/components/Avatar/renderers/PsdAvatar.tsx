@@ -8,9 +8,11 @@ import {
   createAnime25RigAvatar,
   type Anime25RigAvatar,
 } from "../../../avatar-runtime/psd/lib/rig/anime25Renderer";
+import { AvatarViewLayer } from "../AvatarViewLayer";
 import styles from "../Avatar.module.css";
 
 interface Props {
+  avatarId: string;
   modelUrl: string;
   mouthLevel: number;
 }
@@ -73,7 +75,7 @@ function MotionPsdCanvas({
   return <canvas ref={canvasRef} className={styles.modelCanvas} aria-label="Motion PSD avatar" />;
 }
 
-export function PsdAvatar({ modelUrl, mouthLevel }: Props) {
+export function PsdAvatar({ avatarId, modelUrl, mouthLevel }: Props) {
   const avatar = usePsdAvatar();
 
   useEffect(() => {
@@ -100,9 +102,13 @@ export function PsdAvatar({ modelUrl, mouthLevel }: Props) {
   return (
     <div className={styles.renderer}>
       {avatar.mode === "motion" && avatar.rig?.rig ? (
-        <MotionPsdCanvas avatar={avatar} mouthLevel={mouthLevel} />
+        <AvatarViewLayer avatarId={avatarId}>
+          <MotionPsdCanvas avatar={avatar} mouthLevel={mouthLevel} />
+        </AvatarViewLayer>
       ) : avatar.model ? (
-        <StaticPsdCanvas avatar={avatar} mouthLevel={mouthLevel} />
+        <AvatarViewLayer avatarId={avatarId}>
+          <StaticPsdCanvas avatar={avatar} mouthLevel={mouthLevel} />
+        </AvatarViewLayer>
       ) : (
         <div className={styles.status}>
           {avatar.error || (avatar.loading ? "PSDを読み込み中…" : "PSDを準備中…")}

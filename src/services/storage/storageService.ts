@@ -1,8 +1,10 @@
 import type {
   AppSettings,
   AvatarKind,
+  AvatarViewTransform,
   ChatMessage,
   PetManifest,
+  VrmViewTransform,
 } from "../../types";
 import { DEFAULT_SETTINGS } from "../../types";
 
@@ -11,6 +13,7 @@ const PREFIX = "chrome-on-aituber";
 const KEYS = {
   SETTINGS: `${PREFIX}_settings`,
   MESSAGES: `${PREFIX}_messages`,
+  AVATAR_VIEWS: `${PREFIX}_avatar_views`,
 } as const;
 
 const DB_NAME = `${PREFIX}_db`;
@@ -48,6 +51,92 @@ export function loadMessages(): ChatMessage[] {
 export function saveMessages(messages: ChatMessage[]): void {
   const trimmed = messages.slice(-100);
   localStorage.setItem(KEYS.MESSAGES, JSON.stringify(trimmed));
+}
+
+type StoredAvatarView =
+  | ({ kind: "2d" } & AvatarViewTransform)
+  | ({ kind: "vrm" } & VrmViewTransform);
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isVector3(value: unknown): value is [number, number, number] {
+  return (
+    Array.isArray(value) &&
+    value.length === 3 &&
+    value.every(isFiniteNumber)
+  );
+}
+
+function loadAvatarViews(): Record<string, StoredAvatarView> {
+  try {
+    const raw = localStorage.getItem(KEYS.AVATAR_VIEWS);
+    if (!raw) return {};
+    const parsed: unknown = JSON.parse(raw);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, StoredAvatarView>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveAvatarView(id: string, view: StoredAvatarView): void {
+  const views = loadAvatarViews();
+  views[id] = view;
+  localStorage.setItem(KEYS.AVATAR_VIEWS, JSON.stringify(views));
+}
+
+export function loadAvatarViewTransform(
+  id: string
+): AvatarViewTransform | undefined {
+  const view = loadAvatarViews()[id];
+  if (
+    view?.kind !== "2d" ||
+    !isFiniteNumber(view.x) ||
+    !isFiniteNumber(view.y) ||
+    !isFiniteNumber(view.scale)
+  ) {
+    return undefined;
+  }
+  return { x: view.x, y: view.y, scale: view.scale };
+}
+
+export function saveAvatarViewTransform(
+  id: string,
+  transform: AvatarViewTransform
+): void {
+  saveAvatarView(id, { kind: "2d", ...transform });
+}
+
+export function loadVrmViewTransform(id: string): VrmViewTransform | undefined {
+  const view = loadAvatarViews()[id];
+  if (
+    view?.kind !== "vrm" ||
+    !isVector3(view.cameraPosition) ||
+    !isVector3(view.target)
+  ) {
+    return undefined;
+  }
+  return {
+    cameraPosition: [...view.cameraPosition],
+    target: [...view.target],
+  };
+}
+
+export function saveVrmViewTransform(
+  id: string,
+  transform: VrmViewTransform
+): void {
+  saveAvatarView(id, { kind: "vrm", ...transform });
+}
+
+export function deleteAvatarViewTransform(id: string): void {
+  const views = loadAvatarViews();
+  if (!(id in views)) return;
+  delete views[id];
+  localStorage.setItem(KEYS.AVATAR_VIEWS, JSON.stringify(views));
 }
 
 // --- IndexedDB (avatar blobs) ---

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import type { PetManifest } from "../../../types";
+import { AvatarViewLayer } from "../AvatarViewLayer";
 import styles from "../Avatar.module.css";
 
 interface Props {
+  avatarId: string;
   manifest: PetManifest;
   spritesheetUrl: string;
   mouthLevel: number;
@@ -17,6 +19,7 @@ const ROWS = {
 } as const;
 
 export function PetAvatar({
+  avatarId,
   manifest,
   spritesheetUrl,
   mouthLevel,
@@ -36,16 +39,18 @@ export function PetAvatar({
   }, [action, row.frameMs, row.frames]);
 
   return (
-    <div className={styles.petStage} aria-label="Pet stage">
-      <div
-        className={`${styles.petSprite} ${isSpeaking ? styles.petSpeaking : ""}`}
-        role="img"
-        aria-label={manifest.displayName || "Pet avatar"}
-        style={{
-          backgroundImage: `url(${spritesheetUrl})`,
-          backgroundPosition: `${(frame / 7) * 100}% ${(row.row / 8) * 100}%`,
-        }}
-      />
-    </div>
+    <AvatarViewLayer avatarId={avatarId}>
+      <div className={styles.petStage} aria-label="Pet stage">
+        <div
+          className={`${styles.petSprite} ${isSpeaking ? styles.petSpeaking : ""}`}
+          role="img"
+          aria-label={manifest.displayName || "Pet avatar"}
+          style={{
+            backgroundImage: `url(${spritesheetUrl})`,
+            backgroundPosition: `${(frame / 7) * 100}% ${(row.row / 8) * 100}%`,
+          }}
+        />
+      </div>
+    </AvatarViewLayer>
   );
 }
