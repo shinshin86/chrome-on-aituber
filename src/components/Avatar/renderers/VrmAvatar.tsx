@@ -6,10 +6,13 @@ import {
   Box3,
   Clock,
   DirectionalLight,
+  Euler,
   LoopRepeat,
   MOUSE,
   PerspectiveCamera,
+  Quaternion,
   Scene,
+  sRGBEncoding,
   Vector3,
   WebGLRenderer,
 } from "three";
@@ -41,6 +44,49 @@ interface Props {
   mouthLevel: number;
 }
 
+const FRONT_FACING_BONES = ["hips", "spine", "chest", "upperChest", "neck", "head"] as const;
+
+function centerAnimationYaw(clip: AnimationClip, vrm: VRM) {
+  const quaternionTrackNames = new Set(
+    FRONT_FACING_BONES.map((boneName) => vrm.humanoid.getNormalizedBoneNode(boneName)?.name)
+      .filter((nodeName): nodeName is string => Boolean(nodeName))
+      .map((nodeName) => `${nodeName}.quaternion`)
+  );
+  const quaternion = new Quaternion();
+  const euler = new Euler(0, 0, 0, "YXZ");
+
+  clip.tracks.forEach((track) => {
+    if (
+      !quaternionTrackNames.has(track.name) ||
+      track.values.length < 4 ||
+      track.values.length !== track.times.length * 4
+    ) {
+      return;
+    }
+
+    let sinSum = 0;
+    let cosSum = 0;
+    for (let index = 0; index < track.values.length; index += 4) {
+      quaternion.fromArray(track.values, index);
+      euler.setFromQuaternion(quaternion, "YXZ");
+      sinSum += Math.sin(euler.y);
+      cosSum += Math.cos(euler.y);
+    }
+    const centerYaw = Math.atan2(sinSum, cosSum);
+
+    for (let index = 0; index < track.values.length; index += 4) {
+      quaternion.fromArray(track.values, index);
+      euler.setFromQuaternion(quaternion, "YXZ");
+      euler.y -= centerYaw;
+      quaternion.setFromEuler(euler);
+      track.values[index] = quaternion.x;
+      track.values[index + 1] = quaternion.y;
+      track.values[index + 2] = quaternion.z;
+      track.values[index + 3] = quaternion.w;
+    }
+  });
+}
+
 export function VrmAvatar({ avatarId, modelUrl, animationUrl, mouthLevel }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -64,11 +110,12 @@ export function VrmAvatar({ avatarId, modelUrl, animationUrl, mouthLevel }: Prop
       queueMicrotask(() => setError("WebGLを利用できないためVRMを表示できません"));
       return;
     }
+    renderer.outputEncoding = sRGBEncoding;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     const scene = new Scene();
-    scene.add(new AmbientLight(0xffffff, 1.5));
-    const keyLight = new DirectionalLight(0xffffff, 2.2);
-    keyLight.position.set(1, 2, 3);
+    scene.add(new AmbientLight(0xffffff, 1.0));
+    const keyLight = new DirectionalLight(0xffffff, 0.9);
+    keyLight.position.set(1.0, 1.8, 1.2);
     scene.add(keyLight);
     const camera = new PerspectiveCamera(30, 1, 0.01, 100);
     const controls = new OrbitControls(camera, canvas);
@@ -183,6 +230,7 @@ export function VrmAvatar({ avatarId, modelUrl, animationUrl, mouthLevel }: Prop
               animation,
               vrm as unknown as Parameters<typeof createVRMAnimationClip>[1]
             );
+            centerAnimationYaw(clip, vrm);
             const hipsNodeName = vrm.humanoid.getNormalizedBoneNode("hips")?.name;
             const tracks = hipsNodeName
               ? clip.tracks.filter((track) => track.name !== `${hipsNodeName}.position`)
