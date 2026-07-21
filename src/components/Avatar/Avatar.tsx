@@ -25,6 +25,8 @@ const Inochi2DAvatar = lazy(() =>
 );
 
 export function Avatar({ avatar, mouthLevel, isSpeaking, isProcessing }: Props) {
+  const viewportOverflowClass =
+    avatar.kind === "psd" ? styles.viewportOverflow : "";
   let content;
   switch (avatar.kind) {
     case "png":
@@ -88,9 +90,12 @@ export function Avatar({ avatar, mouthLevel, isSpeaking, isProcessing }: Props) 
   }
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} ${viewportOverflowClass}`}>
       <Suspense fallback={<div className={styles.status}>アバターを読み込み中…</div>}>
-        <div key={avatar.id} className={styles.renderer}>
+        <div
+          key={avatar.id}
+          className={`${styles.renderer} ${viewportOverflowClass}`}
+        >
           {content}
         </div>
       </Suspense>

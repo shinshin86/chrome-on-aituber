@@ -24,6 +24,10 @@
   overflow: hidden;
 }
 
+.viewportOverflow {
+  overflow: visible;
+}
+
 .viewLayer {
   width: 100%;
   height: 100%;

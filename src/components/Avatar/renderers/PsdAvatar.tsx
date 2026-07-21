@@ -100,7 +100,7 @@ export function PsdAvatar({ avatarId, modelUrl, mouthLevel }: Props) {
   }, [modelUrl]);
 
   return (
-    <div className={styles.renderer}>
+    <div className={`${styles.renderer} ${styles.viewportOverflow}`}>
       {avatar.mode === "motion" && avatar.rig?.rig ? (
         <AvatarViewLayer avatarId={avatarId}>
           <MotionPsdCanvas avatar={avatar} mouthLevel={mouthLevel} />
