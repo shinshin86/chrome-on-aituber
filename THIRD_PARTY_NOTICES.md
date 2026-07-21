@@ -128,6 +128,7 @@ The full third-party license texts bundled with this software should be stored i
 - `licenses/MIT-piper.txt`
 - `licenses/MIT-onnxruntime-web.txt`
 - `licenses/BSD-3-Clause-open-jtalk.txt`
+- `public/licenses/NPM-THIRD-PARTY-NOTICES.txt` (npm production dependencies)
 
 This `NOTICE` file is intended for overview and credit display purposes.
 For detailed legal conditions, the full license texts and the terms on each official website take precedence.
@@ -163,7 +164,9 @@ The multi-format avatar implementation incorporates or depends on the following 
 - @webtoon/psd — MIT License
 - ag-psd — MIT License
 - Anime2.5DRig by 852wa (hakoniwa) — MIT License
-- PuruPuruPNGTuber concepts and file format — Apache License 2.0
+- PuruPuruPNGTuber avatar-format code and documentation — Apache License 2.0
+
+This app supports the avatar format defined by [rotejin/PuruPuruPNGTuber](https://github.com/rotejin/PuruPuruPNGTuber). The referenced project's software code and documentation are licensed under the Apache License 2.0. Bundled Miko image assets remain subject to the separate Miko usage guidelines below.
 
 The corresponding license texts are distributed in `public/avatar-licenses/` and `src/avatar-runtime/psd/vendor/anime25drig/LICENSE`.
 
@@ -190,7 +193,7 @@ The complete attribution notice is distributed in `public/inochi2d/models/Aka.AT
 
 The bundled PNGTuber, PuruPuru PNGTuber, Pet, and VRM defaults use Miko, the official character of AITuber OnAir.
 
-- Copyright: AITuber OnAir / shinshin86
+- Copyright / example credit: AITuber OnAir / Miko
 - Website: https://miko.aituberonair.com/
 
-The Miko PuruPuru package is included for use with this application. Do not extract or redistribute its images as your own character, and do not use them for AI/model training.
+The current official guidelines allow commercial use without a usage fee or mandatory credit. They also restrict redistribution of the original avatar asset data and define prohibited uses. These conditions apply to all bundled Miko avatar formats. Review the latest official guidelines at the website above before using or redistributing the assets; the current official terms take precedence over this summary.
