@@ -137,6 +137,9 @@ export const en = {
       registerHint:
         "Click or drag and drop to set all 4 images (PNG / JPG recommended)",
       namePlaceholder: "Avatar name",
+      chooseFile: "Choose file",
+      changeFile: "Change file",
+      noFileSelected: "No file selected",
       cancel: "Cancel",
       registering: "Registering...",
       register: "Register",

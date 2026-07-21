@@ -20,6 +20,14 @@ interface Props {
   onSelectAvatar: (id: string) => void;
 }
 
+interface AvatarFilePickerProps {
+  label: string;
+  accept: string;
+  file: File | null;
+  disabled?: boolean;
+  onChange: (file: File | null) => void;
+}
+
 type SlotKey =
   | "mouthCloseEyesOpen"
   | "mouthCloseEyesClose"
@@ -59,6 +67,56 @@ const FILE_CONFIG: Record<
     secondaryLabel: "Motion data (.json / optional)",
   },
 };
+
+function AvatarFilePicker({
+  label,
+  accept,
+  file,
+  disabled = false,
+  onChange,
+}: AvatarFilePickerProps) {
+  const { t } = useI18n();
+  const fieldClassName = [
+    styles.fileField,
+    file ? styles.fileFieldSelected : "",
+    disabled ? styles.fileFieldDisabled : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <label className={fieldClassName}>
+      <span className={styles.fileLabel}>{label}</span>
+      <span className={styles.filePickerRow}>
+        <span className={styles.filePickerButton}>
+          <svg
+            className={styles.filePickerIcon}
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14.5V19h14v-4.5" />
+          </svg>
+          {file ? t("settings.avatar.changeFile") : t("settings.avatar.chooseFile")}
+        </span>
+        <span
+          className={`${styles.fileName} ${file ? styles.fileNameSelected : ""}`}
+          title={file?.name}
+        >
+          {file?.name ?? t("settings.avatar.noFileSelected")}
+        </span>
+      </span>
+      <input
+        className={styles.fileInput}
+        type="file"
+        accept={accept}
+        disabled={disabled}
+        aria-label={label}
+        onChange={(event) => onChange(event.target.files?.[0] ?? null)}
+      />
+    </label>
+  );
+}
 
 export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
   const { t } = useI18n();
@@ -237,43 +295,55 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
           {kind === "png" ? (
             <div className={styles.slotGrid}>
               {slots.map((slot) => (
-                <label key={slot.key} className={styles.fileField}>
-                  <span>{slot.label}</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(event) =>
-                      setPngFiles((current) => ({
-                        ...current,
-                        [slot.key]: event.target.files?.[0] ?? null,
-                      }))
-                    }
-                  />
-                </label>
+                <AvatarFilePicker
+                  key={slot.key}
+                  label={slot.label}
+                  accept="image/*"
+                  file={pngFiles[slot.key]}
+                  disabled={registering}
+                  onChange={(file) =>
+                    setPngFiles((current) => ({
+                      ...current,
+                      [slot.key]: file,
+                    }))
+                  }
+                />
               ))}
             </div>
           ) : kind === "pet" ? (
             <div className={styles.fileFields}>
-              <label className={styles.fileField}>
-                <span>Pet manifest (.json)</span>
-                <input type="file" accept=".json,application/json" onChange={(event) => setPetManifestFile(event.target.files?.[0] ?? null)} />
-              </label>
-              <label className={styles.fileField}>
-                <span>Spritesheet image</span>
-                <input type="file" accept="image/*" onChange={(event) => setPrimaryFile(event.target.files?.[0] ?? null)} />
-              </label>
+              <AvatarFilePicker
+                label="Pet manifest (.json)"
+                accept=".json,application/json"
+                file={petManifestFile}
+                disabled={registering}
+                onChange={setPetManifestFile}
+              />
+              <AvatarFilePicker
+                label="Spritesheet image"
+                accept="image/*"
+                file={primaryFile}
+                disabled={registering}
+                onChange={setPrimaryFile}
+              />
             </div>
           ) : (
             <div className={styles.fileFields}>
-              <label className={styles.fileField}>
-                <span>{FILE_CONFIG[kind].primaryLabel}</span>
-                <input type="file" accept={FILE_CONFIG[kind].primaryAccept} onChange={(event) => setPrimaryFile(event.target.files?.[0] ?? null)} />
-              </label>
+              <AvatarFilePicker
+                label={FILE_CONFIG[kind].primaryLabel}
+                accept={FILE_CONFIG[kind].primaryAccept}
+                file={primaryFile}
+                disabled={registering}
+                onChange={setPrimaryFile}
+              />
               {FILE_CONFIG[kind].secondaryLabel && (
-                <label className={styles.fileField}>
-                  <span>{FILE_CONFIG[kind].secondaryLabel}</span>
-                  <input type="file" accept={FILE_CONFIG[kind].secondaryAccept} onChange={(event) => setSecondaryFile(event.target.files?.[0] ?? null)} />
-                </label>
+                <AvatarFilePicker
+                  label={FILE_CONFIG[kind].secondaryLabel}
+                  accept={FILE_CONFIG[kind].secondaryAccept ?? ""}
+                  file={secondaryFile}
+                  disabled={registering}
+                  onChange={setSecondaryFile}
+                />
               )}
             </div>
           )}

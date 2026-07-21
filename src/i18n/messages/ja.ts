@@ -131,6 +131,9 @@ export const ja = {
       registerHint:
         "4 枚の画像をクリックまたはドラッグ＆ドロップで設定してください（PNG / JPG 推奨）",
       namePlaceholder: "アバター名",
+      chooseFile: "ファイルを選択",
+      changeFile: "ファイルを変更",
+      noFileSelected: "ファイルが選択されていません",
       cancel: "キャンセル",
       registering: "登録中...",
       register: "登録する",

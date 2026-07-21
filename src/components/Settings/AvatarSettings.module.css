@@ -170,16 +170,116 @@
 }
 
 .fileField {
-  padding: 10px;
-  border: 1px solid #e1e6e3;
-  border-radius: 8px;
-  background: #fafcfb;
+  position: relative;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #d9e4e1;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #fbfdfc, #f5faf8);
+  box-shadow: 0 1px 2px rgba(55, 90, 75, 0.05);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    box-shadow 0.15s,
+    transform 0.15s;
 }
 
-.fileField input {
-  max-width: 100%;
-  color: #67736f;
+.fileField:hover:not(.fileFieldDisabled) {
+  border-color: #8fb8ab;
+  box-shadow: 0 3px 9px rgba(55, 90, 75, 0.1);
+  transform: translateY(-1px);
+}
+
+.fileField:focus-within {
+  border-color: #5c8d89;
+  box-shadow: 0 0 0 3px rgba(92, 141, 137, 0.16);
+}
+
+.fileFieldSelected {
+  border-color: #7fac9e;
+  background: linear-gradient(145deg, #f3faf7, #edf6f3);
+}
+
+.fileFieldDisabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.fileLabel {
+  color: #455a54;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.filePickerRow {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+}
+
+.filePickerButton {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 0 11px;
+  border-radius: 999px;
+  background: #5c8d89;
+  box-shadow: 0 2px 5px rgba(77, 122, 119, 0.2);
+  color: #fff;
   font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background 0.15s,
+    box-shadow 0.15s;
+}
+
+.fileField:hover:not(.fileFieldDisabled) .filePickerButton {
+  background: #4d7a77;
+  box-shadow: 0 3px 7px rgba(77, 122, 119, 0.28);
+}
+
+.filePickerIcon {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.fileName {
+  min-width: 0;
+  overflow: hidden;
+  color: #7a8984;
+  font-size: 10px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileNameSelected {
+  color: #3f6257;
+  font-weight: 600;
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .errorText {
@@ -194,6 +294,12 @@
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-bottom: 12px;
+}
+
+@media (max-width: 560px) {
+  .slotGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .slot {
