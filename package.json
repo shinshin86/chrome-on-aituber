@@ -7,11 +7,17 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "licenses:generate": "node scripts/generate-npm-third-party-notices.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@pixiv/three-vrm": "^1.0.10",
+    "@pixiv/three-vrm-animation": "^3.4.5",
+    "@webtoon/psd": "^0.4.0",
+    "ag-psd": "^31.0.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "three": "^0.151.3",
     "use-chat-submit": "^1.0.8"
   },
   "devDependencies": {
@@ -19,6 +25,7 @@
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.151.0",
     "@vitejs/plugin-react": "^5.1.1",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",

@@ -1,6 +1,6 @@
 # Chrome on AITuber
 
-Browser-only AITuber chat app built with React and Vite. It uses Chrome Built-in AI (Gemini Nano / Prompt API) for Japanese responses, piper-plus WASM for speech synthesis, and a 4-sprite avatar for lip-sync and blinking animation.
+Browser-only AITuber chat app built with React and Vite. It uses Chrome Built-in AI (Gemini Nano / Prompt API) for Japanese responses, piper-plus WASM for speech synthesis, and selectable browser-rendered avatars with lip-sync and idle animation.
 
 [日本語版 README](./README.ja.md)
 
@@ -9,14 +9,15 @@ Browser-only AITuber chat app built with React and Vite. It uses Chrome Built-in
 - Browser-only operation with no application server
 - Japanese chat powered by Chrome Built-in AI / `LanguageModel`
 - Browser TTS with piper-plus WASM, OpenJTalk, and ONNX Runtime Web
-- 4-sprite avatar animation with mouth movement and random blinking
+- Selectable PNGTuber, PuruPuru PNGTuber, Pet, VRM, PSD, and Inochi2D avatars
+- Bundled default avatar assets for every supported format
 - Custom background image with reset back to the default background
 - Two display modes: chat mode and broadcast mode (green background)
 - YouTube Live comment pickup via YouTube Data API v3
 - Twitch chat pickup via EventSub WebSocket + OAuth implicit flow
-- Custom avatar registration from 4 uploaded images
+- Custom avatar registration using each format's native files
 - Local persistence for settings and chat history with `localStorage`
-- Custom avatar storage in `IndexedDB`
+- Custom avatar files in `IndexedDB`, with the active avatar restored after reload
 
 ## Requirements
 
@@ -116,11 +117,9 @@ Open the Vite URL in Chrome, usually `http://localhost:5173`.
 - Reset the current conversation from the settings panel
 - Change the background image from the settings panel and reset it with `Back to Default`
 - Enable or disable TTS and change speech speed
-- Register custom avatars by uploading 4 images:
-  - mouth closed / eyes open
-  - mouth closed / eyes closed
-  - mouth open / eyes open
-  - mouth open / eyes closed
+- Choose PNGTuber, PuruPuru PNGTuber, Pet, VRM, PSD, or Inochi2D in Avatar settings
+- Register custom avatars from the corresponding files. PNGTuber uses four images; Pet uses a manifest and spritesheet; VRM and Inochi2D accept optional animation data.
+- The selected avatar and custom files are stored only in the browser and restored automatically after reload.
 
 ## Streaming Integration
 
@@ -162,6 +161,20 @@ The Vite dev server already sends:
 - `Cross-Origin-Embedder-Policy: require-corp`
 
 Set the same headers in production hosting for WASM / `SharedArrayBuffer` support.
+
+## License and bundled assets
+
+The software and documentation are licensed under the MIT License — see
+[LICENSE](./LICENSE).
+
+Bundled Miko PNGTuber, PuruPuru PNGTuber, Pet, and VRM assets are not covered
+by the MIT License. They are governed by the authoritative Japanese
+[Miko Character Usage Guidelines](https://miko.aituberonair.com/#terms); see
+[Miko Asset Terms](./public/avatar-licenses/MIKO_ASSET_TERMS.md) for a short English summary. The assets may be distributed as an integral part
+of software, apps, games, videos, websites, and other works or content,
+including third-party projects. Standalone redistribution and asset collections
+are prohibited. Other bundled models and third-party components are covered by
+their respective notices in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
 
 ## Project Structure
 

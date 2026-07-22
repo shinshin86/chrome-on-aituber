@@ -14,7 +14,6 @@ import { useTwitchComments } from "./hooks/useTwitchComments";
 import {
   getDefaultAvatar,
   getAvatarById,
-  revokeAvatarUrls,
 } from "./services/avatar/avatarService";
 import {
   deleteBackgroundImage,
@@ -96,7 +95,8 @@ function AppContent({ settings, updateSettings }: AppContentProps) {
     isSending,
     llmStatus,
     statusText,
-    mouthOpen,
+    mouthLevel,
+    isSpeaking,
     errorMessage,
     canInitializeAI,
     isInitializingAI,
@@ -137,20 +137,22 @@ function AppContent({ settings, updateSettings }: AppContentProps) {
   // selectedAvatarId に応じてアバターを読み込む
   useEffect(() => {
     let cancelled = false;
+    let ownedAvatar: AvatarPack | undefined;
     async function load() {
       if (settings.selectedAvatarId === "default") {
-        revokeAvatarUrls();
         setAvatar(getDefaultAvatar());
         setAvatarLoading(false);
         return;
       }
       setAvatar(null);
       setAvatarLoading(true);
-      revokeAvatarUrls();
       try {
         const found = await getAvatarById(settings.selectedAvatarId);
         if (!cancelled) {
+          if (found && !found.isBuiltIn) ownedAvatar = found;
           setAvatar(found ?? getDefaultAvatar());
+        } else {
+          found?.dispose?.();
         }
       } catch (e) {
         console.warn("Avatar load error:", e);
@@ -163,8 +165,11 @@ function AppContent({ settings, updateSettings }: AppContentProps) {
         }
       }
     }
-    load();
-    return () => { cancelled = true; };
+    void load();
+    return () => {
+      cancelled = true;
+      ownedAvatar?.dispose?.();
+    };
   }, [settings.selectedAvatarId]);
 
   // Ctrl+S / Cmd+S で設定パネルを開く
@@ -466,8 +471,10 @@ function AppContent({ settings, updateSettings }: AppContentProps) {
         <div className="avatar-center">
           {avatar ? (
             <Avatar
-              images={avatar.images}
-              mouthOpen={mouthOpen}
+              avatar={avatar}
+              mouthLevel={mouthLevel}
+              isSpeaking={isSpeaking}
+              isProcessing={isSending}
             />
           ) : (
             <div className="avatar-loading" role="status" aria-live="polite">

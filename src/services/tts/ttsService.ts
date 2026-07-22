@@ -60,11 +60,11 @@ export async function synthesize(
 
 export async function speak(
   text: string,
-  onMouthChange: (open: boolean) => void,
+  onMouthChange: (level: number) => void,
   lengthScale?: number
 ): Promise<void> {
   stop();
-  onMouthChange(false);
+  onMouthChange(0);
 
   if (!isReady()) {
     await initialize((msg) => msg && console.log("TTS:", msg));

@@ -128,6 +128,7 @@ The full third-party license texts bundled with this software should be stored i
 - `licenses/MIT-piper.txt`
 - `licenses/MIT-onnxruntime-web.txt`
 - `licenses/BSD-3-Clause-open-jtalk.txt`
+- `public/licenses/NPM-THIRD-PARTY-NOTICES.txt` (npm production dependencies)
 
 This `NOTICE` file is intended for overview and credit display purposes.
 For detailed legal conditions, the full license texts and the terms on each official website take precedence.
@@ -150,3 +151,50 @@ If you redistribute them, keep the following in mind:
 
 Each third-party software component, model, corpus, and related material is provided by its respective rights holder.
 Except to the extent stated in each applicable license or terms, the distributor of this software provides no express or implied warranty regarding those third-party components.
+
+---
+
+## 10. Avatar renderers and libraries
+
+The multi-format avatar implementation incorporates or depends on the following components:
+
+- AITuber OnAir example implementations — MIT License
+- three.js — MIT License
+- @pixiv/three-vrm and @pixiv/three-vrm-animation — MIT License
+- @webtoon/psd — MIT License
+- ag-psd — MIT License
+- Anime2.5DRig by 852wa (hakoniwa) — MIT License
+- PuruPuruPNGTuber avatar-format code and documentation — Apache License 2.0
+
+This app supports the avatar format defined by [rotejin/PuruPuruPNGTuber](https://github.com/rotejin/PuruPuruPNGTuber). The referenced project's software code and documentation are licensed under the Apache License 2.0. Bundled Miko image assets remain subject to the separate Miko usage guidelines below.
+
+The corresponding license texts are distributed in `public/avatar-licenses/` and `src/avatar-runtime/psd/vendor/anime25drig/LICENSE`.
+
+The bundled Inochi2D browser runtime statically links Inox2D and other open-source Rust crates. Its detailed notices are distributed in `public/inochi2d/runtime/THIRD-PARTY-NOTICES.md` and must remain with the runtime files.
+
+---
+
+## 11. Bundled Aka Inochi2D model
+
+The bundled Aka model is derived from the Inochi2D example model `Aka`.
+
+- Title: Aka
+- Author: seagetch
+- Source: https://github.com/Inochi2D/example-models
+- License: Creative Commons Attribution 4.0 International
+- License URL: https://creativecommons.org/licenses/by/4.0/
+- Changes: Rig and idle motion adapted for the AITuber OnAir Inochi2D example.
+
+The complete attribution notice is distributed in `public/inochi2d/models/Aka.ATTRIBUTION.md`.
+
+---
+
+## 12. Bundled Miko avatar assets
+
+The bundled PNGTuber, PuruPuru PNGTuber, Pet, and VRM defaults use Miko, the official character of AITuber OnAir.
+
+- Copyright / optional credit: © Yuki Shindo (AITuber OnAir)
+- Website: https://miko.aituberonair.com/
+- Bundled terms summary: `public/avatar-licenses/MIKO_ASSET_TERMS.md`
+
+The authoritative Japanese Miko Character Usage Guidelines permit the assets to be redistributed as an integral part of software, apps, games, videos, websites, and other works or content, including third-party projects. Standalone redistribution, asset collections, and distributions primarily intended to provide the Miko asset files are prohibited. Translations are provided for reference only; the Japanese guidelines take precedence.

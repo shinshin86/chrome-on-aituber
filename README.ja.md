@@ -1,6 +1,6 @@
 # Chrome on AITuber
 
-React + Vite で構成された、ブラウザ完結型の AITuber チャットアプリです。Chrome Built-in AI（Gemini Nano / Prompt API）で日本語応答を生成し、piper-plus WASM で音声合成し、4 枚スプライトのアバターを口パクとまばたき付きで表示します。
+React + Vite で構成された、ブラウザ完結型の AITuber チャットアプリです。Chrome Built-in AI（Gemini Nano / Prompt API）で日本語応答を生成し、piper-plus WASM で音声合成し、選択したアバターを口パク・アイドルモーション付きで表示します。
 
 [English README](./README.md)
 
@@ -9,14 +9,15 @@ React + Vite で構成された、ブラウザ完結型の AITuber チャット�
 - アプリケーションサーバー不要のブラウザ完結動作
 - Chrome Built-in AI / `LanguageModel` による日本語チャット
 - piper-plus WASM + OpenJTalk + ONNX Runtime Web による音声合成
-- 4 枚スプライトのアバター表示、口パク、ランダムまばたき
+- PNGTuber、ぷるぷるPNGTuber、Pet、VRM、PSD、Inochi2D の選択表示
+- 全対応形式の内蔵デフォルトアバター
 - 背景画像の変更とデフォルト背景への復帰
 - チャットモードと配信モード（グリーンバック）の 2 表示モード
 - YouTube Data API v3 を使った YouTube Live コメント取得
 - EventSub WebSocket + OAuth implicit flow を使った Twitch コメント取得
-- 4 枚画像アップロードによるカスタムアバター登録
+- 各形式のファイルによるカスタムアバター登録
 - `localStorage` への設定・会話履歴保存
-- `IndexedDB` へのカスタムアバター保存
+- `IndexedDB` へのカスタムアバターファイル保存とリロード時の自動復元
 
 ## 必要環境
 
@@ -117,11 +118,9 @@ Chrome で Vite の URL（通常は `http://localhost:5173`）を開いてくだ
 - 配信モードに切り替えると、中央アバターのみのグリーンバック表示
 - 設定パネルから会話リセット、TTS の ON/OFF、読み上げ速度変更が可能
 - 設定パネルから背景画像を変更でき、`デフォルトに戻す` で元の背景に戻せる
-- カスタムアバターは 4 枚の画像を登録して追加可能
-  - 口閉じ・目開き
-  - 口閉じ・目閉じ
-  - 口開き・目開き
-  - 口開き・目閉じ
+- アバター設定から PNGTuber、ぷるぷるPNGTuber、Pet、VRM、PSD、Inochi2D を選択可能
+- カスタムアバターは形式に応じたファイルで登録可能。PNGTuber は4枚画像、Pet は manifest と spritesheet、VRM と Inochi2D は任意のモーションファイルにも対応
+- 選択中のアバターとカスタムファイルはブラウザ内だけに保存され、リロード後に自動復元
 
 ## 配信コメント連携
 
@@ -163,6 +162,21 @@ Vite の開発サーバーでは、すでに次のヘッダーを返していま
 - `Cross-Origin-Embedder-Policy: require-corp`
 
 本番ホスティングでも、WASM / `SharedArrayBuffer` のために同じヘッダー設定が必要です。
+
+## ライセンスと同梱素材
+
+ソフトウェアとドキュメントには MIT License が適用されます。詳しくは
+[LICENSE](./LICENSE) を参照してください。
+
+同梱のミコPNGTuber、ぷるぷるPNGTuber、Pet、VRM素材はMIT Licenseの
+対象外です。公式サイトの
+[ミコ キャラクター利用ガイドライン](https://miko.aituberonair.com/#terms)
+が適用されます（正式版は日本語版です）。ソフトウェア、アプリ、ゲーム、映像、Webサイトその他の
+作品・コンテンツの一部として一体で再配布できますが、素材単体・素材集としての
+再配布や素材提供を主目的とする配布は禁止されます。英語での概要は
+[Miko Asset Terms](./public/avatar-licenses/MIKO_ASSET_TERMS.md)を参照してください。
+そのほかの同梱モデルや第三者コンポーネントについては
+[THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)を参照してください。
 
 ## プロジェクト構成
 
