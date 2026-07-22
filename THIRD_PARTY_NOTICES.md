@@ -193,7 +193,8 @@ The complete attribution notice is distributed in `public/inochi2d/models/Aka.AT
 
 The bundled PNGTuber, PuruPuru PNGTuber, Pet, and VRM defaults use Miko, the official character of AITuber OnAir.
 
-- Copyright / example credit: AITuber OnAir / Miko
+- Copyright / optional credit: © Yuki Shindo (AITuber OnAir)
 - Website: https://miko.aituberonair.com/
+- Bundled terms summary: `public/avatar-licenses/MIKO_ASSET_TERMS.md`
 
-The current official guidelines allow commercial use without a usage fee or mandatory credit. They also restrict redistribution of the original avatar asset data and define prohibited uses. These conditions apply to all bundled Miko avatar formats. Review the latest official guidelines at the website above before using or redistributing the assets; the current official terms take precedence over this summary.
+The authoritative Japanese Miko Character Usage Guidelines permit the assets to be redistributed as an integral part of software, apps, games, videos, websites, and other works or content, including third-party projects. Standalone redistribution, asset collections, and distributions primarily intended to provide the Miko asset files are prohibited. Translations are provided for reference only; the Japanese guidelines take precedence.

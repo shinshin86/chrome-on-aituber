@@ -12,7 +12,8 @@ const AVATAR_LICENSE_BASE_URL = `${import.meta.env.BASE_URL}avatar-licenses`;
 const INOCHI_NOTICE_URL = `${import.meta.env.BASE_URL}inochi2d/runtime/THIRD-PARTY-NOTICES.md`;
 const AKA_ATTRIBUTION_URL = `${import.meta.env.BASE_URL}inochi2d/models/Aka.ATTRIBUTION.md`;
 const NPM_NOTICE_URL = `${import.meta.env.BASE_URL}licenses/NPM-THIRD-PARTY-NOTICES.txt`;
-const MIKO_GUIDELINES_URL = "https://miko.aituberonair.com/";
+const MIKO_GUIDELINES_URL_JA = "https://miko.aituberonair.com/#terms";
+const MIKO_GUIDELINES_URL_EN = "https://miko.aituberonair.com/en#terms";
 const PURUPURU_FORMAT_URL = "https://github.com/rotejin/PuruPuruPNGTuber";
 
 interface AvatarLicenseLinkProps {
@@ -341,13 +342,22 @@ function LicenseBodyJa() {
         </p>
         <p>
           現行ガイドラインでは商用利用が認められ、利用料とクレジット表記は
-          不要です。ただし、元のアバター素材データの再配布や禁止用途には
-          制限があります。必ず最新の公式利用ガイドラインを確認してください。
+          不要です。公式・第三者を問わず、ソフトウェア、アプリ、ゲーム、映像、
+          Webサイトその他の作品・コンテンツの一部として一体で再配布できます。
+          素材単体・素材集としての再配布や、素材提供を主目的とする配布は禁止です。
+          公式・提携を装ったり、ミコの権利や独占的な利用権を主張したりすることは
+          できません。
         </p>
-        <p>&copy; AITuber OnAir / Miko</p>
+        <p>&copy; Yuki Shindo (AITuber OnAir)</p>
+        <p>ミコはAITuber OnAirの公式キャラクターです。</p>
         <p>
+          <AvatarLicenseLink
+            fileName="MIKO_ASSET_TERMS.md"
+            label="同梱の利用条件（要約）"
+          />
+          {" / "}
           <a
-            href={MIKO_GUIDELINES_URL}
+            href={MIKO_GUIDELINES_URL_JA}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -681,18 +691,31 @@ function LicenseBodyEn() {
         </p>
         <p>
           The current guidelines allow commercial use and require neither a
-          usage fee nor credit. Restrictions still apply, including to
-          redistribution of the original avatar asset data and prohibited
-          uses. Always review the latest official usage guidelines.
+          usage fee nor credit. Official and third-party projects may
+          redistribute the assets as an integral part of software, apps,
+          games, videos, websites, and other works or content. Standalone
+          redistribution, asset collections, and distributions primarily
+          intended to provide the assets are prohibited. Do not imply official
+          affiliation or claim ownership or exclusive rights to Miko.
         </p>
-        <p>&copy; AITuber OnAir / Miko</p>
+        <p>&copy; Yuki Shindo (AITuber OnAir)</p>
+        <p>Miko is the official character of AITuber OnAir.</p>
         <p>
+          The Japanese guidelines are authoritative. The English page is a
+          reference translation.
+        </p>
+        <p>
+          <AvatarLicenseLink
+            fileName="MIKO_ASSET_TERMS.md"
+            label="Bundled terms summary"
+          />
+          {" / "}
           <a
-            href={MIKO_GUIDELINES_URL}
+            href={MIKO_GUIDELINES_URL_EN}
             target="_blank"
             rel="noopener noreferrer"
           >
-            Official Miko usage guidelines
+            English reference translation
           </a>
         </p>
       </section>
