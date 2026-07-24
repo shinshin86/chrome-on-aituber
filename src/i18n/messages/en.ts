@@ -25,6 +25,7 @@ export const en = {
     aiPrepareTitle: "AI setup required",
     aiPrepareText:
       "Start Gemini Nano's first-time model setup from a user action.",
+    aiInitializing: "Preparing AI...",
     aiPreparing: "Preparing AI...",
     aiPrepare: "Prepare AI",
     backgroundLoadFailed: "Failed to load background image",
@@ -39,6 +40,7 @@ export const en = {
     licenseTitle: "Show license information",
     prepareBusy: "Preparing...",
     prepareAi: "Prepare AI",
+    initializing: "Preparing AI...",
     generating: "Generating response...",
     inputPlaceholder: "Type a message (Enter to send, Shift+Enter for newline)",
     sendLabel: "Send",
@@ -60,15 +62,16 @@ export const en = {
   chat: {
     status: {
       checkingAi: "Checking AI...",
+      sessionCreating: "Preparing AI...",
       userGestureRequired:
         "Start AI model setup from the \"Prepare AI\" button",
-      sessionCreateFailed: "Failed to create AI session",
+      sessionCreateFailed: "Failed to prepare AI",
       pressPrepare: "Press \"Prepare AI\" to use AI",
       unavailable:
         "Built-in AI is unavailable. Enable the flags in Chrome 138+.",
       checkFailed: "Failed to check AI availability",
-      sessionUpdating: "Updating AI session...",
-      sessionUpdateFailed: "Failed to update AI session",
+      sessionUpdating: "Applying AI settings...",
+      sessionUpdateFailed: "Could not apply AI settings",
       modelPreparing: "Preparing AI model...",
       modelDownloading: "Downloading AI model... {pct}%",
       modelPrepareFailed: "Failed to prepare AI model",

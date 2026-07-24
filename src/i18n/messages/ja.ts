@@ -19,6 +19,7 @@ export const ja = {
     aiPrepareTitle: "AI の準備が必要です",
     aiPrepareText:
       "Gemini Nano の初回モデル準備は、ユーザー操作から開始してください。",
+    aiInitializing: "AI を準備しています...",
     aiPreparing: "AI を準備中...",
     aiPrepare: "AI を準備",
     backgroundLoadFailed: "背景画像の読み込みに失敗しました",
@@ -33,6 +34,7 @@ export const ja = {
     licenseTitle: "ライセンス情報を表示",
     prepareBusy: "準備中...",
     prepareAi: "AI を準備",
+    initializing: "AI を準備しています...",
     generating: "応答を生成中...",
     inputPlaceholder: "メッセージを入力（Enterで送信、Shift+Enterで改行）",
     sendLabel: "送信",
@@ -54,15 +56,16 @@ export const ja = {
   chat: {
     status: {
       checkingAi: "AI を確認中...",
+      sessionCreating: "AI を準備しています...",
       userGestureRequired:
         "AI モデルの準備は「AI を準備」ボタンから開始してください",
-      sessionCreateFailed: "AI セッションの作成に失敗しました",
+      sessionCreateFailed: "AI の準備に失敗しました",
       pressPrepare: "AI を使うには「AI を準備」を押してください",
       unavailable:
         "Built-in AI が利用できません。Chrome 138+ でフラグを有効化してください",
       checkFailed: "AI の確認に失敗しました",
-      sessionUpdating: "AI セッションを更新中...",
-      sessionUpdateFailed: "AI セッションの更新に失敗しました",
+      sessionUpdating: "AI の設定を反映しています...",
+      sessionUpdateFailed: "AI の設定を反映できませんでした",
       modelPreparing: "AI モデルを準備中...",
       modelDownloading: "AI モデルをダウンロード中... {pct}%",
       modelPrepareFailed: "AI モデルの準備に失敗しました",
