@@ -6,7 +6,10 @@ import type {
   PetManifest,
   VrmViewTransform,
 } from "../../types";
-import { DEFAULT_SETTINGS } from "../../types";
+import {
+  DEFAULT_SETTINGS,
+  migrateDefaultSystemPrompt,
+} from "../../types";
 
 const PREFIX = "chrome-on-aituber";
 
@@ -28,7 +31,14 @@ export function loadSettings(): AppSettings {
   try {
     const raw = localStorage.getItem(KEYS.SETTINGS);
     if (!raw) return { ...DEFAULT_SETTINGS };
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    const settings = {
+      ...DEFAULT_SETTINGS,
+      ...JSON.parse(raw),
+    } as AppSettings;
+    settings.llmSystemPrompt = migrateDefaultSystemPrompt(
+      settings.llmSystemPrompt
+    );
+    return settings;
   } catch {
     return { ...DEFAULT_SETTINGS };
   }

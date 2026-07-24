@@ -2,7 +2,14 @@
  * LLM Service — Chrome Built-in AI (Prompt API / LanguageModel)
  */
 
-// LanguageModel API の型定義（Chrome 138+）
+import {
+  DEFAULT_PROMPT_EXAMPLES_EN,
+  DEFAULT_PROMPT_EXAMPLES_JA,
+  DEFAULT_SYSTEM_PROMPT_EN,
+  DEFAULT_SYSTEM_PROMPT_JA,
+} from "../../types";
+
+// Current LanguageModel API types.
 declare global {
   interface Window {
     LanguageModel?: LanguageModelAPI;
@@ -21,8 +28,13 @@ interface ModelOptions {
 }
 
 interface CreateOptions extends ModelOptions {
-  systemPrompt?: string;
+  initialPrompts?: LanguageModelMessage[];
   monitor?: (m: DownloadMonitor) => void;
+}
+
+interface LanguageModelMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
 }
 
 interface DownloadMonitor {
@@ -45,12 +57,22 @@ export type LLMStatus =
   | "error";
 
 const MODEL_IO = Object.freeze({
-  expectedInputs: [{ type: "text", languages: ["ja"] }],
-  expectedOutputs: [{ type: "text", languages: ["ja"] }],
+  expectedInputs: [{ type: "text", languages: ["ja", "en"] }],
+  expectedOutputs: [{ type: "text", languages: ["ja", "en"] }],
 });
 
 let session: LanguageModelSession | null = null;
 let creatingSession = false;
+
+function getDefaultExamples(systemPrompt: string): LanguageModelMessage[] {
+  if (systemPrompt === DEFAULT_SYSTEM_PROMPT_JA) {
+    return [...DEFAULT_PROMPT_EXAMPLES_JA];
+  }
+  if (systemPrompt === DEFAULT_SYSTEM_PROMPT_EN) {
+    return [...DEFAULT_PROMPT_EXAMPLES_EN];
+  }
+  return [];
+}
 
 export function isAvailable(): boolean {
   return typeof LanguageModel !== "undefined";
@@ -71,23 +93,22 @@ export async function checkAvailability(): Promise<LLMStatus> {
 
 export async function createSession(
   systemPrompt: string,
-  contextHistory: Array<{ role: string; content: string }> = [],
+  contextHistory: Array<{
+    role: "user" | "assistant";
+    content: string;
+  }> = [],
   onDownloadProgress?: (pct: number) => void
 ): Promise<void> {
   if (creatingSession) return;
   creatingSession = true;
 
   try {
-    let prompt = systemPrompt;
-    if (contextHistory.length > 0) {
-      const history = contextHistory
-        .slice(-20)
-        .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
-        .join("\n");
-      prompt += `\n\n以下はこれまでの会話履歴です。この文脈を踏まえて回答してください:\n${history}`;
-    }
-
-    const options: CreateOptions = { ...MODEL_IO, systemPrompt: prompt };
+    const initialPrompts: LanguageModelMessage[] = [
+      { role: "system", content: systemPrompt },
+      ...getDefaultExamples(systemPrompt),
+      ...contextHistory.slice(-20),
+    ];
+    const options: CreateOptions = { ...MODEL_IO, initialPrompts };
     if (onDownloadProgress) {
       options.monitor = (m) => {
         m.addEventListener("downloadprogress", (e) => {
