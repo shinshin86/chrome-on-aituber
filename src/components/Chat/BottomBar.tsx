@@ -9,7 +9,7 @@ interface Props {
   isSending: boolean;
   statusText: string;
   showInitializeAI: boolean;
-  isInitializingAI: boolean;
+  isInitializing: boolean;
   onInitializeAI: () => void;
   onOpenSettings: () => void;
   onOpenManual: () => void;
@@ -22,7 +22,7 @@ export function BottomBar({
   isSending,
   statusText,
   showInitializeAI,
-  isInitializingAI,
+  isInitializing,
   onInitializeAI,
   onOpenSettings,
   onOpenManual,
@@ -66,29 +66,39 @@ export function BottomBar({
         <button
           className={styles.prepareBtn}
           onClick={onInitializeAI}
-          disabled={isInitializingAI}
+          disabled={isInitializing}
           type="button"
         >
-          {isInitializingAI ? t("bottomBar.prepareBusy") : t("bottomBar.prepareAi")}
+          {isInitializing ? t("bottomBar.prepareBusy") : t("bottomBar.prepareAi")}
         </button>
       )}
 
-      <textarea
-        className={styles.input}
-        rows={1}
-        placeholder={
-          isSending
-            ? t("bottomBar.generating")
-            : statusText
-              ? statusText
-              : t("bottomBar.inputPlaceholder")
-        }
-        disabled={disabled}
-        {...getTextareaProps({
-          value: text,
-          onChange: (e) => setText(e.target.value),
-        })}
-      />
+      <div className={styles.inputWrap}>
+        <textarea
+          className={styles.input}
+          rows={1}
+          placeholder={
+            isInitializing
+              ? ""
+              : isSending
+                ? t("bottomBar.generating")
+                : statusText
+                  ? statusText
+                  : t("bottomBar.inputPlaceholder")
+          }
+          disabled={disabled}
+          {...getTextareaProps({
+            value: text,
+            onChange: (e) => setText(e.target.value),
+          })}
+        />
+        {isInitializing && (
+          <div className={styles.initializing} role="status" aria-live="polite">
+            <span className={styles.spinner} aria-hidden="true" />
+            <span>{statusText || t("bottomBar.initializing")}</span>
+          </div>
+        )}
+      </div>
 
       <button
         className={styles.sendBtn}

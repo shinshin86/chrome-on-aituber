@@ -2,7 +2,14 @@
  * LLM Service — Chrome Built-in AI (Prompt API / LanguageModel)
  */
 
-// LanguageModel API の型定義（Chrome 138+）
+import {
+  DEFAULT_PROMPT_EXAMPLES_EN,
+  DEFAULT_PROMPT_EXAMPLES_JA,
+  DEFAULT_SYSTEM_PROMPT_EN,
+  DEFAULT_SYSTEM_PROMPT_JA,
+} from "../../types";
+
+// Current LanguageModel API types.
 declare global {
   interface Window {
     LanguageModel?: LanguageModelAPI;
@@ -21,8 +28,13 @@ interface ModelOptions {
 }
 
 interface CreateOptions extends ModelOptions {
-  systemPrompt?: string;
+  initialPrompts?: LanguageModelMessage[];
   monitor?: (m: DownloadMonitor) => void;
+}
+
+interface LanguageModelMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
 }
 
 interface DownloadMonitor {
@@ -45,12 +57,25 @@ export type LLMStatus =
   | "error";
 
 const MODEL_IO = Object.freeze({
-  expectedInputs: [{ type: "text", languages: ["ja"] }],
-  expectedOutputs: [{ type: "text", languages: ["ja"] }],
+  expectedInputs: [{ type: "text", languages: ["ja", "en"] }],
+  expectedOutputs: [{ type: "text", languages: ["ja", "en"] }],
 });
 
 let session: LanguageModelSession | null = null;
-let creatingSession = false;
+let sessionCreation: Promise<void> | null = null;
+let sessionCreationKey: string | null = null;
+let sessionCreationGeneration = -1;
+let sessionGeneration = 0;
+
+function getDefaultExamples(systemPrompt: string): LanguageModelMessage[] {
+  if (systemPrompt === DEFAULT_SYSTEM_PROMPT_JA) {
+    return [...DEFAULT_PROMPT_EXAMPLES_JA];
+  }
+  if (systemPrompt === DEFAULT_SYSTEM_PROMPT_EN) {
+    return [...DEFAULT_PROMPT_EXAMPLES_EN];
+  }
+  return [];
+}
 
 export function isAvailable(): boolean {
   return typeof LanguageModel !== "undefined";
@@ -71,23 +96,40 @@ export async function checkAvailability(): Promise<LLMStatus> {
 
 export async function createSession(
   systemPrompt: string,
-  contextHistory: Array<{ role: string; content: string }> = [],
+  contextHistory: Array<{
+    role: "user" | "assistant";
+    content: string;
+  }> = [],
   onDownloadProgress?: (pct: number) => void
 ): Promise<void> {
-  if (creatingSession) return;
-  creatingSession = true;
+  const recentHistory = contextHistory.slice(-20);
+  const creationKey = JSON.stringify([systemPrompt, recentHistory]);
 
-  try {
-    let prompt = systemPrompt;
-    if (contextHistory.length > 0) {
-      const history = contextHistory
-        .slice(-20)
-        .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
-        .join("\n");
-      prompt += `\n\n以下はこれまでの会話履歴です。この文脈を踏まえて回答してください:\n${history}`;
+  if (sessionCreation) {
+    const pendingCreation = sessionCreation;
+    if (
+      sessionCreationKey === creationKey &&
+      sessionCreationGeneration === sessionGeneration
+    ) {
+      return pendingCreation;
     }
 
-    const options: CreateOptions = { ...MODEL_IO, systemPrompt: prompt };
+    try {
+      await pendingCreation;
+    } catch {
+      // A newer request should still get a chance to create its own session.
+    }
+    return createSession(systemPrompt, contextHistory, onDownloadProgress);
+  }
+
+  const creationGeneration = sessionGeneration;
+  const create = async () => {
+    const initialPrompts: LanguageModelMessage[] = [
+      { role: "system", content: systemPrompt },
+      ...getDefaultExamples(systemPrompt),
+      ...recentHistory,
+    ];
+    const options: CreateOptions = { ...MODEL_IO, initialPrompts };
     if (onDownloadProgress) {
       options.monitor = (m) => {
         m.addEventListener("downloadprogress", (e) => {
@@ -96,9 +138,40 @@ export async function createSession(
       };
     }
 
-    session = await LanguageModel!.create(options);
+    const nextSession = await LanguageModel!.create(options);
+    if (creationGeneration !== sessionGeneration) {
+      try {
+        nextSession.destroy();
+      } catch {
+        // The stale session is already unusable.
+      }
+      return;
+    }
+
+    const previousSession = session;
+    session = nextSession;
+    if (previousSession) {
+      try {
+        previousSession.destroy();
+      } catch {
+        // The replacement session is already active.
+      }
+    }
+  };
+
+  const pendingCreation = create();
+  sessionCreation = pendingCreation;
+  sessionCreationKey = creationKey;
+  sessionCreationGeneration = creationGeneration;
+
+  try {
+    await pendingCreation;
   } finally {
-    creatingSession = false;
+    if (sessionCreation === pendingCreation) {
+      sessionCreation = null;
+      sessionCreationKey = null;
+      sessionCreationGeneration = -1;
+    }
   }
 }
 
@@ -108,6 +181,7 @@ export async function prompt(text: string): Promise<string> {
 }
 
 export function destroySession(): void {
+  sessionGeneration += 1;
   if (session) {
     try {
       session.destroy();

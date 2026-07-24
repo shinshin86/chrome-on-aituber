@@ -143,6 +143,10 @@
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
   transition: transform 0.15s, opacity 0.15s, background 0.15s;
 }
 
@@ -161,6 +165,47 @@
   font-size: 14px;
   line-height: 1.5;
   color: #5d6d69;
+}
+
+.ai-session-status {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 140;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 32px);
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 30px rgba(30, 48, 42, 0.18);
+  color: #4f5f5b;
+  font-size: 14px;
+  font-weight: 600;
+  transform: translateX(-50%);
+}
+
+.ai-session-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(88, 120, 96, 0.25);
+  border-top-color: rgba(88, 120, 96, 0.95);
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: ai-session-spin 0.8s linear infinite;
+}
+
+@keyframes ai-session-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-session-spinner {
+    animation-duration: 1.6s;
+  }
 }
 
 /* Responsive: hide side logs on narrow screens */

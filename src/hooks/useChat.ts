@@ -15,6 +15,8 @@ interface SendOptions {
   source?: ChatSource;
 }
 
+const SYSTEM_PROMPT_UPDATE_DELAY_MS = 500;
+
 function getContextHistory(messages: ChatMessage[]) {
   return messages.map((m) => ({ role: m.role, content: m.content }));
 }
@@ -58,10 +60,27 @@ export function useChat(settings: AppSettings) {
   const [errorMessage, setErrorMessage] = useState("");
   const [needsInitialization, setNeedsInitialization] = useState(false);
   const [isInitializingAI, setIsInitializingAI] = useState(false);
+  const [isSessionInitializing, setIsSessionInitializing] = useState(true);
 
   const mouthLevelRef = useRef(setMouthLevel);
   mouthLevelRef.current = setMouthLevel;
   const appliedSystemPromptRef = useRef(settings.llmSystemPrompt);
+  const sessionInitializationCountRef = useRef(0);
+
+  const beginSessionInitialization = useCallback(() => {
+    sessionInitializationCountRef.current += 1;
+    setIsSessionInitializing(true);
+  }, []);
+
+  const endSessionInitialization = useCallback(() => {
+    sessionInitializationCountRef.current = Math.max(
+      0,
+      sessionInitializationCountRef.current - 1
+    );
+    if (sessionInitializationCountRef.current === 0) {
+      setIsSessionInitializing(false);
+    }
+  }, []);
 
   // 初期化
   useEffect(() => {
@@ -78,57 +97,74 @@ export function useChat(settings: AppSettings) {
   }, [settings.ttsEngine]);
 
   async function initLLM(initialMessages: ChatMessage[] = []) {
-    const status = await llm.checkAvailability();
-    setLlmStatus(status);
+    beginSessionInitialization();
 
-    switch (status) {
-      case "available":
-        setNeedsInitialization(false);
-        setStatusText("");
-        if (!llm.hasSession()) {
-          try {
+    try {
+      const status = await llm.checkAvailability();
+      setLlmStatus(status);
+
+      switch (status) {
+        case "available":
+          setNeedsInitialization(false);
+          if (!llm.hasSession()) {
+            setStatusText(t("chat.status.sessionCreating"));
             await llm.createSession(
               settings.llmSystemPrompt,
               getContextHistory(initialMessages)
             );
             appliedSystemPromptRef.current = settings.llmSystemPrompt;
-          } catch (e) {
-            setNeedsInitialization(true);
-            setStatusText(
-              getLLMErrorMessage(
-                e,
-                t("chat.status.sessionCreateFailed"),
-                t("chat.status.userGestureRequired"),
-                t
-              )
-            );
-            setLlmStatus("error");
           }
-        }
-        break;
-      case "downloading":
-        setNeedsInitialization(true);
-        setStatusText(t("chat.status.pressPrepare"));
-        break;
-      case "unavailable":
-        setNeedsInitialization(false);
-        setStatusText(t("chat.status.unavailable"));
-        break;
-      case "error":
-        setNeedsInitialization(false);
-        setStatusText(t("chat.status.checkFailed"));
-        break;
+          setStatusText("");
+          break;
+        case "downloading":
+          setNeedsInitialization(true);
+          setStatusText(t("chat.status.pressPrepare"));
+          break;
+        case "unavailable":
+          setNeedsInitialization(false);
+          setStatusText(t("chat.status.unavailable"));
+          break;
+        case "error":
+          setNeedsInitialization(false);
+          setStatusText(t("chat.status.checkFailed"));
+          break;
+      }
+    } catch (e) {
+      setNeedsInitialization(true);
+      setStatusText(
+        getLLMErrorMessage(
+          e,
+          t("chat.status.sessionCreateFailed"),
+          t("chat.status.userGestureRequired"),
+          t
+        )
+      );
+      setLlmStatus("error");
+    } finally {
+      endSessionInitialization();
     }
   }
 
   useEffect(() => {
-    if (appliedSystemPromptRef.current === settings.llmSystemPrompt) return;
+    if (
+      appliedSystemPromptRef.current === settings.llmSystemPrompt &&
+      llm.hasSession()
+    ) {
+      return;
+    }
     if (isSending || llmStatus !== "available") return;
 
     let cancelled = false;
+    let recreationStarted = false;
+    let recreationFinished = false;
+    beginSessionInitialization();
+    setStatusText(t("chat.status.sessionUpdating"));
+    const timer = window.setTimeout(() => {
+      recreationStarted = true;
+      void recreateSession();
+    }, SYSTEM_PROMPT_UPDATE_DELAY_MS);
 
     async function recreateSession() {
-      setStatusText(t("chat.status.sessionUpdating"));
       llm.destroySession();
 
       try {
@@ -155,15 +191,30 @@ export function useChat(settings: AppSettings) {
           );
           setStatusText(t("chat.status.sessionUpdateFailed"));
         }
+      } finally {
+        recreationFinished = true;
+        endSessionInitialization();
       }
     }
 
-    void recreateSession();
-
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
+      if (!recreationStarted) {
+        endSessionInitialization();
+      } else if (!recreationFinished) {
+        llm.destroySession();
+      }
     };
-  }, [isSending, llmStatus, messages, settings.llmSystemPrompt, t]);
+  }, [
+    beginSessionInitialization,
+    endSessionInitialization,
+    isSending,
+    llmStatus,
+    messages,
+    settings.llmSystemPrompt,
+    t,
+  ]);
 
   const initializeAI = useCallback(async () => {
     if (isInitializingAI) return;
@@ -173,6 +224,7 @@ export function useChat(settings: AppSettings) {
     setLlmStatus("downloading");
     setStatusText(t("chat.status.modelPreparing"));
     setErrorMessage("");
+    beginSessionInitialization();
 
     try {
       await llm.createSession(
@@ -199,8 +251,16 @@ export function useChat(settings: AppSettings) {
       setStatusText(message);
     } finally {
       setIsInitializingAI(false);
+      endSessionInitialization();
     }
-  }, [isInitializingAI, messages, settings.llmSystemPrompt, t]);
+  }, [
+    beginSessionInitialization,
+    endSessionInitialization,
+    isInitializingAI,
+    messages,
+    settings.llmSystemPrompt,
+    t,
+  ]);
 
   const send = useCallback(
     async (text: string, options?: SendOptions) => {
@@ -222,12 +282,15 @@ export function useChat(settings: AppSettings) {
           return;
         }
 
+        beginSessionInitialization();
+        setStatusText(t("chat.status.sessionCreating"));
         try {
           await llm.createSession(
             settings.llmSystemPrompt,
             getContextHistory(messages)
           );
           appliedSystemPromptRef.current = settings.llmSystemPrompt;
+          setStatusText("");
         } catch (e) {
           setErrorMessage(
             getLLMErrorMessage(
@@ -239,6 +302,8 @@ export function useChat(settings: AppSettings) {
           );
           setIsSending(false);
           return;
+        } finally {
+          endSessionInitialization();
         }
       }
 
@@ -315,7 +380,16 @@ export function useChat(settings: AppSettings) {
         setIsSending(false);
       }
     },
-    [isSending, llmStatus, messages, needsInitialization, settings, t]
+    [
+      beginSessionInitialization,
+      endSessionInitialization,
+      isSending,
+      llmStatus,
+      messages,
+      needsInitialization,
+      settings,
+      t,
+    ]
   );
 
   const reset = useCallback(async () => {
@@ -326,6 +400,8 @@ export function useChat(settings: AppSettings) {
     setMessages([]);
     saveMessages([]);
     setNeedsInitialization(false);
+    beginSessionInitialization();
+    setStatusText(t("chat.status.sessionCreating"));
     try {
       const status = await llm.checkAvailability();
       setLlmStatus(status);
@@ -360,8 +436,15 @@ export function useChat(settings: AppSettings) {
           t
         )
       );
+    } finally {
+      endSessionInitialization();
     }
-  }, [settings.llmSystemPrompt, t]);
+  }, [
+    beginSessionInitialization,
+    endSessionInitialization,
+    settings.llmSystemPrompt,
+    t,
+  ]);
 
   const clearError = useCallback(() => setErrorMessage(""), []);
 
@@ -376,6 +459,7 @@ export function useChat(settings: AppSettings) {
     errorMessage,
     canInitializeAI: needsInitialization || isInitializingAI,
     isInitializingAI,
+    isSessionInitializing,
     initializeAI,
     send,
     reset,

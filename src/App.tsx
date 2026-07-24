@@ -100,6 +100,7 @@ function AppContent({ settings, updateSettings }: AppContentProps) {
     errorMessage,
     canInitializeAI,
     isInitializingAI,
+    isSessionInitializing,
     initializeAI,
     send,
     reset,
@@ -494,16 +495,23 @@ function AppContent({ settings, updateSettings }: AppContentProps) {
       {!isBroadcast && (
         <BottomBar
           onSend={send}
-          disabled={!llmReady || isSending}
+          disabled={!llmReady || isSending || isSessionInitializing}
           isSending={isSending}
           statusText={statusText}
           showInitializeAI={canInitializeAI}
-          isInitializingAI={isInitializingAI}
+          isInitializing={isSessionInitializing}
           onInitializeAI={initializeAI}
           onOpenSettings={() => setSettingsOpen(true)}
           onOpenManual={() => setManualOpen(true)}
           onOpenLicense={() => setLicenseOpen(true)}
         />
+      )}
+
+      {isBroadcast && isSessionInitializing && !canInitializeAI && (
+        <div className="ai-session-status" role="status" aria-live="polite">
+          <span className="ai-session-spinner" aria-hidden="true" />
+          <span>{statusText || t("app.aiInitializing")}</span>
+        </div>
       )}
 
       {isBroadcast && canInitializeAI && (
@@ -519,6 +527,9 @@ function AppContent({ settings, updateSettings }: AppContentProps) {
               onClick={initializeAI}
               disabled={isInitializingAI}
             >
+              {isInitializingAI && (
+                <span className="ai-session-spinner" aria-hidden="true" />
+              )}
               {isInitializingAI ? t("app.aiPreparing") : t("app.aiPrepare")}
             </button>
             {statusText && (
