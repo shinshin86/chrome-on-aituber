@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { AppSettings } from "../types";
 import { DEFAULT_SETTINGS } from "../types";
 import {
@@ -9,20 +9,19 @@ import {
 export function useSettings() {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
 
+  useEffect(() => {
+    saveSettings(settings);
+  }, [settings]);
+
   const updateSettings = useCallback(
     (patch: Partial<AppSettings>) => {
-      setSettings((prev) => {
-        const next = { ...prev, ...patch };
-        saveSettings(next);
-        return next;
-      });
+      setSettings((prev) => ({ ...prev, ...patch }));
     },
     []
   );
 
   const resetSettings = useCallback(() => {
     setSettings({ ...DEFAULT_SETTINGS });
-    saveSettings({ ...DEFAULT_SETTINGS });
   }, []);
 
   return { settings, updateSettings, resetSettings };
