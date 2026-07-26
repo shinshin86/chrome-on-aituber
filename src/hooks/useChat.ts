@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useI18n, type I18nKey, type I18nParams } from "../i18n/I18nContext";
+import { useI18n, type I18nKey, type I18nParams } from "../i18n/useI18n";
 import type { ChatMessage, AppSettings, ChatSource } from "../types";
 import * as llm from "../services/llm/llmService";
 import * as tts from "../services/tts/ttsService";

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useChatSubmit } from "use-chat-submit";
-import { useI18n } from "../../i18n/I18nContext";
+import { useI18n } from "../../i18n/useI18n";
 import styles from "./BottomBar.module.css";
 
 interface Props {

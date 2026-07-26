@@ -14,7 +14,7 @@ import type {
   StreamingPlatform,
   TtsEngine,
 } from "../../types";
-import { useI18n } from "../../i18n/I18nContext";
+import { useI18n } from "../../i18n/useI18n";
 import * as tts from "../../services/tts/ttsService";
 import { AvatarSettings } from "./AvatarSettings";
 import { IrodoriTtsSettings } from "./IrodoriTtsSettings";
