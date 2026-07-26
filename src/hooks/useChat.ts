@@ -62,6 +62,8 @@ export function useChat(settings: AppSettings) {
   const [isInitializingAI, setIsInitializingAI] = useState(false);
   const [isSessionInitializing, setIsSessionInitializing] = useState(true);
 
+  const messagesRef = useRef<ChatMessage[]>([]);
+  const isSendingRef = useRef(false);
   const mouthLevelRef = useRef(setMouthLevel);
   mouthLevelRef.current = setMouthLevel;
   const appliedSystemPromptRef = useRef(settings.llmSystemPrompt);
@@ -85,6 +87,7 @@ export function useChat(settings: AppSettings) {
   // 初期化
   useEffect(() => {
     const initialMessages = loadMessages();
+    messagesRef.current = initialMessages;
     setMessages(initialMessages);
     initLLM(initialMessages);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -264,128 +267,130 @@ export function useChat(settings: AppSettings) {
 
   const send = useCallback(
     async (text: string, options?: SendOptions) => {
-      if (isSending || !text.trim()) return;
+      if (isSendingRef.current || !text.trim()) return;
+      isSendingRef.current = true;
       setIsSending(true);
 
-      tts.stop();
-      mouthLevelRef.current(0);
-      setIsSpeaking(false);
-
-      if (!llm.hasSession()) {
-        if (llmStatus !== "available") {
-          const message = needsInitialization
-            ? t("chat.status.pressPrepareFirst")
-            : t("chat.status.notAvailable");
-          setErrorMessage(message);
-          setStatusText(message);
-          setIsSending(false);
-          return;
-        }
-
-        beginSessionInitialization();
-        setStatusText(t("chat.status.sessionCreating"));
-        try {
-          await llm.createSession(
-            settings.llmSystemPrompt,
-            getContextHistory(messages)
-          );
-          appliedSystemPromptRef.current = settings.llmSystemPrompt;
-          setStatusText("");
-        } catch (e) {
-          setErrorMessage(
-            getLLMErrorMessage(
-              e,
-              t("chat.status.sessionCreateFailed"),
-              t("chat.status.userGestureRequired"),
-              t
-            )
-          );
-          setIsSending(false);
-          return;
-        } finally {
-          endSessionInitialization();
-        }
-      }
-
-      const source = options?.source;
-
-      const userMsg: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: "user",
-        content: text.trim(),
-        timestamp: Date.now(),
-        source: source ?? "chat",
-        ...(options?.sender && {
-          senderName: options.sender.name,
-          senderIconUrl: options.sender.iconUrl,
-        }),
-      };
-
-      const updatedWithUser = [...messages, userMsg];
-      setMessages(updatedWithUser);
-      saveMessages(updatedWithUser);
-
       try {
-        const reply = await llm.prompt(text.trim());
-        const assistantMsg: ChatMessage = {
+        tts.stop();
+        mouthLevelRef.current(0);
+        setIsSpeaking(false);
+
+        if (!llm.hasSession()) {
+          if (llmStatus !== "available") {
+            const message = needsInitialization
+              ? t("chat.status.pressPrepareFirst")
+              : t("chat.status.notAvailable");
+            setErrorMessage(message);
+            setStatusText(message);
+            return;
+          }
+
+          beginSessionInitialization();
+          setStatusText(t("chat.status.sessionCreating"));
+          try {
+            await llm.createSession(
+              settings.llmSystemPrompt,
+              getContextHistory(messagesRef.current)
+            );
+            appliedSystemPromptRef.current = settings.llmSystemPrompt;
+            setStatusText("");
+          } catch (e) {
+            setErrorMessage(
+              getLLMErrorMessage(
+                e,
+                t("chat.status.sessionCreateFailed"),
+                t("chat.status.userGestureRequired"),
+                t
+              )
+            );
+            return;
+          } finally {
+            endSessionInitialization();
+          }
+        }
+
+        const source = options?.source;
+
+        const userMsg: ChatMessage = {
           id: crypto.randomUUID(),
-          role: "assistant",
-          content: reply,
+          role: "user",
+          content: text.trim(),
           timestamp: Date.now(),
           source: source ?? "chat",
+          ...(options?.sender && {
+            senderName: options.sender.name,
+            senderIconUrl: options.sender.iconUrl,
+          }),
         };
-        const updatedWithReply = [...updatedWithUser, assistantMsg];
-        setMessages(updatedWithReply);
-        saveMessages(updatedWithReply);
 
-        if (settings.ttsEnabled) {
-          if (!tts.isReady()) {
-            setStatusText(t("chat.status.ttsInitializing"));
-            try {
-              await tts.initialize((msg) => {
-                if (msg) setStatusText(msg);
-              });
-              setStatusText("");
-            } catch (e) {
-              setErrorMessage(
-                getTtsErrorMessage(e, t("chat.status.ttsInitializeFailed"), t)
-              );
-              console.warn("TTS init error:", e);
-              setStatusText("");
+        const updatedWithUser = [...messagesRef.current, userMsg];
+        messagesRef.current = updatedWithUser;
+        setMessages((prev) => [...prev, userMsg]);
+        saveMessages(updatedWithUser);
+
+        try {
+          const reply = await llm.prompt(text.trim());
+          const assistantMsg: ChatMessage = {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: reply,
+            timestamp: Date.now(),
+            source: source ?? "chat",
+          };
+          const updatedWithReply = [...messagesRef.current, assistantMsg];
+          messagesRef.current = updatedWithReply;
+          setMessages((prev) => [...prev, assistantMsg]);
+          saveMessages(updatedWithReply);
+
+          if (settings.ttsEnabled) {
+            if (!tts.isReady()) {
+              setStatusText(t("chat.status.ttsInitializing"));
+              try {
+                await tts.initialize((msg) => {
+                  if (msg) setStatusText(msg);
+                });
+                setStatusText("");
+              } catch (e) {
+                setErrorMessage(
+                  getTtsErrorMessage(e, t("chat.status.ttsInitializeFailed"), t)
+                );
+                console.warn("TTS init error:", e);
+                setStatusText("");
+              }
             }
+            setIsSpeaking(true);
+            void tts
+              .speak(
+                reply,
+                (level) => mouthLevelRef.current(level),
+                toTtsLengthScale(settings.ttsLengthScale)
+              )
+              .catch((e) => {
+                setErrorMessage(
+                  getTtsErrorMessage(e, t("chat.status.ttsPlaybackFailed"), t)
+                );
+                console.warn("TTS error:", e);
+              })
+              .finally(() => {
+                mouthLevelRef.current(0);
+                setIsSpeaking(false);
+              });
           }
-          setIsSpeaking(true);
-          void tts
-            .speak(
-              reply,
-              (level) => mouthLevelRef.current(level),
-              toTtsLengthScale(settings.ttsLengthScale)
-            )
-            .catch((e) => {
-              setErrorMessage(
-                getTtsErrorMessage(e, t("chat.status.ttsPlaybackFailed"), t)
-              );
-              console.warn("TTS error:", e);
-            })
-            .finally(() => {
-              mouthLevelRef.current(0);
-              setIsSpeaking(false);
-            });
+        } catch (e) {
+          setErrorMessage(t("chat.status.responseFailed"));
+          console.error("LLM error:", e);
+          llm.destroySession();
         }
-      } catch (e) {
-        setErrorMessage(t("chat.status.responseFailed"));
-        console.error("LLM error:", e);
-        llm.destroySession();
       } finally {
+        isSendingRef.current = false;
         setIsSending(false);
       }
     },
     [
       beginSessionInitialization,
       endSessionInitialization,
-      isSending,
       llmStatus,
-      messages,
       needsInitialization,
       settings,
       t,
@@ -397,6 +402,7 @@ export function useChat(settings: AppSettings) {
     mouthLevelRef.current(0);
     setIsSpeaking(false);
     llm.destroySession();
+    messagesRef.current = [];
     setMessages([]);
     saveMessages([]);
     setNeedsInitialization(false);
