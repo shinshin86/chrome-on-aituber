@@ -41,11 +41,16 @@ let ready = false;
 let initPromise: Promise<void> | null = null;
 let worker: Worker | null = null;
 let nextRequestId = 1;
+let initializationGeneration = 0;
+
+const DEFAULT_WORKER_TIMEOUT_MS = 30_000;
+const SYNTHESIZE_WORKER_TIMEOUT_MS = 120_000;
 
 interface PendingRequest<T = unknown> {
   resolve: (value: T) => void;
   reject: (reason?: unknown) => void;
   onProgress?: (msg: string | null) => void;
+  timeoutId: number;
 }
 
 type WorkerResponse =
@@ -61,13 +66,33 @@ const IRODORI_SAMPLE_RATE = 48000;
 
 function rejectPendingRequests(reason: Error) {
   for (const pending of pendingRequests.values()) {
+    window.clearTimeout(pending.timeoutId);
     pending.reject(reason);
   }
   pendingRequests.clear();
 }
 
+function terminateWorker(target: Worker): void {
+  target.onmessage = null;
+  target.onerror = null;
+  target.onmessageerror = null;
+  target.terminate();
+}
+
+function handleWorkerFailure(target: Worker, reason: Error): void {
+  if (worker !== target) return;
+
+  initializationGeneration += 1;
+  worker = null;
+  terminateWorker(target);
+  rejectPendingRequests(reason);
+  manifest = null;
+  ready = false;
+  initPromise = null;
+}
+
 export function isReady(): boolean {
-  return ready;
+  return ready && worker !== null && manifest !== null;
 }
 
 export function hasReferenceAudio(): boolean {
@@ -81,10 +106,11 @@ export function getReferenceAudioName(): string | null {
 function getWorker(): Worker {
   if (worker) return worker;
 
-  worker = new Worker(new URL("./irodoriWorker.ts", import.meta.url), {
+  const target = new Worker(new URL("./irodoriWorker.ts", import.meta.url), {
     type: "module",
   });
-  worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
+  worker = target;
+  target.onmessage = (event: MessageEvent<WorkerResponse>) => {
     const response = event.data;
     const pending = pendingRequests.get(response.id);
     if (!pending) return;
@@ -95,6 +121,7 @@ function getWorker(): Worker {
     }
 
     pendingRequests.delete(response.id);
+    window.clearTimeout(pending.timeoutId);
     if (response.type === "error") {
       pending.reject(new Error(response.message));
       return;
@@ -102,16 +129,18 @@ function getWorker(): Worker {
 
     pending.resolve(response.result);
   };
-  worker.onerror = (event) => {
+  target.onerror = (event) => {
     const err = new Error(event.message || "Irodori Worker error");
-    rejectPendingRequests(err);
-    worker?.terminate();
-    worker = null;
-    ready = false;
-    initPromise = null;
+    handleWorkerFailure(target, err);
+  };
+  target.onmessageerror = () => {
+    handleWorkerFailure(
+      target,
+      new Error("Irodori Worker message could not be deserialized")
+    );
   };
 
-  return worker;
+  return target;
 }
 
 function callWorker<T>(
@@ -121,14 +150,39 @@ function callWorker<T>(
 ): Promise<T> {
   const id = nextRequestId++;
   const target = getWorker();
+  const requestType =
+    typeof message.type === "string" ? message.type : "unknown";
+  const timeoutMs =
+    requestType === "synthesize"
+      ? SYNTHESIZE_WORKER_TIMEOUT_MS
+      : DEFAULT_WORKER_TIMEOUT_MS;
 
   return new Promise<T>((resolve, reject) => {
+    const timeoutId = window.setTimeout(() => {
+      const pending = pendingRequests.get(id);
+      if (!pending) return;
+
+      pendingRequests.delete(id);
+      pending.reject(
+        new Error(
+          `Irodori Worker request timed out after ${timeoutMs / 1000}s (${requestType})`
+        )
+      );
+    }, timeoutMs);
+
     pendingRequests.set(id, {
       resolve: resolve as (value: unknown) => void,
       reject,
       onProgress,
+      timeoutId,
     });
-    target.postMessage({ id, ...message }, transfer ?? []);
+    try {
+      target.postMessage({ id, ...message }, transfer ?? []);
+    } catch (error) {
+      window.clearTimeout(timeoutId);
+      pendingRequests.delete(id);
+      reject(error);
+    }
   });
 }
 
@@ -196,48 +250,61 @@ export async function initialize(
   if (ready) return;
   if (initPromise) return initPromise;
 
-  initPromise = (async () => {
-    try {
-      onProgress?.("Irodori TTS を初期化中...");
+  const generation = ++initializationGeneration;
+  const initialization = (async () => {
+    onProgress?.("Irodori TTS を初期化中...");
 
-      if (!(await isWebGpuSupported())) {
-        throw new Error(
-          "このブラウザは WebGPU に対応していません。Piper Plus をご利用ください。"
-        );
-      }
-
-      manifest = await fetchManifest();
-      const missingAsset = await findMissingRuntimeAsset(manifest);
-      if (missingAsset) {
-        throw new Error(
-          `Irodori TTS モデルが未ダウンロードです。設定画面からダウンロードしてください。不足: ${missingAsset.path}`
-        );
-      }
-
-      await callWorker<void>(
-        {
-          type: "init",
-          runtimeUrl: `${getRuntimeBaseUrl()}runtime/pipeline.mjs?v=${encodeURIComponent(
-            manifest.version
-          )}`,
-          baseUrl: getAssetsBaseUrl(),
-          manifest,
-        },
-        undefined,
-        onProgress
+    if (!(await isWebGpuSupported())) {
+      assertCurrentInitialization(generation);
+      throw new Error(
+        "このブラウザは WebGPU に対応していません。Piper Plus をご利用ください。"
       );
-      await sendReferenceAudioToWorker();
-
-      ready = true;
-      onProgress?.(null);
-      console.log("TTS(irodori): 初期化完了");
-    } catch (err) {
-      initPromise = null;
-      throw err;
     }
+    assertCurrentInitialization(generation);
+
+    const nextManifest = await fetchManifest();
+    assertCurrentInitialization(generation);
+    manifest = nextManifest;
+
+    const missingAsset = await findMissingRuntimeAsset(nextManifest);
+    assertCurrentInitialization(generation);
+    if (missingAsset) {
+      throw new Error(
+        `Irodori TTS モデルが未ダウンロードです。設定画面からダウンロードしてください。不足: ${missingAsset.path}`
+      );
+    }
+
+    await callWorker<void>(
+      {
+        type: "init",
+        runtimeUrl: `${getRuntimeBaseUrl()}runtime/pipeline.mjs?v=${encodeURIComponent(
+          nextManifest.version
+        )}`,
+        baseUrl: getAssetsBaseUrl(),
+        manifest: nextManifest,
+      },
+      undefined,
+      onProgress
+    );
+    assertCurrentInitialization(generation);
+
+    await sendReferenceAudioToWorker();
+    assertCurrentInitialization(generation);
+
+    ready = true;
+    onProgress?.(null);
+    console.log("TTS(irodori): 初期化完了");
   })();
 
-  return initPromise;
+  initPromise = initialization;
+  try {
+    await initialization;
+  } catch (err) {
+    if (initPromise === initialization) {
+      initPromise = null;
+    }
+    throw err;
+  }
 }
 
 export async function synthesize(
@@ -256,9 +323,12 @@ export async function synthesize(
 }
 
 export function cancel(): void {
-  if (!worker) return;
-  worker.terminate();
+  initializationGeneration += 1;
+  const target = worker;
   worker = null;
+  if (target) {
+    terminateWorker(target);
+  }
   rejectPendingRequests(new Error("Irodori TTS の生成を中止しました。"));
   manifest = null;
   ready = false;
@@ -266,18 +336,28 @@ export function cancel(): void {
 }
 
 export async function dispose(): Promise<void> {
+  initializationGeneration += 1;
   if (worker) {
+    const target = worker;
     try {
       await callWorker<void>({ type: "dispose" });
     } catch {
       // terminate below
     }
-    worker.terminate();
-    worker = null;
+    if (worker === target) {
+      worker = null;
+    }
+    terminateWorker(target);
   }
   rejectPendingRequests(new Error("Irodori TTS を終了しました。"));
   manifest = null;
   ready = false;
   initPromise = null;
   // 参照音声はセッション内保持のため、エンジン切替では消さない
+}
+
+function assertCurrentInitialization(generation: number): void {
+  if (generation !== initializationGeneration) {
+    throw new DOMException("Irodori TTS initialization cancelled", "AbortError");
+  }
 }
