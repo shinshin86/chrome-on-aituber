@@ -19,9 +19,11 @@ interface Options {
 
 /* ── モジュール共通変数 ─────────────────────────────── */
 let ws: WebSocket | null = null;
+const liveSockets = new Set<WebSocket>();
 let buffer: Array<TwitchChatMessage> = [];
 let pollTimer: number | null = null;
-let reconnectInProgress = false;
+let connectionGeneration = 0;
+let connectionAbortController: AbortController | null = null;
 const processedMessageIds = new Set<string>();
 
 export async function connectTwitchChat(opts: Options): Promise<WebSocket> {
@@ -30,42 +32,58 @@ export async function connectTwitchChat(opts: Options): Promise<WebSocket> {
     return ws;
   }
 
-  // 既存の接続があれば一旦切断
-  if (ws) {
-    disconnectTwitchChat();
-  }
+  // Cancel any in-flight connection attempt and non-open sockets.
+  disconnectTwitchChat();
+
+  const generation = connectionGeneration;
+  const abortController = new AbortController();
+  const { signal } = abortController;
+  connectionAbortController = abortController;
 
   const { channelLogin, pollInterval, onComment, onTokenExpired, token, clientId } = opts;
 
   /* 1) 既存のサブスクリプションをクリーンアップ */
   await cleanupExistingSubscriptions(token, clientId);
+  assertCurrentConnection();
 
   /* 2) 配信者 ID を取得 */
   const br = await fetch(
     `https://api.twitch.tv/helix/users?login=${encodeURIComponent(channelLogin)}`,
-    { headers: { Authorization: `Bearer ${token}`, "Client-Id": clientId } },
+    {
+      headers: { Authorization: `Bearer ${token}`, "Client-Id": clientId },
+      signal,
+    },
   );
+  assertCurrentConnection();
   if (br.status === 401) {
     onTokenExpired?.();
     throw new Error("Twitch token expired");
   }
-  const broadcasterId = (await br.json()).data?.[0]?.id;
+  const broadcasterData = await br.json();
+  assertCurrentConnection();
+  const broadcasterId = broadcasterData.data?.[0]?.id;
   if (!broadcasterId) throw new Error("Invalid channel login");
 
   /* 3) トークン本人のユーザー ID を取得 */
   const me = await fetch("https://id.twitch.tv/oauth2/validate", {
     headers: { Authorization: `OAuth ${token}` },
+    signal,
   });
+  assertCurrentConnection();
   if (me.status === 401) {
     onTokenExpired?.();
     throw new Error("Twitch token expired");
   }
-  const { user_id: userId } = await me.json();
+  const validationData = await me.json();
+  assertCurrentConnection();
+  const { user_id: userId } = validationData;
   if (!userId) throw new Error("Token owner id not found");
 
   /* 4) WebSocket 接続 */
-  ws = new WebSocket("wss://eventsub.wss.twitch.tv/ws");
-  attachHandlers();
+  const socket = new WebSocket("wss://eventsub.wss.twitch.tv/ws");
+  liveSockets.add(socket);
+  ws = socket;
+  attachHandlers(socket);
 
   /* 5) pollInterval ごとに 1 件だけ UI へ渡す */
   pollTimer = window.setInterval(() => {
@@ -75,9 +93,27 @@ export async function connectTwitchChat(opts: Options): Promise<WebSocket> {
     }
   }, pollInterval);
 
-  return ws;
+  return socket;
 
   /* ===== 内部関数 ===== */
+
+  function isCurrentConnection(): boolean {
+    return (
+      connectionGeneration === generation &&
+      connectionAbortController === abortController &&
+      !signal.aborted
+    );
+  }
+
+  function isCurrentSocket(socket: WebSocket): boolean {
+    return isCurrentConnection() && ws === socket;
+  }
+
+  function assertCurrentConnection(): void {
+    if (!isCurrentConnection()) {
+      throw new DOMException("Twitch connection cancelled", "AbortError");
+    }
+  }
 
   async function cleanupExistingSubscriptions(token: string, clientId: string) {
     try {
@@ -88,15 +124,19 @@ export async function connectTwitchChat(opts: Options): Promise<WebSocket> {
             Authorization: `Bearer ${token}`,
             "Client-Id": clientId,
           },
+          signal,
         },
       );
+      assertCurrentConnection();
 
       if (!response.ok) return;
 
       const data = await response.json();
+      assertCurrentConnection();
       const subscriptions = data.data || [];
 
       for (const subscription of subscriptions) {
+        assertCurrentConnection();
         if (
           subscription.type === "channel.chat.message" &&
           subscription.transport?.method === "websocket"
@@ -109,35 +149,52 @@ export async function connectTwitchChat(opts: Options): Promise<WebSocket> {
                 Authorization: `Bearer ${token}`,
                 "Client-Id": clientId,
               },
+              signal,
             },
           );
+          assertCurrentConnection();
         }
       }
     } catch (error) {
+      if (!isCurrentConnection()) throw error;
       console.warn("Failed to cleanup existing subscriptions:", error);
     }
   }
 
-  function attachHandlers() {
-    if (!ws) return;
+  function attachHandlers(socket: WebSocket) {
+    socket.onmessage = (event) => {
+      void handleWsMessage(event, socket);
+    };
 
-    ws.onmessage = handleWsMessage;
+    socket.onclose = () => {
+      liveSockets.delete(socket);
+      if (!isCurrentSocket(socket)) return;
 
-    ws.onclose = () => {
-      if (pollTimer) clearInterval(pollTimer);
+      for (const otherSocket of liveSockets) {
+        closeSocket(otherSocket);
+      }
+
+      if (pollTimer !== null) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
       buffer = [];
-
-      if (!reconnectInProgress) {
-        ws = null;
+      ws = null;
+      if (connectionAbortController === abortController) {
+        abortController.abort();
+        connectionAbortController = null;
       }
     };
 
-    ws.onerror = (error) => {
+    socket.onerror = (error) => {
+      if (!isCurrentSocket(socket)) return;
       console.error("Twitch WebSocket error:", error);
     };
   }
 
-  async function subscribe(sessionId: string) {
+  async function subscribe(sessionId: string, socket: WebSocket) {
+    if (!isCurrentSocket(socket)) return;
+
     const response = await fetch(
       "https://api.twitch.tv/helix/eventsub/subscriptions",
       {
@@ -156,8 +213,11 @@ export async function connectTwitchChat(opts: Options): Promise<WebSocket> {
           },
           transport: { method: "websocket", session_id: sessionId },
         }),
+        signal,
       },
     );
+
+    if (!isCurrentSocket(socket)) return;
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -169,32 +229,38 @@ export async function connectTwitchChat(opts: Options): Promise<WebSocket> {
     }
   }
 
-  function reconnect(url: string) {
-    reconnectInProgress = true;
-    const oldWs = ws;
-    ws = new WebSocket(url);
-    attachHandlers();
+  function reconnect(url: string, socket: WebSocket) {
+    if (!isCurrentSocket(socket)) return;
 
-    ws!.onopen = () => {
-      reconnectInProgress = false;
-      if (oldWs && oldWs.readyState === WebSocket.OPEN) {
-        oldWs.close();
+    const oldSocket = socket;
+    const newSocket = new WebSocket(url);
+    liveSockets.add(newSocket);
+    ws = newSocket;
+    attachHandlers(newSocket);
+
+    newSocket.onopen = () => {
+      if (!isCurrentSocket(newSocket)) {
+        closeSocket(newSocket);
+        return;
       }
+      closeSocket(oldSocket);
     };
   }
 
-  async function handleWsMessage(ev: MessageEvent) {
+  async function handleWsMessage(ev: MessageEvent, socket: WebSocket) {
+    if (!isCurrentSocket(socket)) return;
+
     try {
       const msg = JSON.parse(ev.data);
       const type = msg.metadata?.message_type;
 
       if (type === "session_welcome") {
-        await subscribe(msg.payload.session.id);
+        await subscribe(msg.payload.session.id, socket);
         return;
       }
 
       if (type === "session_reconnect") {
-        reconnect(msg.payload.session.reconnect_url);
+        reconnect(msg.payload.session.reconnect_url, socket);
         return;
       }
 
@@ -216,23 +282,43 @@ export async function connectTwitchChat(opts: Options): Promise<WebSocket> {
         });
       }
     } catch (error) {
+      if (!isCurrentConnection()) return;
       console.error("Error handling WebSocket message:", error);
     }
   }
 }
 
 export function disconnectTwitchChat() {
-  if (ws) {
-    ws.close();
-    ws = null;
-  }
+  connectionGeneration += 1;
+  connectionAbortController?.abort();
+  connectionAbortController = null;
 
-  if (pollTimer) {
+  for (const socket of liveSockets) {
+    closeSocket(socket);
+  }
+  liveSockets.clear();
+  ws = null;
+
+  if (pollTimer !== null) {
     clearInterval(pollTimer);
     pollTimer = null;
   }
 
   buffer = [];
-  reconnectInProgress = false;
   processedMessageIds.clear();
+}
+
+function closeSocket(socket: WebSocket): void {
+  socket.onopen = null;
+  socket.onmessage = null;
+  socket.onclose = null;
+  socket.onerror = null;
+  liveSockets.delete(socket);
+
+  if (
+    socket.readyState === WebSocket.CONNECTING ||
+    socket.readyState === WebSocket.OPEN
+  ) {
+    socket.close();
+  }
 }

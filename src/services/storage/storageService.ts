@@ -27,6 +27,20 @@ const BACKGROUND_ID = "screen-background";
 
 // --- LocalStorage (settings / messages) ---
 
+function saveToLocalStorage(key: string, value: unknown): boolean {
+  try {
+    const serialized = JSON.stringify(value);
+    if (serialized === undefined) {
+      throw new Error("Value could not be serialized");
+    }
+    localStorage.setItem(key, serialized);
+    return true;
+  } catch (error) {
+    console.warn(`Failed to save localStorage item "${key}":`, error);
+    return false;
+  }
+}
+
 export function loadSettings(): AppSettings {
   try {
     const raw = localStorage.getItem(KEYS.SETTINGS);
@@ -44,8 +58,8 @@ export function loadSettings(): AppSettings {
   }
 }
 
-export function saveSettings(settings: AppSettings): void {
-  localStorage.setItem(KEYS.SETTINGS, JSON.stringify(settings));
+export function saveSettings(settings: AppSettings): boolean {
+  return saveToLocalStorage(KEYS.SETTINGS, settings);
 }
 
 export function loadMessages(): ChatMessage[] {
@@ -58,9 +72,9 @@ export function loadMessages(): ChatMessage[] {
   }
 }
 
-export function saveMessages(messages: ChatMessage[]): void {
+export function saveMessages(messages: ChatMessage[]): boolean {
   const trimmed = messages.slice(-100);
-  localStorage.setItem(KEYS.MESSAGES, JSON.stringify(trimmed));
+  return saveToLocalStorage(KEYS.MESSAGES, trimmed);
 }
 
 type StoredAvatarView =
@@ -92,10 +106,10 @@ function loadAvatarViews(): Record<string, StoredAvatarView> {
   }
 }
 
-function saveAvatarView(id: string, view: StoredAvatarView): void {
+function saveAvatarView(id: string, view: StoredAvatarView): boolean {
   const views = loadAvatarViews();
   views[id] = view;
-  localStorage.setItem(KEYS.AVATAR_VIEWS, JSON.stringify(views));
+  return saveToLocalStorage(KEYS.AVATAR_VIEWS, views);
 }
 
 export function loadAvatarViewTransform(
@@ -116,8 +130,8 @@ export function loadAvatarViewTransform(
 export function saveAvatarViewTransform(
   id: string,
   transform: AvatarViewTransform
-): void {
-  saveAvatarView(id, { kind: "2d", ...transform });
+): boolean {
+  return saveAvatarView(id, { kind: "2d", ...transform });
 }
 
 export function loadVrmViewTransform(id: string): VrmViewTransform | undefined {
@@ -138,15 +152,15 @@ export function loadVrmViewTransform(id: string): VrmViewTransform | undefined {
 export function saveVrmViewTransform(
   id: string,
   transform: VrmViewTransform
-): void {
-  saveAvatarView(id, { kind: "vrm", ...transform });
+): boolean {
+  return saveAvatarView(id, { kind: "vrm", ...transform });
 }
 
-export function deleteAvatarViewTransform(id: string): void {
+export function deleteAvatarViewTransform(id: string): boolean {
   const views = loadAvatarViews();
-  if (!(id in views)) return;
+  if (!(id in views)) return true;
   delete views[id];
-  localStorage.setItem(KEYS.AVATAR_VIEWS, JSON.stringify(views));
+  return saveToLocalStorage(KEYS.AVATAR_VIEWS, views);
 }
 
 // --- IndexedDB (avatar blobs) ---

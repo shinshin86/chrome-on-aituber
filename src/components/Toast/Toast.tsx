@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useI18n } from "../../i18n/I18nContext";
+import { useI18n } from "../../i18n/useI18n";
 import styles from "./Toast.module.css";
 
 interface Props {
