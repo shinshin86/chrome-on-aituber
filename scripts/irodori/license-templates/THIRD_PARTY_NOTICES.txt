@@ -45,6 +45,7 @@ watermarked by SilentCipher.
 
 Reference audio note:
 
-No reference audio sample is redistributed with these assets. The application
-accepts only user-uploaded reference audio and keeps it in memory for the
+No reference audio sample is redistributed as part of this Irodori runtime and
+model asset set. The application repository bundles its own default reference
+audio separately and allows a user-selected reference to override it for the
 current session.

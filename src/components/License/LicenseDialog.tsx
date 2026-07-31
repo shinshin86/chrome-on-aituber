@@ -9,6 +9,7 @@ interface Props {
 const PIPER_LICENSE_BASE_URL = `${import.meta.env.BASE_URL}piper/licenses`;
 const IRODORI_LICENSE_BASE_URL = `${import.meta.env.BASE_URL}irodori/licenses`;
 const AVATAR_LICENSE_BASE_URL = `${import.meta.env.BASE_URL}avatar-licenses`;
+const IRODORI_DEFAULT_AUDIO_TERMS_URL = `${import.meta.env.BASE_URL}audio-licenses/IRODORI_DEFAULT_REFERENCE_AUDIO_TERMS.md`;
 const INOCHI_NOTICE_URL = `${import.meta.env.BASE_URL}inochi2d/runtime/THIRD-PARTY-NOTICES.md`;
 const AKA_ATTRIBUTION_URL = `${import.meta.env.BASE_URL}inochi2d/models/Aka.ATTRIBUTION.md`;
 const NPM_NOTICE_URL = `${import.meta.env.BASE_URL}licenses/NPM-THIRD-PARTY-NOTICES.txt`;
@@ -83,6 +84,23 @@ function LicenseBodyJa() {
           </a>
         </p>
         <p>詳細な利用条件は公式規約を参照してください。</p>
+      </section>
+
+      <section className={styles.section}>
+        <h3>Irodori TTS デフォルト参照音声（個別利用条件）</h3>
+        <p>
+          同梱のデフォルト参照音声にはMIT Licenseは適用されません。
+          著作権者が権利を保持し、個別利用条件に記載された範囲に限って利用・再配布を許可します。
+        </p>
+        <p>
+          <a
+            href={IRODORI_DEFAULT_AUDIO_TERMS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Irodoriデフォルト参照音声の個別利用条件
+          </a>
+        </p>
       </section>
 
       <section className={styles.section}>
@@ -430,6 +448,24 @@ function LicenseBodyEn() {
           </a>
         </p>
         <p>See the official terms for detailed usage conditions.</p>
+      </section>
+
+      <section className={styles.section}>
+        <h3>Irodori TTS default reference audio (separate asset terms)</h3>
+        <p>
+          The bundled default reference audio is not covered by the MIT
+          License. The copyright holder retains its rights and permits use and
+          redistribution only within the scope of the separate asset terms.
+        </p>
+        <p>
+          <a
+            href={IRODORI_DEFAULT_AUDIO_TERMS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Irodori Default Reference Audio Asset Terms
+          </a>
+        </p>
       </section>
 
       <section className={styles.section}>

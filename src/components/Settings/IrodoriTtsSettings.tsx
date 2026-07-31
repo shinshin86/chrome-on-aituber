@@ -10,9 +10,11 @@ import {
   type IrodoriManifest,
 } from "../../services/tts/irodoriAssets";
 import {
-  clearReferenceAudio,
-  getReferenceAudioName,
+  ensureDefaultReferenceAudio,
+  getReferenceAudioInfo,
+  resetReferenceAudioToDefault,
   setReferenceAudio,
+  type ReferenceAudioInfo,
 } from "../../services/tts/irodoriTtsProvider";
 import styles from "./Settings.module.css";
 
@@ -33,9 +35,8 @@ export function IrodoriTtsSettings() {
   const [manifest, setManifest] = useState<IrodoriManifest | null>(null);
   const [progress, setProgress] = useState<DownloadProgress | null>(null);
   const [error, setError] = useState("");
-  const [referenceAudioName, setReferenceAudioName] = useState<string | null>(
-    () => getReferenceAudioName()
-  );
+  const [referenceAudio, setReferenceAudioInfo] =
+    useState<ReferenceAudioInfo | null>(() => getReferenceAudioInfo());
   const [referenceAudioBusy, setReferenceAudioBusy] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const referenceInputRef = useRef<HTMLInputElement | null>(null);
@@ -55,6 +56,17 @@ export function IrodoriTtsSettings() {
         const downloaded = await isRuntimeDownloaded(m);
         if (cancelled) return;
         setModelState(downloaded ? "downloaded" : "not_downloaded");
+        if (downloaded) {
+          try {
+            await ensureDefaultReferenceAudio();
+            if (cancelled) return;
+            setReferenceAudioInfo(getReferenceAudioInfo());
+          } catch {
+            if (!cancelled) {
+              setError("デフォルト参照音声の読み込みに失敗しました。");
+            }
+          }
+        }
       } catch {
         if (!cancelled) setModelState("manifest_missing");
       }
@@ -79,6 +91,12 @@ export function IrodoriTtsSettings() {
     try {
       await downloadAssets(manifest, setProgress, abortRef.current.signal);
       setModelState("downloaded");
+      try {
+        await ensureDefaultReferenceAudio();
+        setReferenceAudioInfo(getReferenceAudioInfo());
+      } catch {
+        setError("デフォルト参照音声の読み込みに失敗しました。");
+      }
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") {
         setModelState("not_downloaded");
@@ -120,7 +138,7 @@ export function IrodoriTtsSettings() {
     setReferenceAudioBusy(true);
     try {
       await setReferenceAudio(file);
-      setReferenceAudioName(file.name);
+      setReferenceAudioInfo(getReferenceAudioInfo());
     } catch {
       setError(
         "参照音声の読み込みに失敗しました。.wav または .mp3 ファイルを選択してください。"
@@ -133,9 +151,19 @@ export function IrodoriTtsSettings() {
     }
   }
 
-  function handleClearReferenceAudio() {
-    clearReferenceAudio();
-    setReferenceAudioName(null);
+  async function handleResetReferenceAudio() {
+    if (referenceAudioBusy || referenceAudio?.source === "default") return;
+
+    setError("");
+    setReferenceAudioBusy(true);
+    try {
+      await resetReferenceAudioToDefault();
+      setReferenceAudioInfo(getReferenceAudioInfo());
+    } catch {
+      setError("デフォルト参照音声の読み込みに失敗しました。");
+    } finally {
+      setReferenceAudioBusy(false);
+    }
   }
 
   const progressPercent =
@@ -235,8 +263,8 @@ export function IrodoriTtsSettings() {
 
               {/* 参照音声アップロード */}
               <p className={styles.hint}>
-                Irodori TTS は参照音声をもとに声質を生成します。使用権限のある .wav
-                または .mp3 音声を選択してください。参照音声は保存されず、このセッション内でのみ使用されます。
+                Irodori TTS は参照音声をもとに声質を生成します。最初はデフォルト音声が使用されます。変更する場合は、使用権限のある
+                .wav または .mp3 音声を選択してください。選択した音声は保存されず、このセッション内でのみ使用されます。
               </p>
 
               <input
@@ -258,23 +286,25 @@ export function IrodoriTtsSettings() {
                 >
                   {referenceAudioBusy
                     ? "読み込み中..."
-                    : referenceAudioName
-                      ? "参照音声を変更"
-                      : "参照音声（.wav / .mp3）を選択"}
+                    : "参照音声を変更"}
                 </button>
                 <button
                   className={styles.secondaryBtn}
                   type="button"
-                  disabled={!referenceAudioName}
-                  onClick={handleClearReferenceAudio}
+                  disabled={referenceAudioBusy || referenceAudio?.source === "default"}
+                  onClick={() => void handleResetReferenceAudio()}
                 >
-                  クリア
+                  デフォルトに戻す
                 </button>
               </div>
 
               <p className={styles.hint}>
-                {referenceAudioName
-                  ? `現在の参照音声: ${referenceAudioName}`
+                {referenceAudio
+                  ? `現在の参照音声: ${
+                      referenceAudio.source === "default"
+                        ? "デフォルト音声"
+                        : referenceAudio.name
+                    }`
                   : "参照音声が未設定のため、まだ音声合成はできません"}
               </p>
 

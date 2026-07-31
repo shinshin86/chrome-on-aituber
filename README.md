@@ -96,7 +96,7 @@ To use Irodori TTS, place its `manifest.json`, WebGPU fp16 ONNX models, tokenize
 
 For the deployed site, Irodori assets are hosted in two parts because the set (~1.3GB) exceeds the GitHub Pages site limit and GitHub Release assets do not send CORS headers: the runtime (`pipeline.mjs` + ONNX Runtime wasm, served same-origin because dynamic `import()` requires a JavaScript MIME type) ships as a GitHub Release tarball extracted at build time (`IRODORI_RUNTIME_ASSETS_URL`), while models and tokenizer are downloaded by the browser directly from a public Hugging Face repository (`IRODORI_ASSETS_BASE_URL` → `VITE_IRODORI_ASSETS_BASE_URL`). Both repository variables are optional; when unset the app falls back to same-origin `irodori/`. See [`scripts/irodori/README.md`](scripts/irodori/README.md) for the release steps.
 
-When you click `Download Irodori TTS model` in the app, the asset set is saved to browser storage, primarily IndexedDB. The current fp16 asset set is about 1.2 GiB. In a normal browser window, it remains until you click `Delete model and free storage` in settings or clear the site's data in Chrome. In Incognito mode, it is stored only for that Incognito session and becomes unavailable to the web app after all Incognito windows are closed. Incognito storage quotas can also be smaller than normal-window quotas, so saving the model may fail with `QuotaExceededError`. Uploaded `.wav` / `.mp3` reference audio is not persisted; it is kept only in memory for the current session.
+When you click `Download Irodori TTS model` in the app, the asset set is saved to browser storage, primarily IndexedDB. The current fp16 asset set is about 1.2 GiB. In a normal browser window, it remains until you click `Delete model and free storage` in settings or clear the site's data in Chrome. In Incognito mode, it is stored only for that Incognito session and becomes unavailable to the web app after all Incognito windows are closed. Incognito storage quotas can also be smaller than normal-window quotas, so saving the model may fail with `QuotaExceededError`. The app loads a bundled default reference voice automatically. A user-selected `.wav` / `.mp3` overrides it for the current session and is not persisted.
 
 3. Start the development server
 
@@ -166,6 +166,11 @@ Set the same headers in production hosting for WASM / `SharedArrayBuffer` suppor
 
 The software and documentation are licensed under the MIT License — see
 [LICENSE](./LICENSE).
+
+The bundled Irodori TTS default reference audio is not covered by the MIT
+License. The copyright holder retains its rights and permits only the limited
+use and redistribution described in the
+[Irodori Default Reference Audio Asset Terms](./public/audio-licenses/IRODORI_DEFAULT_REFERENCE_AUDIO_TERMS.md).
 
 Bundled Miko PNGTuber, PuruPuru PNGTuber, Pet, and VRM assets are not covered
 by the MIT License. They are governed by the authoritative Japanese
