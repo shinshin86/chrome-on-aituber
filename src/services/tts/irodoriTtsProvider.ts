@@ -23,10 +23,11 @@
  * }
  * ```
  *
- * 参照音声はユーザーがアップロードした .wav / .mp3 を使い、
- * 永続保存せずセッション内（メモリ上）でのみ保持する。
+ * A bundled default reference voice is loaded automatically. A user-uploaded
+ * .wav / .mp3 can override it for the current session.
  */
 
+import defaultReferenceAudioUrl from "../../assets/irodori-default-reference.mp3";
 import {
   fetchManifest,
   findMissingRuntimeAsset,
@@ -60,9 +61,22 @@ type WorkerResponse =
 
 const pendingRequests = new Map<number, PendingRequest>();
 
-// 参照音声はセッション内のみ保持（永続保存しない）
-let referenceAudio: { samples: Float32Array; sampleRate: number; name: string } | null = null;
+export type ReferenceAudioSource = "default" | "user";
+
+export interface ReferenceAudioInfo {
+  name: string;
+  source: ReferenceAudioSource;
+}
+
+interface ReferenceAudio extends ReferenceAudioInfo {
+  samples: Float32Array;
+  sampleRate: number;
+}
+
+let referenceAudio: ReferenceAudio | null = null;
+let defaultReferenceAudioPromise: Promise<void> | null = null;
 const IRODORI_SAMPLE_RATE = 48000;
+const DEFAULT_REFERENCE_AUDIO_NAME = "irodori-default-reference.mp3";
 
 function rejectPendingRequests(reason: Error) {
   for (const pending of pendingRequests.values()) {
@@ -99,8 +113,12 @@ export function hasReferenceAudio(): boolean {
   return referenceAudio !== null;
 }
 
-export function getReferenceAudioName(): string | null {
-  return referenceAudio?.name ?? null;
+export function getReferenceAudioInfo(): ReferenceAudioInfo | null {
+  if (!referenceAudio) return null;
+  return {
+    name: referenceAudio.name,
+    source: referenceAudio.source,
+  };
 }
 
 function getWorker(): Worker {
@@ -217,31 +235,67 @@ async function toMono48k(decoded: AudioBuffer): Promise<Float32Array> {
   return new Float32Array(rendered.getChannelData(0));
 }
 
-/** アップロードされた参照音声を 48kHz mono にデコードし、セッション内に保持する */
-export async function setReferenceAudio(file: File): Promise<void> {
-  const arrayBuffer = await file.arrayBuffer();
+async function decodeReferenceAudio(arrayBuffer: ArrayBuffer): Promise<Float32Array> {
   const ctx = new AudioContext();
   try {
     const decoded = await ctx.decodeAudioData(arrayBuffer);
-    const samples = await toMono48k(decoded);
-    referenceAudio = {
-      samples,
-      sampleRate: IRODORI_SAMPLE_RATE,
-      name: file.name,
-    };
-    await sendReferenceAudioToWorker();
+    return await toMono48k(decoded);
   } finally {
     await ctx.close();
   }
 }
 
-export function clearReferenceAudio(): void {
-  referenceAudio = null;
-  if (worker) {
-    void callWorker<void>({ type: "clearReferenceAudio" }).catch(() => {
-      // ignore
-    });
+/** Loads the bundled voice unless a user-selected reference is already active. */
+export async function ensureDefaultReferenceAudio(): Promise<void> {
+  if (referenceAudio) return;
+  if (defaultReferenceAudioPromise) return defaultReferenceAudioPromise;
+
+  const loadPromise = (async () => {
+    const response = await fetch(defaultReferenceAudioUrl);
+    if (!response.ok) {
+      throw new Error(
+        `デフォルト参照音声を取得できませんでした (${response.status})。`
+      );
+    }
+
+    const samples = await decodeReferenceAudio(await response.arrayBuffer());
+    // A user upload may have completed while the bundled asset was decoding.
+    if (referenceAudio) return;
+
+    referenceAudio = {
+      samples,
+      sampleRate: IRODORI_SAMPLE_RATE,
+      name: DEFAULT_REFERENCE_AUDIO_NAME,
+      source: "default",
+    };
+    await sendReferenceAudioToWorker();
+  })();
+
+  defaultReferenceAudioPromise = loadPromise;
+  try {
+    await loadPromise;
+  } finally {
+    if (defaultReferenceAudioPromise === loadPromise) {
+      defaultReferenceAudioPromise = null;
+    }
   }
+}
+
+/** Decodes a user-selected reference file and keeps it for the current session. */
+export async function setReferenceAudio(file: File): Promise<void> {
+  const samples = await decodeReferenceAudio(await file.arrayBuffer());
+  referenceAudio = {
+    samples,
+    sampleRate: IRODORI_SAMPLE_RATE,
+    name: file.name,
+    source: "user",
+  };
+  await sendReferenceAudioToWorker();
+}
+
+export async function resetReferenceAudioToDefault(): Promise<void> {
+  referenceAudio = null;
+  await ensureDefaultReferenceAudio();
 }
 
 export async function initialize(
@@ -273,6 +327,9 @@ export async function initialize(
         `Irodori TTS モデルが未ダウンロードです。設定画面からダウンロードしてください。不足: ${missingAsset.path}`
       );
     }
+
+    await ensureDefaultReferenceAudio();
+    assertCurrentInitialization(generation);
 
     await callWorker<void>(
       {
