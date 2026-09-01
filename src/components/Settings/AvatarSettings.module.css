@@ -201,6 +201,19 @@
   background: linear-gradient(145deg, #f3faf7, #edf6f3);
 }
 
+.fileField.fileFieldDragActive:not(.fileFieldDisabled) {
+  border-color: #4d8f83;
+  border-style: dashed;
+  background: linear-gradient(145deg, #edf9f5, #e4f3ee);
+  box-shadow: 0 0 0 3px rgba(77, 143, 131, 0.18);
+  transform: translateY(-1px);
+}
+
+.fileField.fileFieldInvalid:not(.fileFieldDisabled) {
+  border-color: #cf746d;
+  background: linear-gradient(145deg, #fffafa, #fff4f3);
+}
+
 .fileFieldDisabled {
   cursor: not-allowed;
   opacity: 0.55;
@@ -268,6 +281,23 @@
 .fileNameSelected {
   color: #3f6257;
   font-weight: 600;
+}
+
+.fileDropHint {
+  color: #82908b;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.fileDropHintActive {
+  color: #3f746a;
+  font-weight: 700;
+}
+
+.fileDropError {
+  color: #b3423a;
+  font-size: 10px;
+  line-height: 1.35;
 }
 
 .fileInput {
