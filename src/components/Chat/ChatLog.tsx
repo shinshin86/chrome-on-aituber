@@ -14,16 +14,21 @@ function formatTime(ts: number): string {
 }
 
 export function ChatLog({ messages, label, variant }: Props) {
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const messagesElement = messagesRef.current;
+    if (!messagesElement) return;
+    messagesElement.scrollTo({
+      top: messagesElement.scrollHeight,
+      behavior: "smooth",
+    });
   }, [messages]);
 
   return (
     <div className={styles.log}>
       <div className={styles.header}>{label}</div>
-      <div className={styles.messages}>
+      <div ref={messagesRef} className={styles.messages}>
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -48,7 +53,6 @@ export function ChatLog({ messages, label, variant }: Props) {
             <span className={styles.time}>{formatTime(msg.timestamp)}</span>
           </div>
         ))}
-        <div ref={bottomRef} />
       </div>
     </div>
   );
