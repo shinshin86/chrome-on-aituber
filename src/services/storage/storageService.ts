@@ -9,6 +9,7 @@ import type {
 import {
   DEFAULT_SETTINGS,
   migrateDefaultSystemPrompt,
+  normalizePsdMotionIntensity,
 } from "../../types";
 
 const PREFIX = "chrome-on-aituber";
@@ -51,6 +52,9 @@ export function loadSettings(): AppSettings {
     } as AppSettings;
     settings.llmSystemPrompt = migrateDefaultSystemPrompt(
       settings.llmSystemPrompt
+    );
+    settings.psdMotionIntensity = normalizePsdMotionIntensity(
+      settings.psdMotionIntensity
     );
     return settings;
   } catch {

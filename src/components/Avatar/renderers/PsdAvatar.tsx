@@ -15,6 +15,7 @@ interface Props {
   avatarId: string;
   modelUrl: string;
   mouthLevel: number;
+  motionIntensity: number;
 }
 
 function StaticPsdCanvas({
@@ -44,9 +45,11 @@ function StaticPsdCanvas({
 function MotionPsdCanvas({
   avatar,
   mouthLevel,
+  motionIntensity,
 }: {
   avatar: ReturnType<typeof usePsdAvatar>;
   mouthLevel: number;
+  motionIntensity: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rigAvatarRef = useRef<Anime25RigAvatar | null>(null);
@@ -57,7 +60,6 @@ function MotionPsdCanvas({
     const rigAvatar = createAnime25RigAvatar(canvasRef.current, rig);
     rigAvatarRef.current = rigAvatar;
     rigAvatar.setMotionEnabled(true);
-    rigAvatar.setIntensity(1);
     return () => {
       rigAvatar.dispose();
       rigAvatarRef.current = null;
@@ -69,13 +71,22 @@ function MotionPsdCanvas({
   }, [mouthLevel]);
 
   useEffect(() => {
+    rigAvatarRef.current?.setIntensity(motionIntensity);
+  }, [motionIntensity]);
+
+  useEffect(() => {
     rigAvatarRef.current?.setMotionProfile(avatar.motionProfile);
   }, [avatar.motionProfile]);
 
   return <canvas ref={canvasRef} className={styles.modelCanvas} aria-label="Motion PSD avatar" />;
 }
 
-export function PsdAvatar({ avatarId, modelUrl, mouthLevel }: Props) {
+export function PsdAvatar({
+  avatarId,
+  modelUrl,
+  mouthLevel,
+  motionIntensity,
+}: Props) {
   const avatar = usePsdAvatar();
 
   useEffect(() => {
@@ -103,7 +114,11 @@ export function PsdAvatar({ avatarId, modelUrl, mouthLevel }: Props) {
     <div className={`${styles.renderer} ${styles.viewportOverflow}`}>
       {avatar.mode === "motion" && avatar.rig?.rig ? (
         <AvatarViewLayer avatarId={avatarId}>
-          <MotionPsdCanvas avatar={avatar} mouthLevel={mouthLevel} />
+          <MotionPsdCanvas
+            avatar={avatar}
+            mouthLevel={mouthLevel}
+            motionIntensity={motionIntensity}
+          />
         </AvatarViewLayer>
       ) : avatar.model ? (
         <AvatarViewLayer avatarId={avatarId}>

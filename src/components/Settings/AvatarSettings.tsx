@@ -1,7 +1,16 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent,
+} from "react";
 import { useI18n } from "../../i18n/useI18n";
 import {
   AVATAR_KIND_LABELS,
+  PSD_MOTION_INTENSITY_MAX,
+  PSD_MOTION_INTENSITY_MIN,
   type AvatarKind,
   type AvatarPack,
   type PetManifest,
@@ -18,6 +27,8 @@ import styles from "./AvatarSettings.module.css";
 interface Props {
   selectedAvatarId: string;
   onSelectAvatar: (id: string) => void;
+  psdMotionIntensity: number;
+  onPsdMotionIntensityChange: (value: number) => void;
 }
 
 interface AvatarFilePickerProps {
@@ -68,6 +79,26 @@ const FILE_CONFIG: Record<
   },
 };
 
+const IMAGE_FILE_EXTENSION_PATTERN = /\.(avif|bmp|gif|jpe?g|png|svg|webp)$/i;
+
+function fileMatchesAccept(file: File, accept: string): boolean {
+  if (!accept.trim()) return true;
+
+  const fileName = file.name.toLowerCase();
+  const mimeType = file.type.toLowerCase();
+
+  return accept.split(",").some((rawRule) => {
+    const rule = rawRule.trim().toLowerCase();
+    if (!rule) return false;
+    if (rule.startsWith(".")) return fileName.endsWith(rule);
+    if (rule.endsWith("/*")) {
+      if (mimeType.startsWith(rule.slice(0, -1))) return true;
+      return rule === "image/*" && IMAGE_FILE_EXTENSION_PATTERN.test(fileName);
+    }
+    return mimeType === rule;
+  });
+}
+
 function AvatarFilePicker({
   label,
   accept,
@@ -76,16 +107,82 @@ function AvatarFilePicker({
   onChange,
 }: AvatarFilePickerProps) {
   const { t } = useI18n();
+  const dragDepthRef = useRef(0);
+  const [dragActive, setDragActive] = useState(false);
+  const [dropError, setDropError] = useState("");
+
   const fieldClassName = [
     styles.fileField,
     file ? styles.fileFieldSelected : "",
+    dragActive ? styles.fileFieldDragActive : "",
+    dropError ? styles.fileFieldInvalid : "",
     disabled ? styles.fileFieldDisabled : "",
   ]
     .filter(Boolean)
     .join(" ");
 
+  function isFileDrag(event: DragEvent<HTMLLabelElement>): boolean {
+    return Array.from(event.dataTransfer.types).includes("Files");
+  }
+
+  function handleDragEnter(event: DragEvent<HTMLLabelElement>) {
+    if (!isFileDrag(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (disabled) return;
+    dragDepthRef.current += 1;
+    setDragActive(true);
+  }
+
+  function handleDragOver(event: DragEvent<HTMLLabelElement>) {
+    if (!isFileDrag(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = disabled ? "none" : "copy";
+  }
+
+  function handleDragLeave(event: DragEvent<HTMLLabelElement>) {
+    if (dragDepthRef.current === 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+    if (dragDepthRef.current === 0) setDragActive(false);
+  }
+
+  function handleDrop(event: DragEvent<HTMLLabelElement>) {
+    if (!isFileDrag(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepthRef.current = 0;
+    setDragActive(false);
+    if (disabled) return;
+
+    const droppedFiles = Array.from(event.dataTransfer.files);
+    if (droppedFiles.length !== 1) {
+      setDropError(t("settings.avatar.dropSingleFile"));
+      return;
+    }
+
+    const [droppedFile] = droppedFiles;
+    if (!fileMatchesAccept(droppedFile, accept)) {
+      setDropError(t("settings.avatar.dropInvalidType"));
+      return;
+    }
+
+    setDropError("");
+    onChange(droppedFile);
+  }
+
   return (
-    <label className={fieldClassName}>
+    <label
+      className={fieldClassName}
+      data-file-drop-zone=""
+      data-file-drop-active={dragActive ? "true" : "false"}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <span className={styles.fileLabel}>{label}</span>
       <span className={styles.filePickerRow}>
         <span className={styles.filePickerButton}>
@@ -106,19 +203,39 @@ function AvatarFilePicker({
           {file?.name ?? t("settings.avatar.noFileSelected")}
         </span>
       </span>
+      <span
+        className={`${styles.fileDropHint} ${dragActive ? styles.fileDropHintActive : ""}`}
+      >
+        {dragActive
+          ? t("settings.avatar.dropActive")
+          : t("settings.avatar.dropHint")}
+      </span>
+      {dropError && (
+        <span className={styles.fileDropError} role="alert">
+          {dropError}
+        </span>
+      )}
       <input
         className={styles.fileInput}
         type="file"
         accept={accept}
         disabled={disabled}
         aria-label={label}
-        onChange={(event) => onChange(event.target.files?.[0] ?? null)}
+        onChange={(event) => {
+          setDropError("");
+          onChange(event.target.files?.[0] ?? null);
+        }}
       />
     </label>
   );
 }
 
-export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
+export function AvatarSettings({
+  selectedAvatarId,
+  onSelectAvatar,
+  psdMotionIntensity,
+  onPsdMotionIntensityChange,
+}: Props) {
   const { t } = useI18n();
   const [avatars, setAvatars] = useState<AvatarPack[]>([]);
   const avatarsRef = useRef<AvatarPack[]>([]);
@@ -131,6 +248,8 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
   const [petManifestFile, setPetManifestFile] = useState<File | null>(null);
   const [registering, setRegistering] = useState(false);
   const [registerError, setRegisterError] = useState("");
+  const selectedAvatar = avatars.find((avatar) => avatar.id === selectedAvatarId);
+  const psdMotionIntensityPercent = Math.round(psdMotionIntensity * 100);
 
   const slots = useMemo(
     () => [
@@ -276,6 +395,32 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
         </button>
       </div>
 
+      {selectedAvatar?.kind === "psd" && (
+        <div className={styles.motionSettings}>
+          <label className={styles.motionIntensityLabel}>
+            <span className={styles.motionIntensityHeader}>
+              <span>{t("settings.avatar.psdMotionIntensity")}</span>
+              <output>{psdMotionIntensityPercent}%</output>
+            </span>
+            <input
+              className={styles.motionIntensityRange}
+              type="range"
+              min={PSD_MOTION_INTENSITY_MIN}
+              max={PSD_MOTION_INTENSITY_MAX}
+              step="0.1"
+              value={psdMotionIntensity}
+              aria-label={t("settings.avatar.psdMotionIntensity")}
+              onInput={(event) =>
+                onPsdMotionIntensityChange(Number(event.currentTarget.value))
+              }
+            />
+          </label>
+          <p className={styles.motionIntensityHint}>
+            {t("settings.avatar.psdMotionIntensityHint")}
+          </p>
+        </div>
+      )}
+
       {showRegisterForm && (
         <div className={styles.registerSection}>
           <h4 className={styles.registerTitle}>{t("settings.avatar.registerTitle")}</h4>
@@ -293,7 +438,7 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
           </label>
 
           {kind === "png" ? (
-            <div className={styles.slotGrid}>
+            <div key="png" className={styles.slotGrid}>
               {slots.map((slot) => (
                 <AvatarFilePicker
                   key={slot.key}
@@ -311,7 +456,7 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
               ))}
             </div>
           ) : kind === "pet" ? (
-            <div className={styles.fileFields}>
+            <div key="pet" className={styles.fileFields}>
               <AvatarFilePicker
                 label="Pet manifest (.json)"
                 accept=".json,application/json"
@@ -328,7 +473,7 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
               />
             </div>
           ) : (
-            <div className={styles.fileFields}>
+            <div key={kind} className={styles.fileFields}>
               <AvatarFilePicker
                 label={FILE_CONFIG[kind].primaryLabel}
                 accept={FILE_CONFIG[kind].primaryAccept}

@@ -9,6 +9,7 @@ interface Props {
   mouthLevel: number;
   isSpeaking: boolean;
   isProcessing: boolean;
+  psdMotionIntensity: number;
 }
 
 const PuruPuruAvatar = lazy(() =>
@@ -24,7 +25,13 @@ const Inochi2DAvatar = lazy(() =>
   import("./renderers/Inochi2DAvatar").then((module) => ({ default: module.Inochi2DAvatar }))
 );
 
-export function Avatar({ avatar, mouthLevel, isSpeaking, isProcessing }: Props) {
+export function Avatar({
+  avatar,
+  mouthLevel,
+  isSpeaking,
+  isProcessing,
+  psdMotionIntensity,
+}: Props) {
   const viewportOverflowClass =
     avatar.kind === "psd" ? styles.viewportOverflow : "";
   let content;
@@ -72,6 +79,7 @@ export function Avatar({ avatar, mouthLevel, isSpeaking, isProcessing }: Props) 
           avatarId={avatar.id}
           modelUrl={avatar.modelUrl}
           mouthLevel={mouthLevel}
+          motionIntensity={psdMotionIntensity}
         />
       );
       break;

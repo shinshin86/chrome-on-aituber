@@ -106,6 +106,20 @@ export interface VrmViewTransform {
   target: [number, number, number];
 }
 
+export const PSD_MOTION_INTENSITY_MIN = 0;
+export const PSD_MOTION_INTENSITY_MAX = 2;
+export const PSD_MOTION_INTENSITY_DEFAULT = 1;
+
+export function normalizePsdMotionIntensity(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return PSD_MOTION_INTENSITY_DEFAULT;
+  }
+  return Math.min(
+    PSD_MOTION_INTENSITY_MAX,
+    Math.max(PSD_MOTION_INTENSITY_MIN, value)
+  );
+}
+
 // App mode
 export type AppMode = "chat" | "broadcast";
 
@@ -182,6 +196,7 @@ export interface AppSettings {
   ttsEnabled: boolean;
   ttsEngine: TtsEngine;
   selectedAvatarId: string;
+  psdMotionIntensity: number;
   backgroundImageEnabled: boolean;
   backgroundImageUpdatedAt: number;
   llmSystemPrompt: string;
@@ -207,6 +222,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   ttsEnabled: true,
   ttsEngine: "piper",
   selectedAvatarId: "default",
+  psdMotionIntensity: PSD_MOTION_INTENSITY_DEFAULT,
   backgroundImageEnabled: false,
   backgroundImageUpdatedAt: 0,
   llmSystemPrompt: DEFAULT_SYSTEM_PROMPT_JA,

@@ -477,6 +477,7 @@ function AppContent({ settings, updateSettings }: AppContentProps) {
               mouthLevel={mouthLevel}
               isSpeaking={isSpeaking}
               isProcessing={isSending}
+              psdMotionIntensity={settings.psdMotionIntensity}
             />
           ) : (
             <div className="avatar-loading" role="status" aria-live="polite">

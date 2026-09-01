@@ -124,6 +124,51 @@
   line-height: 1;
 }
 
+.motionSettings {
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px solid #d6e5df;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #f8fcfa, #f1f8f5);
+}
+
+.motionIntensityLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  color: #455a54;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.motionIntensityHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.motionIntensityHeader output {
+  min-width: 46px;
+  color: #37776c;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.motionIntensityRange {
+  width: 100%;
+  margin: 0;
+  accent-color: #4f8f84;
+  cursor: pointer;
+}
+
+.motionIntensityHint {
+  margin: 8px 0 0;
+  color: #71817b;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 /* Register section */
 .registerSection {
   border-top: 1px solid #eee;
@@ -201,6 +246,19 @@
   background: linear-gradient(145deg, #f3faf7, #edf6f3);
 }
 
+.fileField.fileFieldDragActive:not(.fileFieldDisabled) {
+  border-color: #4d8f83;
+  border-style: dashed;
+  background: linear-gradient(145deg, #edf9f5, #e4f3ee);
+  box-shadow: 0 0 0 3px rgba(77, 143, 131, 0.18);
+  transform: translateY(-1px);
+}
+
+.fileField.fileFieldInvalid:not(.fileFieldDisabled) {
+  border-color: #cf746d;
+  background: linear-gradient(145deg, #fffafa, #fff4f3);
+}
+
 .fileFieldDisabled {
   cursor: not-allowed;
   opacity: 0.55;
@@ -268,6 +326,23 @@
 .fileNameSelected {
   color: #3f6257;
   font-weight: 600;
+}
+
+.fileDropHint {
+  color: #82908b;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.fileDropHintActive {
+  color: #3f746a;
+  font-weight: 700;
+}
+
+.fileDropError {
+  color: #b3423a;
+  font-size: 10px;
+  line-height: 1.35;
 }
 
 .fileInput {
