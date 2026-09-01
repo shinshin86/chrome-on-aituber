@@ -9,6 +9,8 @@ import {
 import { useI18n } from "../../i18n/useI18n";
 import {
   AVATAR_KIND_LABELS,
+  PSD_MOTION_INTENSITY_MAX,
+  PSD_MOTION_INTENSITY_MIN,
   type AvatarKind,
   type AvatarPack,
   type PetManifest,
@@ -25,6 +27,8 @@ import styles from "./AvatarSettings.module.css";
 interface Props {
   selectedAvatarId: string;
   onSelectAvatar: (id: string) => void;
+  psdMotionIntensity: number;
+  onPsdMotionIntensityChange: (value: number) => void;
 }
 
 interface AvatarFilePickerProps {
@@ -226,7 +230,12 @@ function AvatarFilePicker({
   );
 }
 
-export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
+export function AvatarSettings({
+  selectedAvatarId,
+  onSelectAvatar,
+  psdMotionIntensity,
+  onPsdMotionIntensityChange,
+}: Props) {
   const { t } = useI18n();
   const [avatars, setAvatars] = useState<AvatarPack[]>([]);
   const avatarsRef = useRef<AvatarPack[]>([]);
@@ -239,6 +248,8 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
   const [petManifestFile, setPetManifestFile] = useState<File | null>(null);
   const [registering, setRegistering] = useState(false);
   const [registerError, setRegisterError] = useState("");
+  const selectedAvatar = avatars.find((avatar) => avatar.id === selectedAvatarId);
+  const psdMotionIntensityPercent = Math.round(psdMotionIntensity * 100);
 
   const slots = useMemo(
     () => [
@@ -383,6 +394,32 @@ export function AvatarSettings({ selectedAvatarId, onSelectAvatar }: Props) {
           <span className={styles.avatarName}>{t("settings.avatar.add")}</span>
         </button>
       </div>
+
+      {selectedAvatar?.kind === "psd" && (
+        <div className={styles.motionSettings}>
+          <label className={styles.motionIntensityLabel}>
+            <span className={styles.motionIntensityHeader}>
+              <span>{t("settings.avatar.psdMotionIntensity")}</span>
+              <output>{psdMotionIntensityPercent}%</output>
+            </span>
+            <input
+              className={styles.motionIntensityRange}
+              type="range"
+              min={PSD_MOTION_INTENSITY_MIN}
+              max={PSD_MOTION_INTENSITY_MAX}
+              step="0.1"
+              value={psdMotionIntensity}
+              aria-label={t("settings.avatar.psdMotionIntensity")}
+              onInput={(event) =>
+                onPsdMotionIntensityChange(Number(event.currentTarget.value))
+              }
+            />
+          </label>
+          <p className={styles.motionIntensityHint}>
+            {t("settings.avatar.psdMotionIntensityHint")}
+          </p>
+        </div>
+      )}
 
       {showRegisterForm && (
         <div className={styles.registerSection}>

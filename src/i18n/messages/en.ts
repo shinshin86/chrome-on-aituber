@@ -147,6 +147,9 @@ export const en = {
       dropActive: "Drop here to select",
       dropInvalidType: "That file type cannot be used in this field",
       dropSingleFile: "Drop only one file at a time",
+      psdMotionIntensity: "PSD motion intensity",
+      psdMotionIntensityHint:
+        "Adjusts body, gaze, breathing, and hair motion for motion-enabled PSDs. Lip sync, blinking, and static PSDs are unchanged.",
       cancel: "Cancel",
       registering: "Registering...",
       register: "Register",

@@ -141,6 +141,9 @@ export const ja = {
       dropActive: "ここにドロップして選択",
       dropInvalidType: "この欄ではそのファイル形式を使用できません",
       dropSingleFile: "一度に1ファイルだけドロップしてください",
+      psdMotionIntensity: "PSDの動きの強さ",
+      psdMotionIntensityHint:
+        "モーション対応PSDの身体・目線・呼吸・髪の動きを調整します。口パクとまばたき、静止PSDには影響しません。",
       cancel: "キャンセル",
       registering: "登録中...",
       register: "登録する",

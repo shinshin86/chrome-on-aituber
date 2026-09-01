@@ -362,6 +362,10 @@ export function SettingsPanel({
             <AvatarSettings
               selectedAvatarId={settings.selectedAvatarId}
               onSelectAvatar={(id) => onUpdate({ selectedAvatarId: id })}
+              psdMotionIntensity={settings.psdMotionIntensity}
+              onPsdMotionIntensityChange={(value) =>
+                onUpdate({ psdMotionIntensity: value })
+              }
             />
           </div>
         </details>
