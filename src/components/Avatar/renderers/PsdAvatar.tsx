@@ -111,7 +111,7 @@ export function PsdAvatar({
   }, [modelUrl]);
 
   return (
-    <div className={`${styles.renderer} ${styles.viewportOverflow}`}>
+    <div className={`${styles.renderer} ${styles.viewportOverflow} ${avatarId === "builtin_psd" ? styles.mikoPsd : ""}`}>
       {avatar.mode === "motion" && avatar.rig?.rig ? (
         <AvatarViewLayer avatarId={avatarId}>
           <MotionPsdCanvas

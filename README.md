@@ -172,7 +172,7 @@ License. The copyright holder retains its rights and permits only the limited
 use and redistribution described in the
 [Irodori Default Reference Audio Asset Terms](./public/audio-licenses/IRODORI_DEFAULT_REFERENCE_AUDIO_TERMS.md).
 
-Bundled Miko PNGTuber, PuruPuru PNGTuber, Pet, and VRM assets are not covered
+Bundled Miko PNGTuber, PuruPuru PNGTuber, Pet, VRM, and PSD assets are not covered
 by the MIT License. They are governed by the authoritative Japanese
 [Miko Character Usage Guidelines](https://miko.aituberonair.com/#terms); see
 [Miko Asset Terms](./public/avatar-licenses/MIKO_ASSET_TERMS.md) for a short English summary. The assets may be distributed as an integral part

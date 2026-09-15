@@ -324,21 +324,6 @@ function LicenseBodyJa() {
       </section>
 
       <section className={styles.section}>
-        <h3>PSD Sample — 内蔵PSDアバター</h3>
-        <p>
-          内蔵PSD Sampleは、AITuber OnAirのサンプル内で生成されたデモ用素材です。
-          第三者キャラクターの画像素材は含まず、関連する実装とライブラリの
-          ライセンス本文は上記リンクから確認できます。
-        </p>
-        <p>
-          <AvatarLicenseLink
-            fileName="AITUBER-ONAIR-MIT.txt"
-            label="AITuber OnAir — PSDサンプル実装（MIT License）"
-          />
-        </p>
-      </section>
-
-      <section className={styles.section}>
         <h3>Aka Inochi2D — 内蔵モデル</h3>
         <p>
           Inochi2D runtime の依存ライセンスは同梱 notice を参照してください。
@@ -355,7 +340,7 @@ function LicenseBodyJa() {
       <section className={styles.section}>
         <h3>ミコ — 内蔵アバター素材</h3>
         <p>
-          PNGTuber、ぷるぷるPNGTuber、Pet、VRM の内蔵デフォルトで使用する
+          PNGTuber、ぷるぷるPNGTuber、Pet、VRM、PSD の内蔵デフォルトで使用する
           「ミコ」は AITuber OnAir の公式キャラクターです。
         </p>
         <p>
@@ -690,22 +675,6 @@ function LicenseBodyEn() {
       </section>
 
       <section className={styles.section}>
-        <h3>PSD Sample — bundled PSD avatar</h3>
-        <p>
-          The bundled PSD Sample is demo material generated within the
-          AITuber OnAir example. It does not contain third-party character
-          artwork. License texts for the related implementation and libraries
-          are available through the links above.
-        </p>
-        <p>
-          <AvatarLicenseLink
-            fileName="AITUBER-ONAIR-MIT.txt"
-            label="AITuber OnAir — PSD sample implementation (MIT License)"
-          />
-        </p>
-      </section>
-
-      <section className={styles.section}>
         <h3>Aka Inochi2D — bundled model</h3>
         <p>
           See the bundled notices for the Inochi2D runtime dependencies.
@@ -722,7 +691,7 @@ function LicenseBodyEn() {
       <section className={styles.section}>
         <h3>Miko — bundled avatar assets</h3>
         <p>
-          Miko, used by the bundled PNGTuber, PuruPuru PNGTuber, Pet, and VRM
+          Miko, used by the bundled PNGTuber, PuruPuru PNGTuber, Pet, VRM, and PSD
           defaults, is the official character of AITuber OnAir.
         </p>
         <p>

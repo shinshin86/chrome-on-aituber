@@ -110,3 +110,12 @@
   from { transform: translateY(0); }
   to { transform: translateY(-10px); }
 }
+
+/* Frame the bundled waist-up artwork so its lower edge stays below the viewport. */
+.mikoPsd .modelCanvas {
+  width: auto;
+  height: 100%;
+  aspect-ratio: 1;
+  flex-shrink: 0;
+  transform: translateY(12%) scale(1.3);
+}

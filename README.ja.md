@@ -173,7 +173,7 @@ Vite の開発サーバーでは、すでに次のヘッダーを返していま
 [Irodoriデフォルト参照音声の個別利用条件](./public/audio-licenses/IRODORI_DEFAULT_REFERENCE_AUDIO_TERMS.md)
 に記載された範囲に限って利用・再配布を許可します。
 
-同梱のミコPNGTuber、ぷるぷるPNGTuber、Pet、VRM素材はMIT Licenseの
+同梱のミコPNGTuber、ぷるぷるPNGTuber、Pet、VRM、PSD素材はMIT Licenseの
 対象外です。公式サイトの
 [ミコ キャラクター利用ガイドライン](https://miko.aituberonair.com/#terms)
 が適用されます（正式版は日本語版です）。ソフトウェア、アプリ、ゲーム、映像、Webサイトその他の
