@@ -36,6 +36,7 @@ const BUILT_IN_AVATARS: AvatarPack[] = [
     name: "Miko PuruPuru",
     kind: "purupuru",
     isBuiltIn: true,
+    thumbnailUrl: `${BASE_URL}assets/avatars/thumbnails/miko-purupuru.jpg`,
     packageUrl: `${BASE_URL}assets/avatars/purupuru/miko.purupuru`,
   },
   {
@@ -43,6 +44,7 @@ const BUILT_IN_AVATARS: AvatarPack[] = [
     name: "Miko Pet",
     kind: "pet",
     isBuiltIn: true,
+    thumbnailUrl: `${BASE_URL}assets/avatars/thumbnails/miko-pet.jpg`,
     manifest: {
       id: "miko",
       displayName: "Miko",
@@ -56,6 +58,7 @@ const BUILT_IN_AVATARS: AvatarPack[] = [
     name: "Miko VRM",
     kind: "vrm",
     isBuiltIn: true,
+    thumbnailUrl: `${BASE_URL}assets/avatars/thumbnails/miko-vrm.jpg`,
     modelUrl: `${BASE_URL}assets/avatars/vrm/miko.vrm`,
     animationUrl: `${BASE_URL}assets/avatars/vrm/idle_loop.vrma`,
   },
@@ -64,6 +67,7 @@ const BUILT_IN_AVATARS: AvatarPack[] = [
     name: "Miko Cheerleader PSD",
     kind: "psd",
     isBuiltIn: true,
+    thumbnailUrl: `${BASE_URL}assets/avatars/thumbnails/miko-psd.jpg`,
     modelUrl: `${BASE_URL}assets/avatars/psd/miko-anime25drig-cheer.psd`,
   },
   {
@@ -71,6 +75,7 @@ const BUILT_IN_AVATARS: AvatarPack[] = [
     name: "Aka Inochi2D",
     kind: "inochi2d",
     isBuiltIn: true,
+    thumbnailUrl: `${BASE_URL}assets/avatars/thumbnails/aka-inochi2d.jpg`,
     manifestModelId: "aka",
   },
 ];
