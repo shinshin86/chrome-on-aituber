@@ -191,10 +191,12 @@ The complete attribution notice is distributed in `public/inochi2d/models/Aka.AT
 
 ## 12. Bundled Miko avatar assets
 
-The bundled PNGTuber, PuruPuru PNGTuber, Pet, and VRM defaults use Miko, the official character of AITuber OnAir.
+The bundled PNGTuber, PuruPuru PNGTuber, Pet, VRM, and PSD defaults use Miko, the official character of AITuber OnAir.
 
 - Copyright / optional credit: © Yuki Shindo (AITuber OnAir)
 - Website: https://miko.aituberonair.com/
 - Bundled terms summary: `public/avatar-licenses/MIKO_ASSET_TERMS.md`
 
 The authoritative Japanese Miko Character Usage Guidelines permit the assets to be redistributed as an integral part of software, apps, games, videos, websites, and other works or content, including third-party projects. Standalone redistribution, asset collections, and distributions primarily intended to provide the Miko asset files are prohibited. Translations are provided for reference only; the Japanese guidelines take precedence.
+
+The bundled PSD is the Miko Cheerleader 2.5D Avatar Asset (`public/assets/avatars/psd/miko-anime25drig-cheer.psd`), distributed unmodified from https://miko.aituberonair.com/assets/anime25drig-miko-cheer.zip. It uses the layer naming format defined by Anime2.5DRig. The PSD artwork is governed by the Miko usage guidelines, separately from the MIT-licensed PSD rendering code. The asset has no closed-eye layer; the renderer generates a closed-eye shape for blinking.

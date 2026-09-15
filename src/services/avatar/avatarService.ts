@@ -61,10 +61,10 @@ const BUILT_IN_AVATARS: AvatarPack[] = [
   },
   {
     id: "builtin_psd",
-    name: "PSD Sample",
+    name: "Miko Cheerleader PSD",
     kind: "psd",
     isBuiltIn: true,
-    modelUrl: `${BASE_URL}assets/avatars/psd/sample.psd`,
+    modelUrl: `${BASE_URL}assets/avatars/psd/miko-anime25drig-cheer.psd`,
   },
   {
     id: "builtin_inochi2d",
