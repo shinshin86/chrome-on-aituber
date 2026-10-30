@@ -165,8 +165,11 @@ The multi-format avatar implementation incorporates or depends on the following 
 - ag-psd — MIT License
 - Anime2.5DRig by 852wa (hakoniwa) — MIT License
 - PuruPuruPNGTuber avatar-format code and documentation — Apache License 2.0
+- mesh-avatar (Mesh Avatar Studio runtime) — MIT License
 
 This app supports the avatar format defined by [rotejin/PuruPuruPNGTuber](https://github.com/rotejin/PuruPuruPNGTuber). The referenced project's software code and documentation are licensed under the Apache License 2.0. Bundled Miko image assets remain subject to the separate Miko usage guidelines below.
+
+This app also loads avatars in the `.mavatar` format defined by [Mesh Avatar Studio](https://github.com/shinshin86/mesh-avatar-studio) with the `mesh-avatar` runtime.
 
 The corresponding license texts are distributed in `public/avatar-licenses/` and `src/avatar-runtime/psd/vendor/anime25drig/LICENSE`.
 
@@ -191,7 +194,7 @@ The complete attribution notice is distributed in `public/inochi2d/models/Aka.AT
 
 ## 12. Bundled Miko avatar assets
 
-The bundled PNGTuber, PuruPuru PNGTuber, Pet, VRM, and PSD defaults use Miko, the official character of AITuber OnAir.
+The bundled PNGTuber, PuruPuru PNGTuber, Pet, VRM, PSD, and Mesh Avatar defaults use Miko, the official character of AITuber OnAir.
 
 - Copyright / optional credit: © Yuki Shindo (AITuber OnAir)
 - Website: https://miko.aituberonair.com/

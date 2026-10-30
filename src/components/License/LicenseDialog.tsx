@@ -16,6 +16,7 @@ const NPM_NOTICE_URL = `${import.meta.env.BASE_URL}licenses/NPM-THIRD-PARTY-NOTI
 const MIKO_GUIDELINES_URL_JA = "https://miko.aituberonair.com/#terms";
 const MIKO_GUIDELINES_URL_EN = "https://miko.aituberonair.com/en#terms";
 const PURUPURU_FORMAT_URL = "https://github.com/rotejin/PuruPuruPNGTuber";
+const MESH_AVATAR_FORMAT_URL = "https://github.com/shinshin86/mesh-avatar-studio";
 
 interface AvatarLicenseLinkProps {
   fileName: string;
@@ -324,6 +325,29 @@ function LicenseBodyJa() {
       </section>
 
       <section className={styles.section}>
+        <h3>メッシュアバター描画</h3>
+        <p>
+          Mesh Avatar Studioで定義されている.mavatar形式のアバターを、
+          mesh-avatarランタイムで読み込み、WebGLのメッシュ変形で描画しています。
+          内蔵ミコ画像素材には、後述のMiko公式利用ガイドラインが適用されます。
+        </p>
+        <p>
+          <a
+            href={MESH_AVATAR_FORMAT_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            使用しているアバター形式 — Mesh Avatar Studio
+          </a>
+          <br />
+          <AvatarLicenseLink
+            fileName="MESH-AVATAR-MIT.txt"
+            label="mesh-avatar — メッシュアバター描画ランタイム（MIT License）"
+          />
+        </p>
+      </section>
+
+      <section className={styles.section}>
         <h3>Aka Inochi2D — 内蔵モデル</h3>
         <p>
           Inochi2D runtime の依存ライセンスは同梱 notice を参照してください。
@@ -340,7 +364,7 @@ function LicenseBodyJa() {
       <section className={styles.section}>
         <h3>ミコ — 内蔵アバター素材</h3>
         <p>
-          PNGTuber、ぷるぷるPNGTuber、Pet、VRM、PSD の内蔵デフォルトで使用する
+          PNGTuber、ぷるぷるPNGTuber、Pet、VRM、PSD、メッシュアバターの内蔵デフォルトで使用する
           「ミコ」は AITuber OnAir の公式キャラクターです。
         </p>
         <p>
@@ -675,6 +699,30 @@ function LicenseBodyEn() {
       </section>
 
       <section className={styles.section}>
+        <h3>Mesh Avatar rendering</h3>
+        <p>
+          Avatars in the .mavatar format defined by Mesh Avatar Studio are
+          loaded with the mesh-avatar runtime and rendered with WebGL mesh
+          deformation. The bundled Miko image assets remain subject to the
+          official Miko usage guidelines described below.
+        </p>
+        <p>
+          <a
+            href={MESH_AVATAR_FORMAT_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Avatar format used — Mesh Avatar Studio
+          </a>
+          <br />
+          <AvatarLicenseLink
+            fileName="MESH-AVATAR-MIT.txt"
+            label="mesh-avatar — mesh avatar rendering runtime (MIT License)"
+          />
+        </p>
+      </section>
+
+      <section className={styles.section}>
         <h3>Aka Inochi2D — bundled model</h3>
         <p>
           See the bundled notices for the Inochi2D runtime dependencies.
@@ -691,8 +739,8 @@ function LicenseBodyEn() {
       <section className={styles.section}>
         <h3>Miko — bundled avatar assets</h3>
         <p>
-          Miko, used by the bundled PNGTuber, PuruPuru PNGTuber, Pet, VRM, and PSD
-          defaults, is the official character of AITuber OnAir.
+          Miko, used by the bundled PNGTuber, PuruPuru PNGTuber, Pet, VRM, PSD,
+          and Mesh Avatar defaults, is the official character of AITuber OnAir.
         </p>
         <p>
           The current guidelines allow commercial use and require neither a

@@ -8,6 +8,7 @@ These small static previews are used in the avatar picker so opening settings do
 | `miko-vrm.jpg` | Preview image embedded in `../vrm/miko.vrm`, resized. |
 | `miko-psd.jpg` | Rendered from `../psd/miko-anime25drig-cheer.psd`. |
 | `miko-pet.jpg` | First idle frame of `../pet/spritesheet.webp`. |
+| `miko-mesh.jpg` | Rendered from `../mesh/miko-qipao.mavatar`, cropped to the face. |
 | `aka-inochi2d.jpg` | Rendered from the bundled Aka Inochi2D model, with its framing adjusted for the preview. |
 
 The Miko images are subject to the [Miko Asset Terms](../../../avatar-licenses/MIKO_ASSET_TERMS.md), not the repository's MIT License. Optional credit: © Yuki Shindo (AITuber OnAir).

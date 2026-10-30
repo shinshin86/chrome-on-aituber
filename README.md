@@ -9,7 +9,7 @@ Browser-only AITuber chat app built with React and Vite. It uses Chrome Built-in
 - Browser-only operation with no application server
 - Japanese chat powered by Chrome Built-in AI / `LanguageModel`
 - Browser TTS with piper-plus WASM, OpenJTalk, and ONNX Runtime Web
-- Selectable PNGTuber, PuruPuru PNGTuber, Pet, VRM, PSD, and Inochi2D avatars
+- Selectable PNGTuber, PuruPuru PNGTuber, Pet, VRM, PSD, Inochi2D, and Mesh Avatar (`.mavatar`) avatars
 - Bundled default avatar assets for every supported format
 - Custom background image with reset back to the default background
 - Two display modes: chat mode and broadcast mode (green background)
@@ -117,8 +117,8 @@ Open the Vite URL in Chrome, usually `http://localhost:5173`.
 - Reset the current conversation from the settings panel
 - Change the background image from the settings panel and reset it with `Back to Default`
 - Enable or disable TTS and change speech speed
-- Choose PNGTuber, PuruPuru PNGTuber, Pet, VRM, PSD, or Inochi2D in Avatar settings
-- Register custom avatars from the corresponding files. PNGTuber uses four images; Pet uses a manifest and spritesheet; VRM and Inochi2D accept optional animation data.
+- Choose PNGTuber, PuruPuru PNGTuber, Pet, VRM, PSD, Inochi2D, or Mesh Avatar in Avatar settings
+- Register custom avatars from the corresponding files. PNGTuber uses four images; Pet uses a manifest and spritesheet; VRM and Inochi2D accept optional animation data; Mesh Avatar uses a `.mavatar` file exported from [Mesh Avatar Studio](https://github.com/shinshin86/mesh-avatar-studio).
 - The selected avatar and custom files are stored only in the browser and restored automatically after reload.
 
 ## Streaming Integration
@@ -172,7 +172,7 @@ License. The copyright holder retains its rights and permits only the limited
 use and redistribution described in the
 [Irodori Default Reference Audio Asset Terms](./public/audio-licenses/IRODORI_DEFAULT_REFERENCE_AUDIO_TERMS.md).
 
-Bundled Miko PNGTuber, PuruPuru PNGTuber, Pet, VRM, and PSD assets are not covered
+Bundled Miko PNGTuber, PuruPuru PNGTuber, Pet, VRM, PSD, and Mesh Avatar assets are not covered
 by the MIT License. They are governed by the authoritative Japanese
 [Miko Character Usage Guidelines](https://miko.aituberonair.com/#terms); see
 [Miko Asset Terms](./public/avatar-licenses/MIKO_ASSET_TERMS.md) for a short English summary. The assets may be distributed as an integral part

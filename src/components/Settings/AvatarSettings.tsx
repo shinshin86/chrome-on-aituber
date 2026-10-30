@@ -77,6 +77,7 @@ const FILE_CONFIG: Record<
     secondaryAccept: ".json",
     secondaryLabel: "Motion data (.json / optional)",
   },
+  mesh: { primaryAccept: ".mavatar", primaryLabel: "Mesh Avatar Studio export (.mavatar)" },
 };
 
 const IMAGE_FILE_EXTENSION_PATTERN = /\.(avif|bmp|gif|jpe?g|png|svg|webp)$/i;

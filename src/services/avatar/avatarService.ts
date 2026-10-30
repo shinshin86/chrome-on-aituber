@@ -78,6 +78,14 @@ const BUILT_IN_AVATARS: AvatarPack[] = [
     thumbnailUrl: `${BASE_URL}assets/avatars/thumbnails/aka-inochi2d.jpg`,
     manifestModelId: "aka",
   },
+  {
+    id: "builtin_mesh",
+    name: "Miko Qipao Mesh",
+    kind: "mesh",
+    isBuiltIn: true,
+    thumbnailUrl: `${BASE_URL}assets/avatars/thumbnails/miko-mesh.jpg`,
+    packageUrl: `${BASE_URL}assets/avatars/mesh/miko-qipao.mavatar`,
+  },
 ];
 
 const BUILT_IN_IDS = new Set(BUILT_IN_AVATARS.map((avatar) => avatar.id));
@@ -213,7 +221,7 @@ function storedToAvatarPack(stored: StoredAvatarPack): AvatarPack | undefined {
   if (!stored.asset) return undefined;
   const assetUrl = createBlobUrl(stored.asset, urls);
 
-  if (kind === "purupuru") {
+  if (kind === "purupuru" || kind === "mesh") {
     return { ...base, kind, packageUrl: assetUrl };
   }
   if (kind === "psd") {

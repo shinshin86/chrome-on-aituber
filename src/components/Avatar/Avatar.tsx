@@ -21,6 +21,9 @@ const VrmAvatar = lazy(() =>
 const PsdAvatar = lazy(() =>
   import("./renderers/PsdAvatar").then((module) => ({ default: module.PsdAvatar }))
 );
+const MeshAvatar = lazy(() =>
+  import("./renderers/MeshAvatar").then((module) => ({ default: module.MeshAvatar }))
+);
 const Inochi2DAvatar = lazy(() =>
   import("./renderers/Inochi2DAvatar").then((module) => ({ default: module.Inochi2DAvatar }))
 );
@@ -92,6 +95,16 @@ export function Avatar({
           motionUrl={avatar.motionUrl}
           manifestModelId={avatar.manifestModelId}
           mouthLevel={mouthLevel}
+        />
+      );
+      break;
+    case "mesh":
+      content = (
+        <MeshAvatar
+          avatarId={avatar.id}
+          packageUrl={avatar.packageUrl}
+          mouthLevel={mouthLevel}
+          isSpeaking={isSpeaking}
         />
       );
       break;

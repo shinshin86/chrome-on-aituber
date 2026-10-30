@@ -31,7 +31,8 @@ export type AvatarKind =
   | "pet"
   | "vrm"
   | "psd"
-  | "inochi2d";
+  | "inochi2d"
+  | "mesh";
 
 export const AVATAR_KIND_LABELS: Record<AvatarKind, string> = {
   png: "PNGTuber",
@@ -40,6 +41,7 @@ export const AVATAR_KIND_LABELS: Record<AvatarKind, string> = {
   vrm: "VRM",
   psd: "PSD",
   inochi2d: "Inochi2D",
+  mesh: "Mesh Avatar",
 };
 
 interface AvatarPackBase {
@@ -93,6 +95,10 @@ export type AvatarPack =
       modelUrl?: string;
       motionUrl?: string;
       manifestModelId?: string;
+    })
+  | (AvatarPackBase & {
+      kind: "mesh";
+      packageUrl: string;
     });
 
 export interface AvatarViewTransform {
