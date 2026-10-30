@@ -57,7 +57,7 @@ The Miko voice model is not part of the piper-assets release archive.
 `scripts/piper/fetch-miko-voice.sh` downloads it from
 `https://huggingface.co/shinshin86/aituber-onair-miko-voice-piper-plus` at a
 pinned revision, verifies both files by SHA-256, and copies
-`miko-voice-NOTICE.md`, `piper-plus-base-model-MIT.txt`, and
+`THIRD_PARTY_NOTICES.txt`, `miko-voice-NOTICE.md`, `piper-plus-base-model-MIT.txt`, and
 `piper-plus-base-model-NOTICE.md` into `public/piper/licenses/`. The deploy
 workflow runs it after extracting the piper assets. To move to a newer model
 revision, update `REVISION` and both SHA-256 values in the script.

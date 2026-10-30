@@ -70,7 +70,7 @@ Prepare the assets as follows.
    - `tsukuyomi-wavlm-300epoch.onnx`
    - `config.json` renamed to `tsukuyomi-config.json`
 4. Miko voice model (optional) from [shinshin86/aituber-onair-miko-voice-piper-plus](https://huggingface.co/shinshin86/aituber-onair-miko-voice-piper-plus)
-   Run `./scripts/piper/fetch-miko-voice.sh`. It downloads the model from a pinned revision, verifies it by SHA-256, saves it as `public/piper/models/miko-sample-voice-v2.onnx` and `.onnx.json`, and copies its notices into `public/piper/licenses/`. The deploy workflow runs the same script. Without it, the Miko voice cannot be used, but the Tsukuyomi-chan voice still works.
+   Run `./scripts/piper/fetch-miko-voice.sh`. It downloads the model from a pinned revision, verifies it by SHA-256, saves it as `public/piper/models/miko-sample-voice-v2.onnx` and `.onnx.json`, and copies its notices into `public/piper/licenses/`. The deploy workflow runs the same script and fails if the download or the hash check fails. Without it locally, the Miko voice cannot be used, but the Tsukuyomi-chan voice still works.
 5. License notices
    `scripts/package-piper-assets.sh` copies the templates from `scripts/piper/licenses/` into `public/piper/licenses/` before packaging. If you assemble `public/piper/` manually, include that directory as well.
 

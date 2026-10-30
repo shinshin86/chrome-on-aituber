@@ -10,6 +10,11 @@ designed voice, not recorded from a person.
 - Model weights: MIT, following the base model. See
   `piper-plus-base-model-MIT.txt` and `piper-plus-base-model-NOTICE.md` for the
   base model's provenance, including the datasets its authors used.
+  `piper-plus-base-model-NOTICE.md` is reproduced as published with this
+  model. The files it mentions (such as `provenance.json` and
+  `licenses/CAMPP-APACHE-2.0.txt`) belong to the upstream base model bundle
+  at https://huggingface.co/ayousanz/piper-plus-base and are not included
+  here.
 - Training sentences: original sentences written for this model and the ITA
   corpus (public domain).
 - Teacher model used to generate the training audio: Irodori-TTS (MIT).

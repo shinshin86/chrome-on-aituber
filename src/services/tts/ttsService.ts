@@ -13,6 +13,8 @@ import * as piper from "./piperTtsProvider";
 import * as irodori from "./irodoriTtsProvider";
 
 let currentEngine: TtsEngine = "piper";
+/** Bumped on every engine or voice switch so audio made before it is dropped */
+let switchGeneration = 0;
 
 export function getEngine(): TtsEngine {
   return currentEngine;
@@ -24,6 +26,7 @@ export function getEngine(): TtsEngine {
  */
 export async function setEngine(engine: TtsEngine): Promise<void> {
   if (engine === currentEngine) return;
+  switchGeneration++;
   stop();
   const previous = currentEngine;
   currentEngine = engine;
@@ -37,6 +40,7 @@ export async function setEngine(engine: TtsEngine): Promise<void> {
 /** Select the Piper Plus voice model. Playback stops when the voice changes. */
 export async function setPiperVoice(voice: PiperVoice): Promise<void> {
   if (voice === piper.getVoice()) return;
+  switchGeneration++;
   stop();
   await piper.setVoice(voice);
 }
@@ -73,11 +77,15 @@ export async function speak(
   stop();
   onMouthChange(0);
 
+  const generation = switchGeneration;
   if (!isReady()) {
     await initialize((msg) => msg && console.log("TTS:", msg));
   }
+  // A voice switch during initialization releases the model it loaded.
+  if (generation !== switchGeneration) return;
 
   const { audio, sampleRate } = await synthesize(text, lengthScale);
+  if (generation !== switchGeneration) return;
   await playback.play(audio, sampleRate, onMouthChange);
 }
 

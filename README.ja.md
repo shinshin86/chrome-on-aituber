@@ -72,7 +72,7 @@ Git 管理されているのは次のみです。
    - `tsukuyomi-wavlm-300epoch.onnx`
    - `config.json` を `tsukuyomi-config.json` にリネームしたもの
 4. [shinshin86/aituber-onair-miko-voice-piper-plus](https://huggingface.co/shinshin86/aituber-onair-miko-voice-piper-plus) からミコの音声モデルを取得（任意）
-   `./scripts/piper/fetch-miko-voice.sh` を実行します。固定したリビジョンからモデルをダウンロードして SHA-256 で検証し、`public/piper/models/miko-sample-voice-v2.onnx` と `.onnx.json` として保存したうえで、notice を `public/piper/licenses/` にコピーします。デプロイ用ワークフローも同じスクリプトを実行します。取得しない場合、ミコの声は使えませんが、つくよみちゃんの声は使えます。
+   `./scripts/piper/fetch-miko-voice.sh` を実行します。固定したリビジョンからモデルをダウンロードして SHA-256 で検証し、`public/piper/models/miko-sample-voice-v2.onnx` と `.onnx.json` として保存したうえで、notice を `public/piper/licenses/` にコピーします。デプロイ用ワークフローも同じスクリプトを実行し、ダウンロードかハッシュ検証に失敗するとデプロイは失敗します。ローカルで取得しない場合、ミコの声は使えませんが、つくよみちゃんの声は使えます。
 5. ライセンス表記
    `scripts/package-piper-assets.sh` は、パッケージ前に `scripts/piper/licenses/` のテンプレートを `public/piper/licenses/` にコピーします。手動で `public/piper/` を組み立てる場合も、このディレクトリを同梱してください。
 

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Download the Miko voice model for Piper Plus into public/piper/models/ and
-# copy its license notices into public/piper/licenses/.
+# copy its license notices into public/piper/licenses/. The updated
+# THIRD_PARTY_NOTICES.txt is copied too, because the piper-assets release
+# archive ships an older copy that does not list the Miko voice model.
 #
 # The model is pinned to a Hugging Face revision and verified by SHA-256.
 # Run it after the piper-plus runtime assets are extracted into public/piper/.
@@ -24,7 +26,11 @@ mkdir -p "$MODELS_DIR" "$LICENSES_DIR"
 
 download() {
   local source="$1" target="$2" expected="$3"
-  curl -fL --retry 3 -o "$target.tmp" "$BASE_URL/$source"
+  if ! curl -fL --retry 3 -o "$target.tmp" "$BASE_URL/$source"; then
+    rm -f "$target.tmp"
+    echo "Error: failed to download $source" >&2
+    exit 1
+  fi
   local actual
   actual="$(shasum -a 256 "$target.tmp" | cut -d' ' -f1)"
   if [ "$actual" != "$expected" ]; then
@@ -38,7 +44,7 @@ download() {
 download "sample-voice-v2.onnx" "$MODELS_DIR/miko-sample-voice-v2.onnx" "$MODEL_SHA256"
 download "sample-voice-v2.onnx.json" "$MODELS_DIR/miko-sample-voice-v2.onnx.json" "$CONFIG_SHA256"
 
-for file in miko-voice-NOTICE.md piper-plus-base-model-MIT.txt piper-plus-base-model-NOTICE.md; do
+for file in THIRD_PARTY_NOTICES.txt miko-voice-NOTICE.md piper-plus-base-model-MIT.txt piper-plus-base-model-NOTICE.md; do
   cp "$LICENSE_TEMPLATE_DIR/$file" "$LICENSES_DIR/$file"
 done
 

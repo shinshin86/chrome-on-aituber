@@ -124,6 +124,14 @@ function LicenseBodyJa() {
           >
             ベースモデルのnotice
           </a>
+          {" / "}
+          <a
+            href={`${PIPER_LICENSE_BASE_URL}/piper-plus-base-model-MIT.txt`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            ベースモデルのライセンス（MIT License）
+          </a>
         </p>
       </section>
 
@@ -534,6 +542,14 @@ function LicenseBodyEn() {
             rel="noopener noreferrer"
           >
             Base model notice
+          </a>
+          {" / "}
+          <a
+            href={`${PIPER_LICENSE_BASE_URL}/piper-plus-base-model-MIT.txt`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Base model license (MIT License)
           </a>
         </p>
       </section>

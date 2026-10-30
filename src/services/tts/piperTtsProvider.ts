@@ -34,6 +34,10 @@ const PIPER_VOICE_ASSETS: Record<PiperVoice, PiperVoiceAssets> = {
 };
 
 let currentVoice: PiperVoice = "tsukuyomi";
+/** Voice of the model currently held in onnxSession / modelConfig */
+let loadedVoice: PiperVoice = "tsukuyomi";
+/** Synthesis runs that still use the loaded session; release waits for them */
+const activeRuns = new Set<Promise<unknown>>();
 let phonemizer: any = null;
 let onnxSession: any = null;
 let modelConfig: any = null;
@@ -81,7 +85,8 @@ export async function initialize(
       ort.env.wasm.numThreads = 1;
       ort.env.wasm.simd = true;
 
-      const voiceAssets = PIPER_VOICE_ASSETS[currentVoice];
+      const voice = currentVoice;
+      const voiceAssets = PIPER_VOICE_ASSETS[voice];
 
       // モデル設定読み込み
       onProgress?.("モデル設定を読み込み中...");
@@ -116,9 +121,10 @@ export async function initialize(
         { executionProviders: ["wasm"], graphOptimizationLevel: "all" }
       );
 
+      loadedVoice = voice;
       ready = true;
       onProgress?.(null);
-      console.log(`TTS(piper): 初期化完了 (${currentVoice})`);
+      console.log(`TTS(piper): 初期化完了 (${voice})`);
     } catch (err) {
       initPromise = null;
       throw err;
@@ -133,17 +139,33 @@ export async function synthesize(
   lengthScale?: number
 ): Promise<{ audio: Float32Array; sampleRate: number }> {
   if (!ready) throw new Error("TTS not initialized");
+  // Keep the loaded model for the whole run even if the voice is switched.
+  const run = runSynthesis(onnxSession, modelConfig, loadedVoice, text, lengthScale);
+  activeRuns.add(run);
+  try {
+    return await run;
+  } finally {
+    activeRuns.delete(run);
+  }
+}
 
+async function runSynthesis(
+  session: any,
+  config: any,
+  voice: PiperVoice,
+  text: string,
+  lengthScale?: number
+): Promise<{ audio: Float32Array; sampleRate: number }> {
   const labels = await phonemizer.textToPhonemes(text, "ja");
   const phonemes = phonemizer.extractPhonemes(labels, "ja");
-  const multilingual = isMultilingualModel(modelConfig);
+  const multilingual = isMultilingualModel(config);
   const modelInputs = multilingual
-    ? buildMultilingualInputs(phonemes, labels, modelConfig.phoneme_id_map)
-    : { phonemeIds: phonemesToIds(phonemes), prosody: null };
+    ? buildMultilingualInputs(phonemes, labels, config.phoneme_id_map)
+    : { phonemeIds: phonemesToIds(phonemes, config.phoneme_id_map), prosody: null };
   const { phonemeIds } = modelInputs;
 
   let prosodyFeatures: number[][] | null = null;
-  if (modelConfig.prosody_id_map) {
+  if (config.prosody_id_map) {
     prosodyFeatures =
       modelInputs.prosody ?? extractProsody(labels, phonemeIds.length);
   }
@@ -161,9 +183,9 @@ export async function synthesize(
   const scalesTensor = new ort.Tensor(
     "float32",
     new Float32Array([
-      modelConfig.inference.noise_scale || 0.667,
-      resolveLengthScale(lengthScale),
-      modelConfig.inference.noise_w || 0.8,
+      config.inference.noise_scale || 0.667,
+      resolveLengthScale(voice, config, lengthScale),
+      config.inference.noise_w || 0.8,
     ]),
     [3]
   );
@@ -174,7 +196,7 @@ export async function synthesize(
     scales: scalesTensor,
   };
 
-  const languageId = resolveLanguageId(modelConfig.language_id_map);
+  const languageId = resolveLanguageId(config.language_id_map);
   if (languageId !== undefined) {
     feeds["lid"] = new ort.Tensor(
       "int64",
@@ -183,7 +205,7 @@ export async function synthesize(
     );
   }
 
-  if (prosodyFeatures && modelConfig.prosody_id_map) {
+  if (prosodyFeatures && config.prosody_id_map) {
     const flat: bigint[] = [];
     for (const [a1, a2, a3] of prosodyFeatures) {
       flat.push(BigInt(a1), BigInt(a2), BigInt(a3));
@@ -195,17 +217,18 @@ export async function synthesize(
     );
   }
 
-  const results = await onnxSession.run(feeds);
+  const results = await session.run(feeds);
   const audioTensor = results["output"] || results[Object.keys(results)[0]];
 
   return {
     audio: new Float32Array(audioTensor.data),
-    sampleRate: modelConfig.audio.sample_rate,
+    sampleRate: config.audio.sample_rate,
   };
 }
 
 /** Release piper resources (phonemizer, ONNX session) */
 export async function dispose(): Promise<void> {
+  await releaseModel();
   if (phonemizer) {
     try {
       phonemizer.dispose();
@@ -214,32 +237,44 @@ export async function dispose(): Promise<void> {
     }
     phonemizer = null;
   }
-  await releaseModel();
 }
 
+/**
+ * Detach the loaded model at once so no new run can pick it up, then release
+ * it after the runs that already hold it have finished.
+ */
 async function releaseModel(): Promise<void> {
-  if (onnxSession) {
-    try {
-      await onnxSession.release();
-    } catch {
-      // ignore
-    }
-    onnxSession = null;
-  }
+  const session = onnxSession;
+  onnxSession = null;
   modelConfig = null;
   ready = false;
   initPromise = null;
+  await Promise.allSettled(Array.from(activeRuns));
+  if (session) {
+    try {
+      await session.release();
+    } catch {
+      // ignore
+    }
+  }
 }
 
-function resolveLengthScale(lengthScale: number | undefined): number {
-  const { baseLengthScale } = PIPER_VOICE_ASSETS[currentVoice];
+function resolveLengthScale(
+  voice: PiperVoice,
+  config: any,
+  lengthScale: number | undefined
+): number {
+  const { baseLengthScale } = PIPER_VOICE_ASSETS[voice];
   if (baseLengthScale !== undefined) {
     return (lengthScale ?? 1.0) * baseLengthScale;
   }
-  return lengthScale ?? modelConfig.inference.length_scale ?? 1.0;
+  return lengthScale ?? config.inference.length_scale ?? 1.0;
 }
 
-function phonemesToIds(phonemes: string[]): number[] {
+function phonemesToIds(
+  phonemes: string[],
+  map: Record<string, number[]>
+): number[] {
   let processed = phonemes;
   if (phonemes.length < 20) {
     processed = [
@@ -253,7 +288,6 @@ function phonemesToIds(phonemes: string[]): number[] {
     ];
   }
   const ids: number[] = [];
-  const map = modelConfig.phoneme_id_map;
   for (const ph of processed) {
     if (map[ph]) {
       ids.push(...map[ph]);
