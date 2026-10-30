@@ -4,6 +4,7 @@ import type {
   AvatarImages,
   PetManifest,
 } from "../../types";
+import { DEFAULT_AVATAR_ID, PNG_AVATAR_ID } from "../../types";
 import {
   loadAvatarPack,
   listAvatarPacks,
@@ -15,8 +16,8 @@ import {
 
 const BASE_URL = import.meta.env.BASE_URL;
 
-const DEFAULT_AVATAR: Extract<AvatarPack, { kind: "png" }> = {
-  id: "default",
+const PNG_MIKO_AVATAR: Extract<AvatarPack, { kind: "png" }> = {
+  id: PNG_AVATAR_ID,
   name: "Miko",
   kind: "png",
   isBuiltIn: true,
@@ -30,7 +31,15 @@ const DEFAULT_AVATAR: Extract<AvatarPack, { kind: "png" }> = {
 };
 
 const BUILT_IN_AVATARS: AvatarPack[] = [
-  DEFAULT_AVATAR,
+  {
+    id: DEFAULT_AVATAR_ID,
+    name: "Miko Qipao Mesh",
+    kind: "mesh",
+    isBuiltIn: true,
+    thumbnailUrl: `${BASE_URL}assets/avatars/thumbnails/miko-mesh.jpg`,
+    packageUrl: `${BASE_URL}assets/avatars/mesh/miko-qipao.mavatar`,
+  },
+  PNG_MIKO_AVATAR,
   {
     id: "builtin_purupuru",
     name: "Miko PuruPuru",
@@ -78,21 +87,17 @@ const BUILT_IN_AVATARS: AvatarPack[] = [
     thumbnailUrl: `${BASE_URL}assets/avatars/thumbnails/aka-inochi2d.jpg`,
     manifestModelId: "aka",
   },
-  {
-    id: "builtin_mesh",
-    name: "Miko Qipao Mesh",
-    kind: "mesh",
-    isBuiltIn: true,
-    thumbnailUrl: `${BASE_URL}assets/avatars/thumbnails/miko-mesh.jpg`,
-    packageUrl: `${BASE_URL}assets/avatars/mesh/miko-qipao.mavatar`,
-  },
 ];
 
 const BUILT_IN_IDS = new Set(BUILT_IN_AVATARS.map((avatar) => avatar.id));
 const activeBlobUrls = new Set<string>();
 
-export function getDefaultAvatar(): Extract<AvatarPack, { kind: "png" }> {
-  return DEFAULT_AVATAR;
+export function getDefaultAvatar(): AvatarPack {
+  return getBuiltInAvatar(DEFAULT_AVATAR_ID)!;
+}
+
+export function getBuiltInAvatar(id: string): AvatarPack | undefined {
+  return BUILT_IN_AVATARS.find((avatar) => avatar.id === id);
 }
 
 export function getBuiltInAvatars(): AvatarPack[] {
@@ -108,7 +113,7 @@ export async function getAllAvatars(): Promise<AvatarPack[]> {
 }
 
 export async function getAvatarById(id: string): Promise<AvatarPack | undefined> {
-  const builtIn = BUILT_IN_AVATARS.find((avatar) => avatar.id === id);
+  const builtIn = getBuiltInAvatar(id);
   if (builtIn) return builtIn;
   const stored = await loadAvatarPack(id);
   return stored ? storedToAvatarPack(stored) : undefined;

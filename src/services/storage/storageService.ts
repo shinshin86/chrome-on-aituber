@@ -8,6 +8,7 @@ import type {
 } from "../../types";
 import {
   DEFAULT_SETTINGS,
+  PNG_AVATAR_ID,
   migrateDefaultSystemPrompt,
   normalizePiperVoice,
   normalizePsdMotionIntensity,
@@ -20,6 +21,9 @@ const KEYS = {
   MESSAGES: `${PREFIX}_messages`,
   AVATAR_VIEWS: `${PREFIX}_avatar_views`,
 } as const;
+
+// The bundled PNG avatar used this ID before explicit built-in avatar IDs.
+const LEGACY_PNG_AVATAR_ID = "default";
 
 const DB_NAME = `${PREFIX}_db`;
 const DB_VERSION = 2;
@@ -44,6 +48,7 @@ function saveToLocalStorage(key: string, value: unknown): boolean {
 }
 
 export function loadSettings(): AppSettings {
+  migrateLegacyPngAvatarView();
   try {
     const raw = localStorage.getItem(KEYS.SETTINGS);
     if (!raw) return { ...DEFAULT_SETTINGS };
@@ -58,6 +63,10 @@ export function loadSettings(): AppSettings {
       settings.psdMotionIntensity
     );
     settings.piperVoice = normalizePiperVoice(settings.piperVoice);
+    if (settings.selectedAvatarId === LEGACY_PNG_AVATAR_ID) {
+      settings.selectedAvatarId = PNG_AVATAR_ID;
+      saveSettings(settings);
+    }
     return settings;
   } catch {
     return { ...DEFAULT_SETTINGS };
@@ -109,6 +118,15 @@ function loadAvatarViews(): Record<string, StoredAvatarView> {
       : {};
   } catch {
     return {};
+  }
+}
+
+function migrateLegacyPngAvatarView(): void {
+  const views = loadAvatarViews();
+  if (LEGACY_PNG_AVATAR_ID in views && !(PNG_AVATAR_ID in views)) {
+    views[PNG_AVATAR_ID] = views[LEGACY_PNG_AVATAR_ID];
+    delete views[LEGACY_PNG_AVATAR_ID];
+    saveToLocalStorage(KEYS.AVATAR_VIEWS, views);
   }
 }
 

@@ -14,6 +14,7 @@ import { useYoutubeComments } from "./hooks/useYoutubeComments";
 import { useTwitchComments } from "./hooks/useTwitchComments";
 import {
   getDefaultAvatar,
+  getBuiltInAvatar,
   getAvatarById,
 } from "./services/avatar/avatarService";
 import {
@@ -120,10 +121,10 @@ function AppContent({ settings, updateSettings }: AppContentProps) {
 
   const isBroadcast = settings.appMode === "broadcast";
   const [avatar, setAvatar] = useState<AvatarPack | null>(() =>
-    settings.selectedAvatarId === "default" ? getDefaultAvatar() : null
+    getBuiltInAvatar(settings.selectedAvatarId) ?? null
   );
   const [avatarLoading, setAvatarLoading] = useState(
-    settings.selectedAvatarId !== "default"
+    !getBuiltInAvatar(settings.selectedAvatarId)
   );
   const assistantLabel = avatar?.name ?? "AI";
   const llmReady = llmStatus === "available";
@@ -136,13 +137,14 @@ function AppContent({ settings, updateSettings }: AppContentProps) {
     [t]
   );
 
-  // selectedAvatarId に応じてアバターを読み込む
+  // Load the selected avatar, resolving built-in avatars synchronously.
   useEffect(() => {
     let cancelled = false;
     let ownedAvatar: AvatarPack | undefined;
     async function load() {
-      if (settings.selectedAvatarId === "default") {
-        setAvatar(getDefaultAvatar());
+      const builtIn = getBuiltInAvatar(settings.selectedAvatarId);
+      if (builtIn) {
+        setAvatar(builtIn);
         setAvatarLoading(false);
         return;
       }

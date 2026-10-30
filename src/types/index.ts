@@ -35,14 +35,17 @@ export type AvatarKind =
   | "mesh";
 
 export const AVATAR_KIND_LABELS: Record<AvatarKind, string> = {
+  mesh: "Mesh Avatar",
   png: "PNGTuber",
   purupuru: "ぷるぷるPNGTuber",
   pet: "Pet",
   vrm: "VRM",
   psd: "PSD",
   inochi2d: "Inochi2D",
-  mesh: "Mesh Avatar",
 };
+
+export const DEFAULT_AVATAR_ID = "builtin_mesh";
+export const PNG_AVATAR_ID = "builtin_png";
 
 interface AvatarPackBase {
   id: string;
@@ -239,7 +242,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   ttsEnabled: true,
   ttsEngine: "piper",
   piperVoice: "tsukuyomi",
-  selectedAvatarId: "default",
+  selectedAvatarId: DEFAULT_AVATAR_ID,
   psdMotionIntensity: PSD_MOTION_INTENSITY_DEFAULT,
   backgroundImageEnabled: false,
   backgroundImageUpdatedAt: 0,
