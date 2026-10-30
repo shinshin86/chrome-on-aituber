@@ -42,6 +42,9 @@ jobs:
           tar -xzf piper-assets.tar.gz -C public/
           rm piper-assets.tar.gz
 
+      - name: Download Miko voice model
+        run: ./scripts/piper/fetch-miko-voice.sh
+
       - name: Download Irodori runtime assets
         if: env.IRODORI_RUNTIME_ASSETS_URL != ''
         run: |

@@ -10,6 +10,10 @@ export const ja = {
       piper: "Piper Plus（標準）",
       irodori: "Irodori TTS（WebGPU / 高品質）",
     },
+    piperVoice: {
+      tsukuyomi: "つくよみちゃん",
+      miko: "ミコ",
+    },
   },
   app: {
     broadcastHintTitle: "配信モードです",
@@ -156,6 +160,11 @@ export const ja = {
       ttsEnabled: "音声読み上げ（TTS）を有効にする",
       ttsEngine: "TTS エンジン",
       speed: "読み上げ速度 ({value}x)",
+      piperVoice: "音声モデル",
+      mikoVoiceCreditLine1:
+        "音声モデル: ミコ（piper-plus zs-v1 ベースの合成音声モデル）",
+      mikoVoiceCreditLine2:
+        "ミコはAITuber OnAirの公式キャラクターです © Yuki Shindo。実在の人物の録音ではない合成音声です。",
       piperCreditLine1: "音声モデル: つくよみちゃんコーパス（CV.夢前黎）",
       piperCreditLine2:
         "本ソフトウェアの音声合成には、フリー素材キャラクター「つくよみちゃん」 © Rei Yumesaki が無料公開している音声データを使用しています。",

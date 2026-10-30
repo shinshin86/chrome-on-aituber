@@ -50,3 +50,14 @@ Re-run the inventory checks whenever model names, ONNX Runtime files, or
 piper-plus runtime files change. In particular, upstream piper-plus currently
 has `@piper-plus/g2p` in its npm package metadata, but that package is not
 present in the existing `piper-assets-v1` archive.
+
+## Miko voice model
+
+The Miko voice model is not part of the piper-assets release archive.
+`scripts/piper/fetch-miko-voice.sh` downloads it from
+`https://huggingface.co/shinshin86/aituber-onair-miko-voice-piper-plus` at a
+pinned revision, verifies both files by SHA-256, and copies
+`miko-voice-NOTICE.md`, `piper-plus-base-model-MIT.txt`, and
+`piper-plus-base-model-NOTICE.md` into `public/piper/licenses/`. The deploy
+workflow runs it after extracting the piper assets. To move to a newer model
+revision, update `REVISION` and both SHA-256 values in the script.

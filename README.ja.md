@@ -71,7 +71,9 @@ Git 管理されているのは次のみです。
    次のファイルを `public/piper/models/` に配置します。
    - `tsukuyomi-wavlm-300epoch.onnx`
    - `config.json` を `tsukuyomi-config.json` にリネームしたもの
-4. ライセンス表記
+4. [shinshin86/aituber-onair-miko-voice-piper-plus](https://huggingface.co/shinshin86/aituber-onair-miko-voice-piper-plus) からミコの音声モデルを取得（任意）
+   `./scripts/piper/fetch-miko-voice.sh` を実行します。固定したリビジョンからモデルをダウンロードして SHA-256 で検証し、`public/piper/models/miko-sample-voice-v2.onnx` と `.onnx.json` として保存したうえで、notice を `public/piper/licenses/` にコピーします。デプロイ用ワークフローも同じスクリプトを実行します。取得しない場合、ミコの声は使えませんが、つくよみちゃんの声は使えます。
+5. ライセンス表記
    `scripts/package-piper-assets.sh` は、パッケージ前に `scripts/piper/licenses/` のテンプレートを `public/piper/licenses/` にコピーします。手動で `public/piper/` を組み立てる場合も、このディレクトリを同梱してください。
 
 Piper 音声モデルのクレジット:
@@ -80,6 +82,8 @@ Piper 音声モデルのクレジット:
 >
 > つくよみちゃんコーパス（CV.夢前黎）<br>
 > https://tyc.rei-yumesaki.net/material/corpus/
+
+ミコの声は、piper-plus の `zs-v1` ベースモデル（MIT）を追加学習した合成音声モデルです。ミコは AITuber OnAir の公式キャラクターです © Yuki Shindo。
 
 `scripts/package-piper-assets.sh` はセットアップ用スクリプトではなく、すでに用意済みの `public/piper/` にライセンステンプレートをコピーした上で `piper-assets.tar.gz` に固めて GitHub Releases / CI 配布に使うためのものです。`scripts/release-piper-assets.sh` はさらに GitHub Release へのアップロードまで自動化します。
 

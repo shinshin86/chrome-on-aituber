@@ -9,6 +9,7 @@ import type {
 import {
   DEFAULT_SETTINGS,
   migrateDefaultSystemPrompt,
+  normalizePiperVoice,
   normalizePsdMotionIntensity,
 } from "../../types";
 
@@ -56,6 +57,7 @@ export function loadSettings(): AppSettings {
     settings.psdMotionIntensity = normalizePsdMotionIntensity(
       settings.psdMotionIntensity
     );
+    settings.piperVoice = normalizePiperVoice(settings.piperVoice);
     return settings;
   } catch {
     return { ...DEFAULT_SETTINGS };

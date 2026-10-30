@@ -101,6 +101,17 @@ Components included in the packaged asset:
   Included via: piper/models/tsukuyomi-wavlm-300epoch.onnx and
   piper/models/tsukuyomi-config.json
 
+- Miko voice model (sample-voice-v2)
+  Source: https://huggingface.co/shinshin86/aituber-onair-miko-voice-piper-plus
+  License: MIT (model weights, following the piper-plus zs-v1 base model)
+  Notice files: miko-voice-NOTICE.md, piper-plus-base-model-MIT.txt,
+  piper-plus-base-model-NOTICE.md
+  Included via: piper/models/miko-sample-voice-v2.onnx and
+  piper/models/miko-sample-voice-v2.onnx.json
+  Not part of the piper-assets release archive. The deploy workflow downloads
+  it at build time with scripts/piper/fetch-miko-voice.sh, pinned to a
+  Hugging Face revision and verified by SHA-256.
+
 Components checked but not included in piper-assets-v1:
 
 - espeak-ng

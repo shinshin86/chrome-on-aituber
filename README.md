@@ -69,15 +69,19 @@ Prepare the assets as follows.
    Place these files into `public/piper/models/`:
    - `tsukuyomi-wavlm-300epoch.onnx`
    - `config.json` renamed to `tsukuyomi-config.json`
-4. License notices
+4. Miko voice model (optional) from [shinshin86/aituber-onair-miko-voice-piper-plus](https://huggingface.co/shinshin86/aituber-onair-miko-voice-piper-plus)
+   Run `./scripts/piper/fetch-miko-voice.sh`. It downloads the model from a pinned revision, verifies it by SHA-256, saves it as `public/piper/models/miko-sample-voice-v2.onnx` and `.onnx.json`, and copies its notices into `public/piper/licenses/`. The deploy workflow runs the same script. Without it, the Miko voice cannot be used, but the Tsukuyomi-chan voice still works.
+5. License notices
    `scripts/package-piper-assets.sh` copies the templates from `scripts/piper/licenses/` into `public/piper/licenses/` before packaging. If you assemble `public/piper/` manually, include that directory as well.
 
-Piper voice credit:
+Piper voice credits:
 
 > This software uses voice data made freely available by the free material character "Tsukuyomi-chan" (c) Rei Yumesaki for speech synthesis.
 >
 > Tsukuyomi-chan Corpus (CV. Rei Yumesaki)<br>
 > https://tyc.rei-yumesaki.net/material/corpus/
+
+The Miko voice is a synthetic voice model fine-tuned from the piper-plus `zs-v1` base model (MIT). Miko is the official character of AITuber OnAir, © Yuki Shindo.
 
 `scripts/package-piper-assets.sh` is not a setup script. It only packages an already-prepared `public/piper/` directory into `piper-assets.tar.gz` for GitHub Releases / CI deployment, after copying the license templates. `scripts/release-piper-assets.sh` also uploads that asset to a GitHub Release.
 

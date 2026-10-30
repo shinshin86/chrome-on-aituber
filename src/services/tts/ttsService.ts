@@ -7,7 +7,7 @@
  * 再生と口パクは audioPlayback.ts に共通化している。
  */
 
-import type { TtsEngine } from "../../types";
+import type { PiperVoice, TtsEngine } from "../../types";
 import * as playback from "./audioPlayback";
 import * as piper from "./piperTtsProvider";
 import * as irodori from "./irodoriTtsProvider";
@@ -32,6 +32,13 @@ export async function setEngine(engine: TtsEngine): Promise<void> {
   } else {
     await irodori.dispose();
   }
+}
+
+/** Select the Piper Plus voice model. Playback stops when the voice changes. */
+export async function setPiperVoice(voice: PiperVoice): Promise<void> {
+  if (voice === piper.getVoice()) return;
+  stop();
+  await piper.setVoice(voice);
 }
 
 export function isReady(): boolean {
