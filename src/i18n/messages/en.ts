@@ -16,6 +16,10 @@ export const en = {
       piper: "Piper Plus (standard)",
       irodori: "Irodori TTS (WebGPU / high quality)",
     },
+    piperVoice: {
+      tsukuyomi: "Tsukuyomi-chan",
+      miko: "Miko",
+    },
   },
   app: {
     broadcastHintTitle: "Broadcast mode",
@@ -162,6 +166,11 @@ export const en = {
       ttsEnabled: "Enable text-to-speech (TTS)",
       ttsEngine: "TTS engine",
       speed: "Speech speed ({value}x)",
+      piperVoice: "Voice model",
+      mikoVoiceCreditLine1:
+        "Voice model: Miko (synthetic voice model based on piper-plus zs-v1)",
+      mikoVoiceCreditLine2:
+        "Miko is the official character of AITuber OnAir © Yuki Shindo. The voice is synthetic, not a recording of a real person.",
       piperCreditLine1: "Voice model: Tsukuyomi-chan Corpus (CV: Rei Yumesaki)",
       piperCreditLine2:
         "This app uses voice data published for free by the free-material character Tsukuyomi-chan © Rei Yumesaki.",

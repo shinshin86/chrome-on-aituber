@@ -9,6 +9,7 @@ import {
 import { useI18n } from "../../i18n/useI18n";
 import {
   AVATAR_KIND_LABELS,
+  DEFAULT_AVATAR_ID,
   PSD_MOTION_INTENSITY_MAX,
   PSD_MOTION_INTENSITY_MIN,
   type AvatarKind,
@@ -77,6 +78,7 @@ const FILE_CONFIG: Record<
     secondaryAccept: ".json",
     secondaryLabel: "Motion data (.json / optional)",
   },
+  mesh: { primaryAccept: ".mavatar", primaryLabel: "Mesh Avatar Studio export (.mavatar)" },
 };
 
 const IMAGE_FILE_EXTENSION_PATTERN = /\.(avif|bmp|gif|jpe?g|png|svg|webp)$/i;
@@ -240,7 +242,7 @@ export function AvatarSettings({
   const [avatars, setAvatars] = useState<AvatarPack[]>([]);
   const avatarsRef = useRef<AvatarPack[]>([]);
   const [showRegisterForm, setShowRegisterForm] = useState(false);
-  const [kind, setKind] = useState<AvatarKind>("png");
+  const [kind, setKind] = useState<AvatarKind>("mesh");
   const [name, setName] = useState("");
   const [pngFiles, setPngFiles] = useState<Record<SlotKey, File | null>>(EMPTY_PNG_FILES);
   const [primaryFile, setPrimaryFile] = useState<File | null>(null);
@@ -339,7 +341,7 @@ export function AvatarSettings({
 
   async function handleDelete(id: string) {
     await removeAvatar(id);
-    if (selectedAvatarId === id) onSelectAvatar("default");
+    if (selectedAvatarId === id) onSelectAvatar(DEFAULT_AVATAR_ID);
     await loadAvatars();
   }
 

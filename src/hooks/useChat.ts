@@ -99,6 +99,12 @@ export function useChat(settings: AppSettings) {
     });
   }, [settings.ttsEngine]);
 
+  useEffect(() => {
+    tts.setPiperVoice(settings.piperVoice).catch((e) => {
+      console.warn("Piper voice switch error:", e);
+    });
+  }, [settings.piperVoice]);
+
   async function initLLM(initialMessages: ChatMessage[] = []) {
     beginSessionInitialization();
 

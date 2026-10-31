@@ -165,8 +165,11 @@ The multi-format avatar implementation incorporates or depends on the following 
 - ag-psd — MIT License
 - Anime2.5DRig by 852wa (hakoniwa) — MIT License
 - PuruPuruPNGTuber avatar-format code and documentation — Apache License 2.0
+- mesh-avatar (Mesh Avatar Studio runtime) — MIT License
 
 This app supports the avatar format defined by [rotejin/PuruPuruPNGTuber](https://github.com/rotejin/PuruPuruPNGTuber). The referenced project's software code and documentation are licensed under the Apache License 2.0. Bundled Miko image assets remain subject to the separate Miko usage guidelines below.
+
+This app also loads avatars in the `.mavatar` format defined by [Mesh Avatar Studio](https://github.com/shinshin86/mesh-avatar-studio) with the `mesh-avatar` runtime.
 
 The corresponding license texts are distributed in `public/avatar-licenses/` and `src/avatar-runtime/psd/vendor/anime25drig/LICENSE`.
 
@@ -191,7 +194,7 @@ The complete attribution notice is distributed in `public/inochi2d/models/Aka.AT
 
 ## 12. Bundled Miko avatar assets
 
-The bundled PNGTuber, PuruPuru PNGTuber, Pet, VRM, and PSD defaults use Miko, the official character of AITuber OnAir.
+The bundled PNGTuber, PuruPuru PNGTuber, Pet, VRM, PSD, and Mesh Avatar defaults use Miko, the official character of AITuber OnAir.
 
 - Copyright / optional credit: © Yuki Shindo (AITuber OnAir)
 - Website: https://miko.aituberonair.com/
@@ -200,3 +203,20 @@ The bundled PNGTuber, PuruPuru PNGTuber, Pet, VRM, and PSD defaults use Miko, th
 The authoritative Japanese Miko Character Usage Guidelines permit the assets to be redistributed as an integral part of software, apps, games, videos, websites, and other works or content, including third-party projects. Standalone redistribution, asset collections, and distributions primarily intended to provide the Miko asset files are prohibited. Translations are provided for reference only; the Japanese guidelines take precedence.
 
 The bundled PSD is the Miko Cheerleader 2.5D Avatar Asset (`public/assets/avatars/psd/miko-anime25drig-cheer.psd`), distributed unmodified from https://miko.aituberonair.com/assets/anime25drig-miko-cheer.zip. It uses the layer naming format defined by Anime2.5DRig. The PSD artwork is governed by the Miko usage guidelines, separately from the MIT-licensed PSD rendering code. The asset has no closed-eye layer; the renderer generates a closed-eye shape for blinking.
+
+---
+
+## 13. Miko voice model for piper-plus
+
+When Miko is selected as the Piper Plus voice model, this software uses the following synthetic voice model.
+
+- Name: Miko voice for piper-plus (`sample-voice-v2`)
+- Distribution source: https://huggingface.co/shinshin86/aituber-onair-miko-voice-piper-plus
+- Files (renamed at download): `miko-sample-voice-v2.onnx`, `miko-sample-voice-v2.onnx.json`
+- Base model: piper-plus `zs-v1`
+- License: MIT (model weights, following the base model)
+- Notices: `scripts/piper/licenses/miko-voice-NOTICE.md`, `scripts/piper/licenses/piper-plus-base-model-MIT.txt`, and `scripts/piper/licenses/piper-plus-base-model-NOTICE.md`, distributed in `public/piper/licenses/`
+
+The voice is synthetic: its training audio was generated with Irodori-TTS from a designed voice, not recorded from a person. Do not present its output as a recording of a real person. Miko is the official character of AITuber OnAir, © Yuki Shindo, and use of the character follows the Miko Character Usage Guidelines (https://miko.aituberonair.com/#terms).
+
+The model is not committed to this repository. `scripts/piper/fetch-miko-voice.sh` downloads it from a pinned Hugging Face revision and verifies it by SHA-256.

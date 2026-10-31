@@ -3,6 +3,7 @@ import {
   DEFAULT_SYSTEM_PROMPT_EN,
   DEFAULT_SYSTEM_PROMPT_JA,
   LANGUAGE_LABELS,
+  PIPER_VOICES,
   isDefaultSystemPrompt,
 } from "../../types";
 import type {
@@ -11,6 +12,7 @@ import type {
   ChatMessage,
   ChatSource,
   Language,
+  PiperVoice,
   StreamingPlatform,
   TtsEngine,
 } from "../../types";
@@ -193,6 +195,7 @@ export function SettingsPanel({
 
     try {
       await tts.setEngine(settings.ttsEngine);
+      await tts.setPiperVoice(settings.piperVoice);
 
       if (!tts.isReady()) {
         await tts.initialize((msg) => {
@@ -419,6 +422,22 @@ export function SettingsPanel({
             {settings.ttsEngine === "piper" && (
               <>
                 <label className={styles.label}>
+                  {t("settings.aiVoice.piperVoice")}
+                  <select
+                    className={styles.textInput}
+                    value={settings.piperVoice}
+                    onChange={(e) =>
+                      onUpdate({ piperVoice: e.target.value as PiperVoice })
+                    }
+                  >
+                    {PIPER_VOICES.map((voice) => (
+                      <option key={voice} value={voice}>
+                        {t(`common.piperVoice.${voice}`)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className={styles.label}>
                   {t("settings.aiVoice.speed", {
                     value: settings.ttsLengthScale.toFixed(1),
                   })}
@@ -435,11 +454,19 @@ export function SettingsPanel({
                     }
                   />
                 </label>
-                <p className={styles.hint}>
-                  {t("settings.aiVoice.piperCreditLine1")}
-                  <br />
-                  {t("settings.aiVoice.piperCreditLine2")}
-                </p>
+                {settings.piperVoice === "miko" ? (
+                  <p className={styles.hint}>
+                    {t("settings.aiVoice.mikoVoiceCreditLine1")}
+                    <br />
+                    {t("settings.aiVoice.mikoVoiceCreditLine2")}
+                  </p>
+                ) : (
+                  <p className={styles.hint}>
+                    {t("settings.aiVoice.piperCreditLine1")}
+                    <br />
+                    {t("settings.aiVoice.piperCreditLine2")}
+                  </p>
+                )}
               </>
             )}
 

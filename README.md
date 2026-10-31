@@ -9,7 +9,7 @@ Browser-only AITuber chat app built with React and Vite. It uses Chrome Built-in
 - Browser-only operation with no application server
 - Japanese chat powered by Chrome Built-in AI / `LanguageModel`
 - Browser TTS with piper-plus WASM, OpenJTalk, and ONNX Runtime Web
-- Selectable PNGTuber, PuruPuru PNGTuber, Pet, VRM, PSD, and Inochi2D avatars
+- Selectable PNGTuber, PuruPuru PNGTuber, Pet, VRM, PSD, Inochi2D, and Mesh Avatar (`.mavatar`) avatars
 - Bundled default avatar assets for every supported format
 - Custom background image with reset back to the default background
 - Two display modes: chat mode and broadcast mode (green background)
@@ -69,15 +69,19 @@ Prepare the assets as follows.
    Place these files into `public/piper/models/`:
    - `tsukuyomi-wavlm-300epoch.onnx`
    - `config.json` renamed to `tsukuyomi-config.json`
-4. License notices
+4. Miko voice model (optional) from [shinshin86/aituber-onair-miko-voice-piper-plus](https://huggingface.co/shinshin86/aituber-onair-miko-voice-piper-plus)
+   Run `./scripts/piper/fetch-miko-voice.sh`. It downloads the model from a pinned revision, verifies it by SHA-256, saves it as `public/piper/models/miko-sample-voice-v2.onnx` and `.onnx.json`, and copies its notices into `public/piper/licenses/`. The deploy workflow runs the same script and fails if the download or the hash check fails. Without it locally, the Miko voice cannot be used, but the Tsukuyomi-chan voice still works.
+5. License notices
    `scripts/package-piper-assets.sh` copies the templates from `scripts/piper/licenses/` into `public/piper/licenses/` before packaging. If you assemble `public/piper/` manually, include that directory as well.
 
-Piper voice credit:
+Piper voice credits:
 
 > This software uses voice data made freely available by the free material character "Tsukuyomi-chan" (c) Rei Yumesaki for speech synthesis.
 >
 > Tsukuyomi-chan Corpus (CV. Rei Yumesaki)<br>
 > https://tyc.rei-yumesaki.net/material/corpus/
+
+The Miko voice is a synthetic voice model fine-tuned from the piper-plus `zs-v1` base model (MIT). Miko is the official character of AITuber OnAir, © Yuki Shindo.
 
 `scripts/package-piper-assets.sh` is not a setup script. It only packages an already-prepared `public/piper/` directory into `piper-assets.tar.gz` for GitHub Releases / CI deployment, after copying the license templates. `scripts/release-piper-assets.sh` also uploads that asset to a GitHub Release.
 
@@ -117,8 +121,8 @@ Open the Vite URL in Chrome, usually `http://localhost:5173`.
 - Reset the current conversation from the settings panel
 - Change the background image from the settings panel and reset it with `Back to Default`
 - Enable or disable TTS and change speech speed
-- Choose PNGTuber, PuruPuru PNGTuber, Pet, VRM, PSD, or Inochi2D in Avatar settings
-- Register custom avatars from the corresponding files. PNGTuber uses four images; Pet uses a manifest and spritesheet; VRM and Inochi2D accept optional animation data.
+- Choose PNGTuber, PuruPuru PNGTuber, Pet, VRM, PSD, Inochi2D, or Mesh Avatar in Avatar settings
+- Register custom avatars from the corresponding files. PNGTuber uses four images; Pet uses a manifest and spritesheet; VRM and Inochi2D accept optional animation data; Mesh Avatar uses a `.mavatar` file exported from [Mesh Avatar Studio](https://github.com/shinshin86/mesh-avatar-studio).
 - The selected avatar and custom files are stored only in the browser and restored automatically after reload.
 
 ## Streaming Integration
@@ -172,7 +176,7 @@ License. The copyright holder retains its rights and permits only the limited
 use and redistribution described in the
 [Irodori Default Reference Audio Asset Terms](./public/audio-licenses/IRODORI_DEFAULT_REFERENCE_AUDIO_TERMS.md).
 
-Bundled Miko PNGTuber, PuruPuru PNGTuber, Pet, VRM, and PSD assets are not covered
+Bundled Miko PNGTuber, PuruPuru PNGTuber, Pet, VRM, PSD, and Mesh Avatar assets are not covered
 by the MIT License. They are governed by the authoritative Japanese
 [Miko Character Usage Guidelines](https://miko.aituberonair.com/#terms); see
 [Miko Asset Terms](./public/avatar-licenses/MIKO_ASSET_TERMS.md) for a short English summary. The assets may be distributed as an integral part

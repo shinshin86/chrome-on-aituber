@@ -31,9 +31,11 @@ export type AvatarKind =
   | "pet"
   | "vrm"
   | "psd"
-  | "inochi2d";
+  | "inochi2d"
+  | "mesh";
 
 export const AVATAR_KIND_LABELS: Record<AvatarKind, string> = {
+  mesh: "Mesh Avatar",
   png: "PNGTuber",
   purupuru: "ぷるぷるPNGTuber",
   pet: "Pet",
@@ -41,6 +43,9 @@ export const AVATAR_KIND_LABELS: Record<AvatarKind, string> = {
   psd: "PSD",
   inochi2d: "Inochi2D",
 };
+
+export const DEFAULT_AVATAR_ID = "builtin_mesh";
+export const PNG_AVATAR_ID = "builtin_png";
 
 interface AvatarPackBase {
   id: string;
@@ -93,6 +98,10 @@ export type AvatarPack =
       modelUrl?: string;
       motionUrl?: string;
       manifestModelId?: string;
+    })
+  | (AvatarPackBase & {
+      kind: "mesh";
+      packageUrl: string;
     });
 
 export interface AvatarViewTransform {
@@ -133,6 +142,16 @@ export const TTS_ENGINE_LABELS: Record<TtsEngine, string> = {
   piper: "Piper Plus（標準）",
   irodori: "Irodori TTS（WebGPU / 高品質）",
 };
+
+export type PiperVoice = "tsukuyomi" | "miko";
+
+export const PIPER_VOICES: PiperVoice[] = ["tsukuyomi", "miko"];
+
+export function normalizePiperVoice(value: unknown): PiperVoice {
+  return PIPER_VOICES.includes(value as PiperVoice)
+    ? (value as PiperVoice)
+    : "tsukuyomi";
+}
 
 const LEGACY_DEFAULT_SYSTEM_PROMPT_JA =
   "あなたは配信者として視聴者とチャットで会話するAIアバターです。フレンドリーで親しみやすいキャラクターとして振る舞ってください。\n\n【重要なルール】\n- 応答は1〜3文程度の短さにとどめてください。長文は禁止です。\n- 話し言葉で、テンポよく返してください。\n- マークダウンや記号での装飾は使わず、プレーンテキストで返してください。\n- 視聴者のコメントにはリアクションを交えて楽しく返しましょう。";
@@ -195,6 +214,7 @@ export interface AppSettings {
   appMode: AppMode;
   ttsEnabled: boolean;
   ttsEngine: TtsEngine;
+  piperVoice: PiperVoice;
   selectedAvatarId: string;
   psdMotionIntensity: number;
   backgroundImageEnabled: boolean;
@@ -221,7 +241,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   appMode: "chat",
   ttsEnabled: true,
   ttsEngine: "piper",
-  selectedAvatarId: "default",
+  piperVoice: "tsukuyomi",
+  selectedAvatarId: DEFAULT_AVATAR_ID,
   psdMotionIntensity: PSD_MOTION_INTENSITY_DEFAULT,
   backgroundImageEnabled: false,
   backgroundImageUpdatedAt: 0,

@@ -8,6 +8,36 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import type { PiperVoice } from "../../types";
+
+interface PiperVoiceAssets {
+  configFile: string;
+  modelFile: string;
+  /**
+   * Multiplied with the requested length scale. When omitted, the model
+   * config's length_scale is used as the default instead.
+   */
+  baseLengthScale?: number;
+}
+
+const PIPER_VOICE_ASSETS: Record<PiperVoice, PiperVoiceAssets> = {
+  tsukuyomi: {
+    configFile: "tsukuyomi-config.json",
+    modelFile: "tsukuyomi-wavlm-300epoch.onnx",
+  },
+  // The model card suggests a length_scale of 1.07 for sample-voice-v2.
+  miko: {
+    configFile: "miko-sample-voice-v2.onnx.json",
+    modelFile: "miko-sample-voice-v2.onnx",
+    baseLengthScale: 1.07,
+  },
+};
+
+let currentVoice: PiperVoice = "tsukuyomi";
+/** Voice of the model currently held in onnxSession / modelConfig */
+let loadedVoice: PiperVoice = "tsukuyomi";
+/** Synthesis runs that still use the loaded session; release waits for them */
+const activeRuns = new Set<Promise<unknown>>();
 let phonemizer: any = null;
 let onnxSession: any = null;
 let modelConfig: any = null;
@@ -19,6 +49,23 @@ declare const ort: any;
 
 export function isReady(): boolean {
   return ready;
+}
+
+export function getVoice(): PiperVoice {
+  return currentVoice;
+}
+
+/**
+ * Select the voice model. A different voice releases the loaded model; the
+ * phonemizer is kept and the next initialize() only loads the new model.
+ */
+export async function setVoice(voice: PiperVoice): Promise<void> {
+  if (voice === currentVoice) return;
+  currentVoice = voice;
+  if (initPromise) {
+    await initPromise.catch(() => undefined);
+  }
+  await releaseModel();
 }
 
 export async function initialize(
@@ -38,34 +85,46 @@ export async function initialize(
       ort.env.wasm.numThreads = 1;
       ort.env.wasm.simd = true;
 
+      const voice = currentVoice;
+      const voiceAssets = PIPER_VOICE_ASSETS[voice];
+
       // モデル設定読み込み
       onProgress?.("モデル設定を読み込み中...");
-      const configResp = await fetch(`${base}piper/models/tsukuyomi-config.json`);
+      const configResp = await fetch(`${base}piper/models/${voiceAssets.configFile}`);
+      if (!configResp.ok) {
+        throw new Error(
+          `Voice model config not found: ${voiceAssets.configFile} (HTTP ${configResp.status})`
+        );
+      }
       modelConfig = await configResp.json();
 
       // OpenJTalk Phonemizer 初期化
-      onProgress?.("音素化エンジンを読み込み中...");
-      const { SimpleUnifiedPhonemizer } = await getPiperPlus();
-      phonemizer = new SimpleUnifiedPhonemizer();
-      await phonemizer.initialize({
-        openjtalk: {
-          jsPath: `${base}piper/dist/openjtalk.js`,
-          wasmPath: `${base}piper/dist/openjtalk.wasm`,
-          dictPath: `${base}piper/assets/dict`,
-          voicePath: `${base}piper/assets/voice/mei_normal.htsvoice`,
-        },
-      });
+      if (!phonemizer) {
+        onProgress?.("音素化エンジンを読み込み中...");
+        const { SimpleUnifiedPhonemizer } = await getPiperPlus();
+        const created = new SimpleUnifiedPhonemizer();
+        await created.initialize({
+          openjtalk: {
+            jsPath: `${base}piper/dist/openjtalk.js`,
+            wasmPath: `${base}piper/dist/openjtalk.wasm`,
+            dictPath: `${base}piper/assets/dict`,
+            voicePath: `${base}piper/assets/voice/mei_normal.htsvoice`,
+          },
+        });
+        phonemizer = created;
+      }
 
       // ONNX モデル読み込み
       onProgress?.("音声モデルを読み込み中...");
       onnxSession = await ort.InferenceSession.create(
-        `${base}piper/models/tsukuyomi-wavlm-300epoch.onnx`,
+        `${base}piper/models/${voiceAssets.modelFile}`,
         { executionProviders: ["wasm"], graphOptimizationLevel: "all" }
       );
 
+      loadedVoice = voice;
       ready = true;
       onProgress?.(null);
-      console.log("TTS(piper): 初期化完了");
+      console.log(`TTS(piper): 初期化完了 (${voice})`);
     } catch (err) {
       initPromise = null;
       throw err;
@@ -80,14 +139,35 @@ export async function synthesize(
   lengthScale?: number
 ): Promise<{ audio: Float32Array; sampleRate: number }> {
   if (!ready) throw new Error("TTS not initialized");
+  // Keep the loaded model for the whole run even if the voice is switched.
+  const run = runSynthesis(onnxSession, modelConfig, loadedVoice, text, lengthScale);
+  activeRuns.add(run);
+  try {
+    return await run;
+  } finally {
+    activeRuns.delete(run);
+  }
+}
 
+async function runSynthesis(
+  session: any,
+  config: any,
+  voice: PiperVoice,
+  text: string,
+  lengthScale?: number
+): Promise<{ audio: Float32Array; sampleRate: number }> {
   const labels = await phonemizer.textToPhonemes(text, "ja");
   const phonemes = phonemizer.extractPhonemes(labels, "ja");
-  const phonemeIds = phonemesToIds(phonemes);
+  const multilingual = isMultilingualModel(config);
+  const modelInputs = multilingual
+    ? buildMultilingualInputs(phonemes, labels, config.phoneme_id_map)
+    : { phonemeIds: phonemesToIds(phonemes, config.phoneme_id_map), prosody: null };
+  const { phonemeIds } = modelInputs;
 
   let prosodyFeatures: number[][] | null = null;
-  if (modelConfig.prosody_id_map) {
-    prosodyFeatures = extractProsody(labels, phonemeIds.length);
+  if (config.prosody_id_map) {
+    prosodyFeatures =
+      modelInputs.prosody ?? extractProsody(labels, phonemeIds.length);
   }
 
   const inputTensor = new ort.Tensor(
@@ -103,9 +183,9 @@ export async function synthesize(
   const scalesTensor = new ort.Tensor(
     "float32",
     new Float32Array([
-      modelConfig.inference.noise_scale || 0.667,
-      lengthScale ?? modelConfig.inference.length_scale ?? 1.0,
-      modelConfig.inference.noise_w || 0.8,
+      config.inference.noise_scale || 0.667,
+      resolveLengthScale(voice, config, lengthScale),
+      config.inference.noise_w || 0.8,
     ]),
     [3]
   );
@@ -116,7 +196,16 @@ export async function synthesize(
     scales: scalesTensor,
   };
 
-  if (prosodyFeatures && modelConfig.prosody_id_map) {
+  const languageId = resolveLanguageId(config.language_id_map);
+  if (languageId !== undefined) {
+    feeds["lid"] = new ort.Tensor(
+      "int64",
+      new BigInt64Array([BigInt(languageId)]),
+      [1]
+    );
+  }
+
+  if (prosodyFeatures && config.prosody_id_map) {
     const flat: bigint[] = [];
     for (const [a1, a2, a3] of prosodyFeatures) {
       flat.push(BigInt(a1), BigInt(a2), BigInt(a3));
@@ -128,17 +217,18 @@ export async function synthesize(
     );
   }
 
-  const results = await onnxSession.run(feeds);
+  const results = await session.run(feeds);
   const audioTensor = results["output"] || results[Object.keys(results)[0]];
 
   return {
     audio: new Float32Array(audioTensor.data),
-    sampleRate: modelConfig.audio.sample_rate,
+    sampleRate: config.audio.sample_rate,
   };
 }
 
 /** Release piper resources (phonemizer, ONNX session) */
 export async function dispose(): Promise<void> {
+  await releaseModel();
   if (phonemizer) {
     try {
       phonemizer.dispose();
@@ -147,20 +237,44 @@ export async function dispose(): Promise<void> {
     }
     phonemizer = null;
   }
-  if (onnxSession) {
-    try {
-      await onnxSession.release();
-    } catch {
-      // ignore
-    }
-    onnxSession = null;
-  }
+}
+
+/**
+ * Detach the loaded model at once so no new run can pick it up, then release
+ * it after the runs that already hold it have finished.
+ */
+async function releaseModel(): Promise<void> {
+  const session = onnxSession;
+  onnxSession = null;
   modelConfig = null;
   ready = false;
   initPromise = null;
+  await Promise.allSettled(Array.from(activeRuns));
+  if (session) {
+    try {
+      await session.release();
+    } catch {
+      // ignore
+    }
+  }
 }
 
-function phonemesToIds(phonemes: string[]): number[] {
+function resolveLengthScale(
+  voice: PiperVoice,
+  config: any,
+  lengthScale: number | undefined
+): number {
+  const { baseLengthScale } = PIPER_VOICE_ASSETS[voice];
+  if (baseLengthScale !== undefined) {
+    return (lengthScale ?? 1.0) * baseLengthScale;
+  }
+  return lengthScale ?? config.inference.length_scale ?? 1.0;
+}
+
+function phonemesToIds(
+  phonemes: string[],
+  map: Record<string, number[]>
+): number[] {
   let processed = phonemes;
   if (phonemes.length < 20) {
     processed = [
@@ -174,7 +288,6 @@ function phonemesToIds(phonemes: string[]): number[] {
     ];
   }
   const ids: number[] = [];
-  const map = modelConfig.phoneme_id_map;
   for (const ph of processed) {
     if (map[ph]) {
       ids.push(...map[ph]);
@@ -223,4 +336,133 @@ function extractProsody(labels: string, count: number): number[][] {
   prosody.push([0, 0, 0]);
   while (prosody.length < count) prosody.push([0, 0, 0]);
   return prosody.slice(0, count);
+}
+
+/**
+ * Multilingual piper-plus models (zs-v1 based) take a language id. OpenJTalk
+ * only phonemizes Japanese, so prefer "ja" and fall back to the first entry.
+ */
+function resolveLanguageId(
+  languageIdMap: Record<string, number> | undefined
+): number | undefined {
+  if (!languageIdMap) return undefined;
+  const ja = languageIdMap["ja"];
+  if (typeof ja === "number") return ja;
+  const first = Object.values(languageIdMap)[0];
+  return typeof first === "number" ? first : undefined;
+}
+
+function isMultilingualModel(config: any): boolean {
+  return Object.keys(config.language_id_map ?? {}).length > 1;
+}
+
+const SPECIAL_TOKENS = new Set(["^", "$", "_", "#", "[", "]", "?", "?!", "?.", "?~"]);
+const EOS_TOKENS = new Set(["$", "?", "?!", "?.", "?~"]);
+/** Short inputs are padded with silence up to this many ids */
+const MIN_PHONEME_IDS = 15;
+const MIN_BODY_FOR_PADDING = 3;
+
+interface ModelInputs {
+  phonemeIds: number[];
+  prosody: number[][] | null;
+}
+
+/**
+ * Multilingual models are trained on sequences with a pad id after every
+ * token (BOS, t0, PAD, t1, PAD, ..., EOS) and with raw OpenJTalk accent
+ * values, unlike the single-language Japanese models.
+ */
+function buildMultilingualInputs(
+  tokens: string[],
+  labels: string,
+  phonemeIdMap: Record<string, number[]>
+): ModelInputs {
+  const accents = extractRawAccents(labels);
+  const firstId = (token: string, fallback: number) =>
+    phonemeIdMap[token]?.[0] ?? fallback;
+  const bos = firstId("^", 1);
+  const pad = firstId("_", 0);
+  const zero = [0, 0, 0];
+
+  const phonemeIds = [bos];
+  const prosody: number[][] = [zero];
+  let eosToken = "$";
+  let accentIndex = 0;
+
+  for (const token of tokens) {
+    if (token === "^") continue;
+    if (EOS_TOKENS.has(token)) {
+      eosToken = token;
+      continue;
+    }
+    const isPhoneme = !SPECIAL_TOKENS.has(token);
+    const accent = isPhoneme ? (accents[accentIndex++] ?? zero) : zero;
+    const ids = phonemeIdMap[token];
+    if (ids) {
+      for (const id of ids) {
+        phonemeIds.push(id);
+        prosody.push(accent);
+      }
+    }
+    phonemeIds.push(pad);
+    prosody.push(zero);
+  }
+
+  phonemeIds.push(firstId(eosToken, firstId("$", 2)));
+  prosody.push(zero);
+
+  return padShortInputs({ phonemeIds, prosody }, pad);
+}
+
+/** Insert silence ids after BOS and before EOS so short lines keep their timing. */
+function padShortInputs(inputs: ModelInputs, pad: number): ModelInputs {
+  const { phonemeIds, prosody } = inputs;
+  const total = phonemeIds.length;
+  const body = total - 2;
+  if (body < MIN_BODY_FOR_PADDING || total >= MIN_PHONEME_IDS) {
+    return inputs;
+  }
+  const missing = MIN_PHONEME_IDS - total;
+  const front = Math.floor(missing / 2);
+  const back = missing - front;
+  const zeros = (count: number) => Array.from({ length: count }, () => [0, 0, 0]);
+  return {
+    phonemeIds: [
+      phonemeIds[0],
+      ...new Array<number>(front).fill(pad),
+      ...phonemeIds.slice(1, -1),
+      ...new Array<number>(back).fill(pad),
+      phonemeIds[total - 1],
+    ],
+    prosody: prosody
+      ? [
+          prosody[0],
+          ...zeros(front),
+          ...prosody.slice(1, -1),
+          ...zeros(back),
+          prosody[total - 1],
+        ]
+      : null,
+  };
+}
+
+/** Raw A1/A2/A3 accent values for every phoneme label (silence and pauses skipped). */
+function extractRawAccents(labels: string): number[][] {
+  const accents: number[][] = [];
+  const reA1 = /\/A:([\d-]+)\+/;
+  const reA2 = /\+([0-9]+)\+/;
+  const reA3 = /\+([0-9]+)\//;
+  for (const line of labels.split("\n")) {
+    const m = line.match(/-([^-+]+)\+/);
+    if (!m || m[1] === "sil" || m[1] === "pau") continue;
+    const mA1 = reA1.exec(line);
+    const mA2 = reA2.exec(line);
+    const mA3 = reA3.exec(line);
+    accents.push(
+      mA1 && mA2 && mA3
+        ? [parseInt(mA1[1], 10), parseInt(mA2[1], 10), parseInt(mA3[1], 10)]
+        : [0, 0, 0]
+    );
+  }
+  return accents;
 }

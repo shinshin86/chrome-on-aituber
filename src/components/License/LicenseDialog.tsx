@@ -16,6 +16,9 @@ const NPM_NOTICE_URL = `${import.meta.env.BASE_URL}licenses/NPM-THIRD-PARTY-NOTI
 const MIKO_GUIDELINES_URL_JA = "https://miko.aituberonair.com/#terms";
 const MIKO_GUIDELINES_URL_EN = "https://miko.aituberonair.com/en#terms";
 const PURUPURU_FORMAT_URL = "https://github.com/rotejin/PuruPuruPNGTuber";
+const MIKO_VOICE_MODEL_URL =
+  "https://huggingface.co/shinshin86/aituber-onair-miko-voice-piper-plus";
+const MESH_AVATAR_FORMAT_URL = "https://github.com/shinshin86/mesh-avatar-studio";
 
 interface AvatarLicenseLinkProps {
   fileName: string;
@@ -84,6 +87,52 @@ function LicenseBodyJa() {
           </a>
         </p>
         <p>詳細な利用条件は公式規約を参照してください。</p>
+      </section>
+
+      <section className={styles.section}>
+        <h3>ミコ音声モデル（MIT License）</h3>
+        <p>
+          Piper Plusの音声モデルで「ミコ」を選んだ場合は、piper-plusのzs-v1
+          ベースモデルをミコの声に追加学習した合成音声モデルを使用します。
+          学習音声はIrodori-TTSで設計した声から生成したもので、実在の人物の録音ではありません。
+          モデルの重みはベースモデルに合わせてMIT Licenseです。
+          ミコはAITuber OnAirの公式キャラクターで、キャラクターの利用には
+          Miko公式利用ガイドラインが適用されます。
+        </p>
+        <p>&copy; Yuki Shindo (AITuber OnAir)</p>
+        <p>
+          <a
+            href={MIKO_VOICE_MODEL_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            モデル配布元 — Hugging Face
+          </a>
+          {" / "}
+          <a
+            href={`${PIPER_LICENSE_BASE_URL}/miko-voice-NOTICE.md`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            ミコ音声モデルのnotice
+          </a>
+          {" / "}
+          <a
+            href={`${PIPER_LICENSE_BASE_URL}/piper-plus-base-model-NOTICE.md`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            ベースモデルのnotice
+          </a>
+          {" / "}
+          <a
+            href={`${PIPER_LICENSE_BASE_URL}/piper-plus-base-model-MIT.txt`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            ベースモデルのライセンス（MIT License）
+          </a>
+        </p>
       </section>
 
       <section className={styles.section}>
@@ -324,6 +373,29 @@ function LicenseBodyJa() {
       </section>
 
       <section className={styles.section}>
+        <h3>メッシュアバター描画</h3>
+        <p>
+          Mesh Avatar Studioで定義されている.mavatar形式のアバターを、
+          mesh-avatarランタイムで読み込み、WebGLのメッシュ変形で描画しています。
+          内蔵ミコ画像素材には、後述のMiko公式利用ガイドラインが適用されます。
+        </p>
+        <p>
+          <a
+            href={MESH_AVATAR_FORMAT_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            使用しているアバター形式 — Mesh Avatar Studio
+          </a>
+          <br />
+          <AvatarLicenseLink
+            fileName="MESH-AVATAR-MIT.txt"
+            label="mesh-avatar — メッシュアバター描画ランタイム（MIT License）"
+          />
+        </p>
+      </section>
+
+      <section className={styles.section}>
         <h3>Aka Inochi2D — 内蔵モデル</h3>
         <p>
           Inochi2D runtime の依存ライセンスは同梱 notice を参照してください。
@@ -340,7 +412,7 @@ function LicenseBodyJa() {
       <section className={styles.section}>
         <h3>ミコ — 内蔵アバター素材</h3>
         <p>
-          PNGTuber、ぷるぷるPNGTuber、Pet、VRM、PSD の内蔵デフォルトで使用する
+          PNGTuber、ぷるぷるPNGTuber、Pet、VRM、PSD、メッシュアバターの内蔵デフォルトで使用する
           「ミコ」は AITuber OnAir の公式キャラクターです。
         </p>
         <p>
@@ -433,6 +505,53 @@ function LicenseBodyEn() {
           </a>
         </p>
         <p>See the official terms for detailed usage conditions.</p>
+      </section>
+
+      <section className={styles.section}>
+        <h3>Miko voice model (MIT License)</h3>
+        <p>
+          When Miko is selected as the Piper Plus voice model, the app uses a
+          synthetic voice model fine-tuned from the piper-plus zs-v1 base model
+          to speak as Miko. Its training audio was generated with Irodori-TTS
+          from a designed voice, not recorded from a real person. The model
+          weights are MIT licensed, following the base model. Miko is the
+          official character of AITuber OnAir, and use of the character
+          follows the official Miko usage guidelines.
+        </p>
+        <p>&copy; Yuki Shindo (AITuber OnAir)</p>
+        <p>
+          <a
+            href={MIKO_VOICE_MODEL_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Model source — Hugging Face
+          </a>
+          {" / "}
+          <a
+            href={`${PIPER_LICENSE_BASE_URL}/miko-voice-NOTICE.md`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Miko voice model notice
+          </a>
+          {" / "}
+          <a
+            href={`${PIPER_LICENSE_BASE_URL}/piper-plus-base-model-NOTICE.md`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Base model notice
+          </a>
+          {" / "}
+          <a
+            href={`${PIPER_LICENSE_BASE_URL}/piper-plus-base-model-MIT.txt`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Base model license (MIT License)
+          </a>
+        </p>
       </section>
 
       <section className={styles.section}>
@@ -675,6 +794,30 @@ function LicenseBodyEn() {
       </section>
 
       <section className={styles.section}>
+        <h3>Mesh Avatar rendering</h3>
+        <p>
+          Avatars in the .mavatar format defined by Mesh Avatar Studio are
+          loaded with the mesh-avatar runtime and rendered with WebGL mesh
+          deformation. The bundled Miko image assets remain subject to the
+          official Miko usage guidelines described below.
+        </p>
+        <p>
+          <a
+            href={MESH_AVATAR_FORMAT_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Avatar format used — Mesh Avatar Studio
+          </a>
+          <br />
+          <AvatarLicenseLink
+            fileName="MESH-AVATAR-MIT.txt"
+            label="mesh-avatar — mesh avatar rendering runtime (MIT License)"
+          />
+        </p>
+      </section>
+
+      <section className={styles.section}>
         <h3>Aka Inochi2D — bundled model</h3>
         <p>
           See the bundled notices for the Inochi2D runtime dependencies.
@@ -691,8 +834,8 @@ function LicenseBodyEn() {
       <section className={styles.section}>
         <h3>Miko — bundled avatar assets</h3>
         <p>
-          Miko, used by the bundled PNGTuber, PuruPuru PNGTuber, Pet, VRM, and PSD
-          defaults, is the official character of AITuber OnAir.
+          Miko, used by the bundled PNGTuber, PuruPuru PNGTuber, Pet, VRM, PSD,
+          and Mesh Avatar defaults, is the official character of AITuber OnAir.
         </p>
         <p>
           The current guidelines allow commercial use and require neither a

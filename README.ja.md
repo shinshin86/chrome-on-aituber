@@ -9,7 +9,7 @@ React + Vite で構成された、ブラウザ完結型の AITuber チャット�
 - アプリケーションサーバー不要のブラウザ完結動作
 - Chrome Built-in AI / `LanguageModel` による日本語チャット
 - piper-plus WASM + OpenJTalk + ONNX Runtime Web による音声合成
-- PNGTuber、ぷるぷるPNGTuber、Pet、VRM、PSD、Inochi2D の選択表示
+- PNGTuber、ぷるぷるPNGTuber、Pet、VRM、PSD、Inochi2D、メッシュアバター（`.mavatar`）の選択表示
 - 全対応形式の内蔵デフォルトアバター
 - 背景画像の変更とデフォルト背景への復帰
 - チャットモードと配信モード（グリーンバック）の 2 表示モード
@@ -71,7 +71,9 @@ Git 管理されているのは次のみです。
    次のファイルを `public/piper/models/` に配置します。
    - `tsukuyomi-wavlm-300epoch.onnx`
    - `config.json` を `tsukuyomi-config.json` にリネームしたもの
-4. ライセンス表記
+4. [shinshin86/aituber-onair-miko-voice-piper-plus](https://huggingface.co/shinshin86/aituber-onair-miko-voice-piper-plus) からミコの音声モデルを取得（任意）
+   `./scripts/piper/fetch-miko-voice.sh` を実行します。固定したリビジョンからモデルをダウンロードして SHA-256 で検証し、`public/piper/models/miko-sample-voice-v2.onnx` と `.onnx.json` として保存したうえで、notice を `public/piper/licenses/` にコピーします。デプロイ用ワークフローも同じスクリプトを実行し、ダウンロードかハッシュ検証に失敗するとデプロイは失敗します。ローカルで取得しない場合、ミコの声は使えませんが、つくよみちゃんの声は使えます。
+5. ライセンス表記
    `scripts/package-piper-assets.sh` は、パッケージ前に `scripts/piper/licenses/` のテンプレートを `public/piper/licenses/` にコピーします。手動で `public/piper/` を組み立てる場合も、このディレクトリを同梱してください。
 
 Piper 音声モデルのクレジット:
@@ -80,6 +82,8 @@ Piper 音声モデルのクレジット:
 >
 > つくよみちゃんコーパス（CV.夢前黎）<br>
 > https://tyc.rei-yumesaki.net/material/corpus/
+
+ミコの声は、piper-plus の `zs-v1` ベースモデル（MIT）を追加学習した合成音声モデルです。ミコは AITuber OnAir の公式キャラクターです © Yuki Shindo。
 
 `scripts/package-piper-assets.sh` はセットアップ用スクリプトではなく、すでに用意済みの `public/piper/` にライセンステンプレートをコピーした上で `piper-assets.tar.gz` に固めて GitHub Releases / CI 配布に使うためのものです。`scripts/release-piper-assets.sh` はさらに GitHub Release へのアップロードまで自動化します。
 
@@ -118,8 +122,8 @@ Chrome で Vite の URL（通常は `http://localhost:5173`）を開いてくだ
 - 配信モードに切り替えると、中央アバターのみのグリーンバック表示
 - 設定パネルから会話リセット、TTS の ON/OFF、読み上げ速度変更が可能
 - 設定パネルから背景画像を変更でき、`デフォルトに戻す` で元の背景に戻せる
-- アバター設定から PNGTuber、ぷるぷるPNGTuber、Pet、VRM、PSD、Inochi2D を選択可能
-- カスタムアバターは形式に応じたファイルで登録可能。PNGTuber は4枚画像、Pet は manifest と spritesheet、VRM と Inochi2D は任意のモーションファイルにも対応
+- アバター設定から PNGTuber、ぷるぷるPNGTuber、Pet、VRM、PSD、Inochi2D、メッシュアバターを選択可能
+- カスタムアバターは形式に応じたファイルで登録可能。PNGTuber は4枚画像、Pet は manifest と spritesheet、VRM と Inochi2D は任意のモーションファイルにも対応。メッシュアバターは [Mesh Avatar Studio](https://github.com/shinshin86/mesh-avatar-studio) から書き出した `.mavatar` ファイルを使用
 - 選択中のアバターとカスタムファイルはブラウザ内だけに保存され、リロード後に自動復元
 
 ## 配信コメント連携
@@ -173,7 +177,7 @@ Vite の開発サーバーでは、すでに次のヘッダーを返していま
 [Irodoriデフォルト参照音声の個別利用条件](./public/audio-licenses/IRODORI_DEFAULT_REFERENCE_AUDIO_TERMS.md)
 に記載された範囲に限って利用・再配布を許可します。
 
-同梱のミコPNGTuber、ぷるぷるPNGTuber、Pet、VRM、PSD素材はMIT Licenseの
+同梱のミコPNGTuber、ぷるぷるPNGTuber、Pet、VRM、PSD、メッシュアバター素材はMIT Licenseの
 対象外です。公式サイトの
 [ミコ キャラクター利用ガイドライン](https://miko.aituberonair.com/#terms)
 が適用されます（正式版は日本語版です）。ソフトウェア、アプリ、ゲーム、映像、Webサイトその他の
