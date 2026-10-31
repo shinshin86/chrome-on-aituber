@@ -1,4 +1,15 @@
 export const ja = {
+  piper: {
+    downloading: "音声モデルをダウンロード中… {percent}%（{bytes} / {total}）",
+    downloadingUnknown: "音声モデルをダウンロード中… {bytes} 受信済み",
+    stalled: "音声のダウンロードで30秒間データを受信できませんでした。接続を確認して再度お試しください。",
+    downloadFailed: "音声ファイルのダウンロードに失敗しました。接続を確認して再度お試しください。",
+    initTimeout: "音声エンジンの準備がタイムアウトしました。接続を確認して再度お試しください。",
+    delete: "ダウンロード済みの Piper 音声ファイルを削除",
+    deleting: "音声ファイルを削除中…",
+    deleted: "ダウンロード済みの Piper 音声ファイルを削除しました。次にサンプル再生や読み上げを使うときに再度ダウンロードします。",
+    deleteFailed: "ダウンロード済みの Piper 音声ファイルを削除できませんでした。再度お試しください。",
+  },
   common: {
     source: {
       chat: "chat",

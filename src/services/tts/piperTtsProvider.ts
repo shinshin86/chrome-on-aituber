@@ -9,6 +9,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { PiperVoice } from "../../types";
+import { cancelPiperPrefetch, prefetchPiperVoice, PiperPreparationError } from "./piperAssets";
 
 interface PiperVoiceAssets {
   configFile: string;
@@ -43,6 +44,7 @@ let onnxSession: any = null;
 let modelConfig: any = null;
 let ready = false;
 let initPromise: Promise<void> | null = null;
+let initializationGeneration = 0;
 
 // ort は public/piper/dist/ort.min.js で <script> ロードされる想定
 declare const ort: any;
@@ -62,10 +64,13 @@ export function getVoice(): PiperVoice {
 export async function setVoice(voice: PiperVoice): Promise<void> {
   if (voice === currentVoice) return;
   currentVoice = voice;
-  if (initPromise) {
-    await initPromise.catch(() => undefined);
-  }
+  cancelPiperPrefetch();
+  // Invalidate a pending initialization instead of waiting for a stuck loader.
   await releaseModel();
+}
+
+export function prepareVoice(voice: PiperVoice = currentVoice): Promise<boolean> {
+  return prefetchPiperVoice(voice, PIPER_VOICE_ASSETS[voice]);
 }
 
 export async function initialize(
@@ -73,65 +78,89 @@ export async function initialize(
 ): Promise<void> {
   if (ready) return;
   if (initPromise) return initPromise;
-
-  initPromise = (async () => {
-    try {
-      onProgress?.("音声エンジンを初期化中...");
-
+  const generation = initializationGeneration;
+  const voice = currentVoice;
+  const ensureCurrent = () => {
+    if (generation !== initializationGeneration) {
+      throw new DOMException("Piper initialization cancelled", "AbortError");
+    }
+  };
+  const job = (async () => {
+    const fullyCached = await prepareVoice(voice);
+    ensureCurrent();
+    let timer: ReturnType<typeof setTimeout>;
+    const runtime = (async () => {
+      onProgress?.("Preparing voice engine...");
       const base = import.meta.env.BASE_URL;
-
-      // ONNX Runtime 設定
       ort.env.wasm.wasmPaths = `${base}piper/dist/`;
       ort.env.wasm.numThreads = 1;
       ort.env.wasm.simd = true;
-
-      const voice = currentVoice;
       const voiceAssets = PIPER_VOICE_ASSETS[voice];
-
-      // モデル設定読み込み
-      onProgress?.("モデル設定を読み込み中...");
       const configResp = await fetch(`${base}piper/models/${voiceAssets.configFile}`);
       if (!configResp.ok) {
-        throw new Error(
-          `Voice model config not found: ${voiceAssets.configFile} (HTTP ${configResp.status})`
-        );
+        throw new Error(`Voice model config not found: ${voiceAssets.configFile} (HTTP ${configResp.status})`);
       }
-      modelConfig = await configResp.json();
-
-      // OpenJTalk Phonemizer 初期化
+      const config = await configResp.json();
+      ensureCurrent();
       if (!phonemizer) {
-        onProgress?.("音素化エンジンを読み込み中...");
         const { SimpleUnifiedPhonemizer } = await getPiperPlus();
+        ensureCurrent();
         const created = new SimpleUnifiedPhonemizer();
-        await created.initialize({
-          openjtalk: {
-            jsPath: `${base}piper/dist/openjtalk.js`,
-            wasmPath: `${base}piper/dist/openjtalk.wasm`,
-            dictPath: `${base}piper/assets/dict`,
-            voicePath: `${base}piper/assets/voice/mei_normal.htsvoice`,
-          },
-        });
-        phonemizer = created;
+        try {
+          await created.initialize({
+            openjtalk: {
+              jsPath: `${base}piper/dist/openjtalk.js`,
+              wasmPath: `${base}piper/dist/openjtalk.wasm`,
+              dictPath: `${base}piper/assets/dict`,
+              voicePath: `${base}piper/assets/voice/mei_normal.htsvoice`,
+            },
+          });
+          ensureCurrent();
+          phonemizer = created;
+        } catch (error) {
+          created.dispose();
+          throw error;
+        }
       }
-
-      // ONNX モデル読み込み
-      onProgress?.("音声モデルを読み込み中...");
-      onnxSession = await ort.InferenceSession.create(
+      const session = await ort.InferenceSession.create(
         `${base}piper/models/${voiceAssets.modelFile}`,
         { executionProviders: ["wasm"], graphOptimizationLevel: "all" }
       );
-
+      if (generation !== initializationGeneration) {
+        await session.release();
+        ensureCurrent();
+      }
+      onnxSession = session;
+      modelConfig = config;
       loadedVoice = voice;
       ready = true;
       onProgress?.(null);
-      console.log(`TTS(piper): 初期化完了 (${voice})`);
-    } catch (err) {
-      initPromise = null;
-      throw err;
+    })();
+    try {
+      // A network-only fallback may still be downloading on a slow connection.
+      if (!fullyCached) {
+        await runtime;
+        return;
+      }
+      await Promise.race([
+        runtime,
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => {
+            if (generation === initializationGeneration) initializationGeneration++;
+            reject(new PiperPreparationError("initTimeout"));
+          }, 120_000);
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer!);
     }
   })();
-
-  return initPromise;
+  initPromise = job;
+  try {
+    await job;
+  } finally {
+    if (initPromise === job) initPromise = null;
+  }
 }
 
 export async function synthesize(
@@ -228,6 +257,7 @@ async function runSynthesis(
 
 /** Release piper resources (phonemizer, ONNX session) */
 export async function dispose(): Promise<void> {
+  cancelPiperPrefetch();
   await releaseModel();
   if (phonemizer) {
     try {
@@ -244,6 +274,7 @@ export async function dispose(): Promise<void> {
  * it after the runs that already hold it have finished.
  */
 async function releaseModel(): Promise<void> {
+  initializationGeneration++;
   const session = onnxSession;
   onnxSession = null;
   modelConfig = null;
@@ -307,10 +338,16 @@ function getPiperPlus(): Promise<any> {
   if ((window as any).__PiperPlus) {
     return Promise.resolve((window as any).__PiperPlus);
   }
-  return new Promise((resolve) => {
-    window.addEventListener("piper-plus-ready", () => {
+  return new Promise((resolve, reject) => {
+    const loaded = () => {
+      clearTimeout(timer);
       resolve((window as any).__PiperPlus);
-    }, { once: true });
+    };
+    const timer = setTimeout(() => {
+      window.removeEventListener("piper-plus-ready", loaded);
+      reject(new PiperPreparationError("initTimeout"));
+    }, 30_000);
+    window.addEventListener("piper-plus-ready", loaded, { once: true });
   });
 }
 

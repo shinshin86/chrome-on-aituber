@@ -175,3 +175,14 @@
     animation-duration: 1.6s;
   }
 }
+
+.piperStatus {
+  padding: 8px 16px;
+  background: rgba(245, 230, 215, 0.95);
+  color: #555;
+  font-size: 13px;
+}
+
+.piperStatus:empty {
+  display: none;
+}

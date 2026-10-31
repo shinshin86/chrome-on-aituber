@@ -3,6 +3,34 @@
 This directory keeps the reproducible license templates for `public/piper/`.
 The generated model/runtime assets are intentionally not committed.
 
+## Download manifest
+
+After preparing the runtime, dictionary, and voice files (run
+`./scripts/piper/fetch-miko-voice.sh` first if using Miko), generate the manifest
+before starting the dev server or building:
+
+```bash
+node scripts/piper/write-manifest.mjs
+```
+
+The dependency-free Node script inventories `public/piper/` except the manifest
+itself and `licenses/`, streams each file to record its decoded byte size and
+SHA-256, and derives a deterministic version from the sorted inventory. Required
+runtime, dictionary, and Tsukuyomi files must exist; optional voices are included
+when present. Re-run it whenever any runtime or voice asset changes. The output,
+`public/piper/manifest.json`, remains gitignored with the generated assets.
+
+The browser uses decoded sizes for byte progress even when the server applies
+gzip or Brotli. Cache names include the content version, and older Piper caches
+are removed after the selected voice has been stored in the new cache. Prefetch
+bypasses old worker/HTTP cache entries and verifies decoded sizes and hashes.
+The deploy workflow generates the manifest after the Piper and Miko downloads.
+
+If the manifest is missing or invalid, playback still works with header-based
+progress (indeterminate for compressed responses) and an unversioned cache.
+Regenerate the manifest and delete downloaded Piper files in settings to refresh
+that fallback cache.
+
 ## Current release inventory
 
 - Release: `piper-assets-v1`

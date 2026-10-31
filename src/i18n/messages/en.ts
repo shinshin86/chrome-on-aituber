@@ -5,6 +5,17 @@ type MessageShape<T> = {
 };
 
 export const en = {
+  piper: {
+    downloading: "Downloading voice model… {percent}% ({bytes} / {total})",
+    downloadingUnknown: "Downloading voice model… {bytes} received",
+    stalled: "The voice download stopped receiving data for 30 seconds. Check your connection and try again.",
+    downloadFailed: "Failed to download voice files. Check your connection and try again.",
+    initTimeout: "Voice engine preparation timed out. Check your connection and try again.",
+    delete: "Delete downloaded Piper voice files",
+    deleting: "Deleting voice files…",
+    deleted: "Downloaded Piper voice files deleted. They will download again the next time you play a sample or use speech.",
+    deleteFailed: "Failed to delete downloaded Piper voice files. Try again.",
+  },
   common: {
     source: {
       chat: "chat",

@@ -19,6 +19,8 @@ import type {
 import { useI18n } from "../../i18n/useI18n";
 import * as tts from "../../services/tts/ttsService";
 import { AvatarSettings } from "./AvatarSettings";
+import { localizePiperError } from "../../hooks/usePiperDownload";
+import { PiperDownloadStatus } from "./PiperDownloadStatus";
 import { IrodoriTtsSettings } from "./IrodoriTtsSettings";
 import styles from "./Settings.module.css";
 
@@ -96,6 +98,7 @@ export function SettingsPanel({
   const [backgroundBusy, setBackgroundBusy] = useState(false);
   const [backgroundError, setBackgroundError] = useState("");
   const [sampleBusy, setSampleBusy] = useState(false);
+  const [cacheBusy, setCacheBusy] = useState(false);
   const [sampleStatus, setSampleStatus] = useState("");
   const [sampleError, setSampleError] = useState("");
   const backgroundInputRef = useRef<HTMLInputElement | null>(null);
@@ -187,7 +190,7 @@ export function SettingsPanel({
   }
 
   async function handlePlayTtsSample() {
-    if (sampleBusy) return;
+    if (sampleBusy || cacheBusy) return;
 
     setSampleBusy(true);
     setSampleError("");
@@ -199,7 +202,8 @@ export function SettingsPanel({
 
       if (!tts.isReady()) {
         await tts.initialize((msg) => {
-          setSampleStatus(msg ?? "");
+          setSampleStatus(msg ? (settings.ttsEngine === "piper"
+            ? t("settings.aiVoice.samplePreparing") : msg) : "");
         });
       }
 
@@ -215,12 +219,28 @@ export function SettingsPanel({
     } catch (e) {
       setSampleStatus("");
       setSampleError(
-        e instanceof Error
+        localizePiperError(e, t) ?? (e instanceof Error
           ? e.message
-          : t("settings.aiVoice.sampleFailed")
+          : t("settings.aiVoice.sampleFailed"))
       );
     } finally {
       setSampleBusy(false);
+    }
+  }
+
+  async function handleDeletePiperFiles() {
+    if (sampleBusy || cacheBusy) return;
+    setCacheBusy(true);
+    setSampleStatus("");
+    setSampleError("");
+    try {
+      await tts.deletePiperVoiceFiles();
+      setSampleStatus(t("piper.deleted"));
+    } catch (error) {
+      console.warn("Piper cache deletion failed:", error);
+      setSampleError(t("piper.deleteFailed"));
+    } finally {
+      setCacheBusy(false);
     }
   }
 
@@ -454,6 +474,12 @@ export function SettingsPanel({
                     }
                   />
                 </label>
+                <PiperDownloadStatus voice={settings.piperVoice} />
+                <button className={styles.secondaryBtn} type="button"
+                  disabled={sampleBusy || cacheBusy}
+                  onClick={() => void handleDeletePiperFiles()}>
+                  {t(cacheBusy ? "piper.deleting" : "piper.delete")}
+                </button>
                 {settings.piperVoice === "miko" ? (
                   <p className={styles.hint}>
                     {t("settings.aiVoice.mikoVoiceCreditLine1")}
@@ -475,7 +501,7 @@ export function SettingsPanel({
                 <button
                   className={styles.subActionBtn}
                   type="button"
-                  disabled={sampleBusy}
+                  disabled={sampleBusy || cacheBusy}
                   onClick={() => void handlePlayTtsSample()}
                 >
                   {sampleBusy
