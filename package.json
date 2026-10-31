@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/piper/write-manifest.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/piper/write-manifest.mjs",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "licenses:generate": "node scripts/generate-npm-third-party-notices.mjs",

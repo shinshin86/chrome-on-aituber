@@ -46,7 +46,7 @@ jobs:
         run: ./scripts/piper/fetch-miko-voice.sh
 
       - name: Generate Piper asset manifest
-        run: node scripts/piper/write-manifest.mjs
+        run: node scripts/piper/write-manifest.mjs --strict
 
       - name: Download Irodori runtime assets
         if: env.IRODORI_RUNTIME_ASSETS_URL != ''

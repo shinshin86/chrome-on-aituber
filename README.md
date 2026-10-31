@@ -76,7 +76,7 @@ Prepare the assets as follows.
 5. License notices
    `scripts/package-piper-assets.sh` copies the templates from `scripts/piper/licenses/` into `public/piper/licenses/` before packaging. If you assemble `public/piper/` manually, include that directory as well.
 6. Download manifest
-   After preparing all runtime and voice files (including Miko, if used), run `node scripts/piper/write-manifest.mjs` before starting the dev server or building. Re-run it whenever the assets change. It generates the gitignored `public/piper/manifest.json` with decoded byte sizes and SHA-256 hashes, so download percentages work with gzip/Brotli hosting and updated assets replace older browser caches. The deploy workflow runs it after downloading the Piper assets and Miko voice. If the manifest is missing or invalid, playback still works using header-based progress (indeterminate for compressed responses) and an unversioned cache; regenerate the manifest and delete downloaded Piper files in settings to refresh that fallback cache.
+   `npm run dev` and `npm run build` automatically generate the gitignored `public/piper/manifest.json` for download progress and cache updates, reusing hashes for unchanged files. Missing assets remove stale manifests and allow dev/build without TTS; deployment uses `--strict` to reject missing assets. `npm run preview` serves the built output without regeneration.
 
 Piper voice credits:
 

@@ -5,31 +5,22 @@ The generated model/runtime assets are intentionally not committed.
 
 ## Download manifest
 
-After preparing the runtime, dictionary, and voice files (run
-`./scripts/piper/fetch-miko-voice.sh` first if using Miko), generate the manifest
-before starting the dev server or building:
+`npm run dev` and `npm run build` automatically run `write-manifest.mjs` after
+you prepare the runtime, dictionary, and voice files. The gitignored
+`public/piper/manifest.json` records decoded sizes and SHA-256 hashes for gzip
+progress and content-versioned browser caches. The script reuses hashes when
+both file size and `mtimeMs` are unchanged; modification times do not affect the
+content version. Optional voices are included when present.
 
-```bash
-node scripts/piper/write-manifest.mjs
-```
+By default, unavailable or incomplete assets remove any stale manifest and print
+one notice without blocking dev or build. The deploy workflow keeps its separate
+`node scripts/piper/write-manifest.mjs --strict` step after the Piper and Miko
+downloads so missing assets fail deployment. `npm run preview` serves the built
+output without generating a manifest.
 
-The dependency-free Node script inventories `public/piper/` except the manifest
-itself and `licenses/`, streams each file to record its decoded byte size and
-SHA-256, and derives a deterministic version from the sorted inventory. Required
-runtime, dictionary, and Tsukuyomi files must exist; optional voices are included
-when present. Re-run it whenever any runtime or voice asset changes. The output,
-`public/piper/manifest.json`, remains gitignored with the generated assets.
-
-The browser uses decoded sizes for byte progress even when the server applies
-gzip or Brotli. Cache names include the content version, and older Piper caches
-are removed after the selected voice has been stored in the new cache. Prefetch
-bypasses old worker/HTTP cache entries and verifies decoded sizes and hashes.
-The deploy workflow generates the manifest after the Piper and Miko downloads.
-
-If the manifest is missing or invalid, playback still works with header-based
-progress (indeterminate for compressed responses) and an unversioned cache.
-Regenerate the manifest and delete downloaded Piper files in settings to refresh
-that fallback cache.
+If the browser used header-based progress and an unversioned fallback cache,
+restart dev or rebuild after preparing the assets, then delete downloaded Piper
+files in settings to refresh that cache.
 
 ## Current release inventory
 

@@ -78,7 +78,7 @@ Git 管理されているのは次のみです。
 5. ライセンス表記
    `scripts/package-piper-assets.sh` は、パッケージ前に `scripts/piper/licenses/` のテンプレートを `public/piper/licenses/` にコピーします。手動で `public/piper/` を組み立てる場合も、このディレクトリを同梱してください。
 6. ダウンロード用 manifest
-   ランタイムと音声ファイル（ミコを使う場合はミコも含む）を配置したら、開発サーバーの起動やビルドの前に `node scripts/piper/write-manifest.mjs` を実行してください。アセットを変更したときも再実行します。Git 管理対象外の `public/piper/manifest.json` に圧縮前の容量と SHA-256 を記録し、gzip/Brotli 配信時のダウンロード率の表示と、更新後のアセットによる古いブラウザキャッシュの置き換えに使います。デプロイ用ワークフローでは、Piper アセットとミコの取得後に実行します。manifest がない場合や不正な場合も再生はできますが、進捗はヘッダーを使って計算し（圧縮された応答は不定表示）、キャッシュはバージョンなしで保存します。この代替キャッシュを更新するには、manifest を再生成し、設定でダウンロード済みの Piper 音声ファイルを削除してください。
+   `npm run dev` と `npm run build` が、進捗表示とキャッシュ更新に使う、Git 管理対象外の `public/piper/manifest.json` を自動生成します。変更のないファイルはハッシュを再利用します。アセット不足時は古い manifest を削除し、TTS なしで起動・ビルドできます。デプロイでは `--strict` でアセット不足をエラーにします。`npm run preview` は生成済みのビルドを使い、manifest を再生成しません。
 
 Piper 音声モデルのクレジット:
 
