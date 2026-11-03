@@ -502,6 +502,7 @@ function AppContent({ settings, updateSettings }: AppContentProps) {
           disabled={!llmReady || isSending || isSessionInitializing}
           isSending={isSending}
           statusText={statusText}
+          piperVoice={settings.ttsEngine === "piper" ? settings.piperVoice : undefined}
           showInitializeAI={canInitializeAI}
           isInitializing={isSessionInitializing}
           onInitializeAI={initializeAI}

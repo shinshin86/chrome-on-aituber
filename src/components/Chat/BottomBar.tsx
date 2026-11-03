@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useChatSubmit } from "use-chat-submit";
 import { useI18n } from "../../i18n/useI18n";
+import type { PiperVoice } from "../../types";
+import { PiperDownloadStatus } from "../Settings/PiperDownloadStatus";
 import styles from "./BottomBar.module.css";
 
 interface Props {
@@ -8,6 +10,7 @@ interface Props {
   disabled: boolean;
   isSending: boolean;
   statusText: string;
+  piperVoice?: PiperVoice;
   showInitializeAI: boolean;
   isInitializing: boolean;
   onInitializeAI: () => void;
@@ -21,6 +24,7 @@ export function BottomBar({
   disabled,
   isSending,
   statusText,
+  piperVoice,
   showInitializeAI,
   isInitializing,
   onInitializeAI,
@@ -43,6 +47,10 @@ export function BottomBar({
   }
 
   return (
+    <>
+      {piperVoice && <div className={styles.piperStatus}>
+        <PiperDownloadStatus voice={piperVoice} />
+      </div>}
     <div className={styles.bar}>
       <button
         className={`${styles.iconBtn} ${styles.manualBtn}`}
@@ -119,5 +127,6 @@ export function BottomBar({
         &#x2699;
       </button>
     </div>
+    </>
   );
 }

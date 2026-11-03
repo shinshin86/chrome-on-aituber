@@ -11,6 +11,7 @@ import type { PiperVoice, TtsEngine } from "../../types";
 import * as playback from "./audioPlayback";
 import * as piper from "./piperTtsProvider";
 import * as irodori from "./irodoriTtsProvider";
+import { deletePiperAssets } from "./piperAssets";
 
 let currentEngine: TtsEngine = "piper";
 /** Bumped on every engine or voice switch so audio made before it is dropped */
@@ -43,6 +44,14 @@ export async function setPiperVoice(voice: PiperVoice): Promise<void> {
   switchGeneration++;
   stop();
   await piper.setVoice(voice);
+}
+
+/** Clear only Piper's downloaded files and invalidate its in-memory model. */
+export async function deletePiperVoiceFiles(): Promise<void> {
+  switchGeneration++;
+  stop();
+  await piper.dispose();
+  await deletePiperAssets();
 }
 
 export function isReady(): boolean {

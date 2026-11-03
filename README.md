@@ -47,6 +47,8 @@ npm install
 
 2. Prepare TTS assets if you want voice playback
 
+Piper voice files are cached in your browser after the first download, when browser storage is available. On desktop, the selected voice downloads in the background; on mobile or with data saver enabled, downloading starts when you play a sample or use speech. Progress appears in settings and the chat area. To free space, open Settings → AI / Voice and select “Delete downloaded Piper voice files”. The next use downloads them again.
+
 The full piper TTS assets are not committed to this repository. When you clone this project yourself, you need to place the required files under `public/piper/`.
 
 - `public/piper/piper-global-loader.js`
@@ -73,6 +75,8 @@ Prepare the assets as follows.
    Run `./scripts/piper/fetch-miko-voice.sh`. It downloads the model from a pinned revision, verifies it by SHA-256, saves it as `public/piper/models/miko-sample-voice-v2.onnx` and `.onnx.json`, and copies its notices into `public/piper/licenses/`. The deploy workflow runs the same script and fails if the download or the hash check fails. Without it locally, the Miko voice cannot be used, but the Tsukuyomi-chan voice still works.
 5. License notices
    `scripts/package-piper-assets.sh` copies the templates from `scripts/piper/licenses/` into `public/piper/licenses/` before packaging. If you assemble `public/piper/` manually, include that directory as well.
+6. Download manifest
+   `npm run dev` and `npm run build` automatically generate the gitignored `public/piper/manifest.json` for download progress and cache updates, reusing hashes for unchanged files. Missing assets remove stale manifests and allow dev/build without TTS; deployment uses `--strict` to reject missing assets. `npm run preview` serves the built output without regeneration.
 
 Piper voice credits:
 

@@ -3,6 +3,25 @@
 This directory keeps the reproducible license templates for `public/piper/`.
 The generated model/runtime assets are intentionally not committed.
 
+## Download manifest
+
+`npm run dev` and `npm run build` automatically run `write-manifest.mjs` after
+you prepare the runtime, dictionary, and voice files. The gitignored
+`public/piper/manifest.json` records decoded sizes and SHA-256 hashes for gzip
+progress and content-versioned browser caches. The script reuses hashes when
+both file size and `mtimeMs` are unchanged; modification times do not affect the
+content version. Optional voices are included when present.
+
+By default, unavailable or incomplete assets remove any stale manifest and print
+one notice without blocking dev or build. The deploy workflow keeps its separate
+`node scripts/piper/write-manifest.mjs --strict` step after the Piper and Miko
+downloads so missing assets fail deployment. `npm run preview` serves the built
+output without generating a manifest.
+
+If the browser used header-based progress and an unversioned fallback cache,
+restart dev or rebuild after preparing the assets, then delete downloaded Piper
+files in settings to refresh that cache.
+
 ## Current release inventory
 
 - Release: `piper-assets-v1`

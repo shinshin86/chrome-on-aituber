@@ -3,6 +3,9 @@ import { useI18n, type I18nKey, type I18nParams } from "../i18n/useI18n";
 import type { ChatMessage, AppSettings, ChatSource } from "../types";
 import * as llm from "../services/llm/llmService";
 import * as tts from "../services/tts/ttsService";
+import { prepareVoice } from "../services/tts/piperTtsProvider";
+import { cancelPiperPrefetch, shouldAutoPreparePiper } from "../services/tts/piperAssets";
+import { localizePiperError } from "./usePiperDownload";
 import {
   loadMessages,
   saveMessages,
@@ -39,7 +42,7 @@ function getLLMErrorMessage(
 }
 
 function getTtsErrorMessage(error: unknown, fallback: string, t: Translate): string {
-  const detail = error instanceof Error ? error.message : "";
+  const detail = localizePiperError(error, t) ?? (error instanceof Error ? error.message : "");
   return detail ? t("chat.status.withDetail", { fallback, detail }) : fallback;
 }
 
@@ -104,6 +107,21 @@ export function useChat(settings: AppSettings) {
       console.warn("Piper voice switch error:", e);
     });
   }, [settings.piperVoice]);
+
+  useEffect(() => {
+    if (settings.ttsEngine !== "piper" || !shouldAutoPreparePiper()) return;
+    const timer = window.setTimeout(() => {
+      void prepareVoice(settings.piperVoice).catch((error) => {
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          console.warn("Piper background prefetch failed:", error);
+        }
+      });
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      cancelPiperPrefetch();
+    };
+  }, [settings.ttsEngine, settings.piperVoice]);
 
   async function initLLM(initialMessages: ChatMessage[] = []) {
     beginSessionInitialization();
@@ -354,7 +372,8 @@ export function useChat(settings: AppSettings) {
               setStatusText(t("chat.status.ttsInitializing"));
               try {
                 await tts.initialize((msg) => {
-                  if (msg) setStatusText(msg);
+                  if (msg) setStatusText(settings.ttsEngine === "piper"
+                    ? t("settings.aiVoice.samplePreparing") : msg);
                 });
                 setStatusText("");
               } catch (e) {
@@ -363,6 +382,7 @@ export function useChat(settings: AppSettings) {
                 );
                 console.warn("TTS init error:", e);
                 setStatusText("");
+                return;
               }
             }
             setIsSpeaking(true);

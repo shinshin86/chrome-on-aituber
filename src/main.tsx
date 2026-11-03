@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
+import { registerPiperServiceWorker } from "./services/tts/piperAssets";
 
 function loadScript(src: string, type: "module" | "classic" = "classic"): Promise<void> {
   const existing = document.querySelector<HTMLScriptElement>(`script[data-src="${src}"]`);
@@ -39,6 +40,7 @@ function loadScript(src: string, type: "module" | "classic" = "classic"): Promis
 
 async function bootstrap() {
   const base = import.meta.env.BASE_URL;
+  registerPiperServiceWorker();
 
   try {
     await loadScript(`${base}piper/dist/ort.min.js`);
